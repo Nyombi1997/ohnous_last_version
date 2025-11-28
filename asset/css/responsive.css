@@ -1,0 +1,15 @@
+@media screen and (max-width: 780px) {
+/* intro */
+
+#changing-word {
+    margin-top: 50px;
+}
+/* search bare */
+.search_bar
+{
+    width: 95%;
+}
+    .input_search_bar {
+        padding: 10px;
+    }
+}
