@@ -33,11 +33,12 @@
             $contentPage = ob_get_clean();
 
             // Si le fichier appelé est test.php, on n'utilise pas le gabarit
-            if (basename($templatePath) === 'test.php') {
+            include_once VIEW . '_gabarit.php';
+            /* if (basename($templatePath) === 'upload_image.php') {
                 echo $contentPage;
             } else {
                 include_once VIEW . '_gabarit.php';
-            }
+            } */
         }
     }
 ?>

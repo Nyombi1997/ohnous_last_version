@@ -1,58 +1,71 @@
 <?php
     /* affiche produit */
     function affiche_produit($donnee=null) {
-        $bdd = Database::getConnection();
-        if( !$donnee ) {
-            return false;
-            exit;
-        }
-        $id = $donnee['id'];
-        $sortie = '';
-
-        $img = only_select("image_articles", "article = '".$donnee['id']."'", $order = null, $limit = null);
-
-        if ($img) {
-            $img_version = select_bdd($bdd, "image_versions", "image_id = '".$img['unique_id']."'", $limit = null, $offset = 0, $order = null, $random = false);
-
-            $image = $img['img'];
-            $slug = $donnee['slug'];
-            $sortie .= '
-                    <div class="col-sm-6 col-md-4 col-lg-3 p-b-35 isotope-item women">
-                        <!-- Block2 -->
-                        <div class="block2">
-                            <div class="block2-pic hov-img0 label-new" data-label="Nouveau">
-                                <a href="'.$slug.'">
-                                    <img src="'.ASSET.'images/articles/'.$id.'/'.$image.'" alt="IMG-PRODUCT" loading="lazy">
-                                </a>	
-                                <a href="#" class="block2-btn flex-c-m stext-103 cl2 size-102 bg0 bor2 hov-btn1 p-lr-15 trans-04 js-show-modal1">
-                                    Details rapide
-                                </a>
-                            </div> 
-
-                            <div class="block2-txt flex-w flex-t p-t-14">
-                                <div class="block2-txt-child1 flex-col-l ">
-                                    <a href="product-detail.html" class="stext-104 cl1 hov-cl1 trans-04 p-b-6">
-                                        <i class="fa-solid fa-store"></i> Boutique la fleure
-                                    </a>
-                                    <a href="product-detail.html" class="stext-104 cl4 hov-cl1 trans-04 js-name-b2 p-b-6">
-                                        Esprit Ruffle Shirt
-                                    </a>
-
-                                    <span class="stext-105 cl3">
-                                        $16.64
-                                    </span>
+        global $bdd;
+        if($donnee)
+        {
+            $img = select_bdd($bdd, "image_articles", $where = "article = '".$donnee['id']."'", $limit = null, $offset = 0, $order = null, $random = false);
+            echo '
+                <div class="div_affiche_produit">
+                    <div class="affiche_produit">
+                        <!-- image -->				
+                        <div class="div_img_affiche_produit">
+                            <a href="">
+                                <img 
+                                    src="'.$img[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-50,blur-10" 
+                                    alt="" 
+                                    class="img_affiche blur-up" 
+                                    id="img_produit_'.$img[0]['id'].'"
+                                    data-src="'.$img[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-50,blur-10"
+                                >
+                            </a>
+                            <!-- info -->
+                            <span class="info_affiche_produit new">New</span>
+                            <!-- like -->
+                            <button type="button" class="like_affiche_produit">
+                                <i class="fa-regular fa-heart"></i>
+                            </button>
+                        </div>
+                        <!-- details -->
+                        <div class="div_details_affiche_produit">
+                            <div class="nom">petard</div>
+                            <!-- panier prix tailles -->
+                            <div class="details_affiche_produit">
+                                <div class="prix_taille">
+                                    <div class="taille">xl, xxl</div>
+                                    <div class="prix">$200</div>
                                 </div>
-
-                                <div class="block2-txt-child2 flex-r p-t-3">
-                                    <a href="#" class="btn-addwish-b2 dis-block pos-relative js-addwish-b2">
-                                        <img class="icon-heart1 dis-block trans-04" src="'.ASSET.'images/icons/cart-in.png" alt="ICON">
-                                        <img class="icon-heart2 dis-block trans-04 ab-t-l" src="'.ASSET.'images/icons/cart-out.png" alt="ICON">
-                                    </a>
+                                <div class="boutton_panier_affiche_produit">
+                                    <button type="button"><span class="icon-panier_plus"></span></button>
                                 </div>
                             </div>
                         </div>
-                    </div>';
+
+                    </div>
+                </div>
+
+                <script>
+                    let img_'.$img[0]['id'].' = document.getElementById("img_produit_'.$img[0]['id'].'");
+                    img_'.$img[0]['id'].'.onload = () => img_'.$img[0]['id'].'.classList.add(\'blur-up-loaded\');
+                    /* recalculer la taille de l\'image pour lui donner un style */
+                    function recalculateImageStyle(imgUrl) {
+                        return new Promise((resolve) => {
+                            const img = new Image();
+                            img.src = imgUrl;
+
+                            img.onload = () => {
+                                if (img.width > img.height) {
+                                    resolve(\'width: 100%; height: auto;\');
+                                } else if (img.width < img.height) {
+                                    resolve(\'width: auto; height: 100%;\');
+                                } else {
+                                    resolve(\'width: 100%; height: 100%;\');
+                                }
+                            };
+                        });
+                    }
+                </script>                
+                ';
         }
-        return $sortie;
     }
 ?>

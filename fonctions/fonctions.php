@@ -1,6 +1,7 @@
 <?php
     // Fonction pour générer un slug à partir d'une chaîne de caractères
-    function generateSlug($string, $separator = '-') {
+    function generateSlug($string, $separator = '-') 
+    {
         // Convertir en minuscules
         $slug = strtolower($string);
 

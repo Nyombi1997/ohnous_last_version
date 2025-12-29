@@ -6,6 +6,7 @@
         private $routes = [
                             "" => ["controller" => 'Home', "method" => 'showHome'], 
                             "accueil" => ["controller" => 'Home', "method" => 'showHome'],
+                            "ajouter-articles" => ["controller" => 'Home', "method" => 'showAddProduct'],
                         ];
 
         public function __construct($request) {
