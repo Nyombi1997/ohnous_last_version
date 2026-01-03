@@ -425,10 +425,37 @@
                     } else if (img.width < img.height) {
                         resolve('width: auto; height: 100%;');
                     } else {
-                        resolve('width: 100%; height: 100%;');
+                        resolve('width: 100%; height: auto;');
                     }
                 };
             });
+        }
+        /* donner la couleur dominante */
+        function getDominantColor(imgUrl) {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+
+            ctx.drawImage(img, 0, 0);
+
+            const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+            let r = 0, g = 0, b = 0;
+            const pixelCount = data.length / 4;
+
+            for (let i = 0; i < data.length; i += 4) {
+                r += data[i];
+                g += data[i + 1];
+                b += data[i + 2];
+            }
+
+            return {
+                r: Math.round(r / pixelCount),
+                g: Math.round(g / pixelCount),
+                b: Math.round(b / pixelCount)
+            };
         }
 
         /* Appliquer le croppe */

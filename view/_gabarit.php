@@ -28,41 +28,82 @@
     <div class="div_slide_panier" id="div_slide_panier">
         <div class="background" id="sortie_panier"></div>
         <div class="slide_panier">
-            <div class="contenu_slide_panier">
+            <div class="contenu_slide_panier" id="contenu_slide_panier">
                 <!-- div sortie -->
                 <div class="div_sortie_slide_panier" id="sortie_panier">
                     <button class="button_sortie_slide_panier btn_ohnous"><i class="fa fa-close"></i></button>
+                </div>
+                <!-- corps detail panier -->                
+                <div class="corps_detail_panier" id="corps_detail_panier">
+                    <!-- <h2 class="titre_panier">Votre panier est vide</h2> -->
+                    <?php
+                        $nombre_article = 0;
+                        $total = 0;
+                        if(isset($_SESSION['cart-ohnous-123456789']))
+                        {
+                            //session_destroy();
+                            function displayCart() {
+                                if (empty($_SESSION['cart-ohnous-123456789'])) {
+                                    echo '<h2 class="titre_panier">Votre panier est vide</h2>';
+                                    return;
+                                }
+
+                                $total = 0;
+
+                                foreach ($_SESSION['cart-ohnous-123456789'] as $item) {
+                                    $subtotal = $item['price'] * $item['qty'];
+                                    $total += $subtotal;
+
+                                    echo '
+                                        <!-- images -->
+                                        <div class="detail_panier" id="detail_panier">
+                                            <div class="div_img_detail_panier" style="background: '.$item['background'].'">
+                                                <img
+                                                    class="blur-up"
+                                                    src="'.$item['image'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-50,blur-10" 
+                                                    srcset="
+                                                        '.$item['image'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-80 400w,
+                                                        '.$item['image'].'?updatedAt=1765131265242/image.webp?tr=w-800,q-80 800w,
+                                                        '.$item['image'].'?updatedAt=1765131265242/image.webp?tr=w-1200,q-80 1200w"
+                                                    sizes="(max-width:768px) 90vw, 600px"
+                                                    loading="lazy"
+                                                    style="'.$item['style'].'"
+                                                    alt="'.$item['slug'].'"
+                                                />
+                                                <div class="div_supp_produit_panier">
+                                                    <i class="fa fa-trash"></i>
+                                                </div>
+                                            </div>
+                                            <!-- details -->
+                                            <div class="infos_detail_panier">
+                                                <p class="titre_produit_detail_panier">'.$item['name'].'</p>
+                                                <p class="prix_produit_detail_panier">$ <span class="prix-panier">'.$item['price'].'</span></p>
+                                                <p class="taille_produit_detail_panier">'.$item['size'].'</p>
+                                            </div>
+                                        </div>';
+                                }
+                                return $total;
+                            }
+                            $nombre_article = count($_SESSION['cart-ohnous-123456789']);
+                            $total = displayCart();
+                        }
+                        else
+                        {
+                            echo '<h2 class="titre_panier">Votre panier est vide</h2>';
+                        }
+                    ?>
                 </div>
                 <!-- compte -->
                 <div class="div_compte_panier">
                     <div class="div_total_panier">
                         <div class="total_panier btn_ohnous second">
                             <p>Total : </p>
-                            <p class="prix_total_panier"><span>0.00</span> <span>$</span></p>
+                            <p class="prix_total_panier"><span id="prix_total_panier"><?= number_format($total, 2, '.', ' '); ?></span> <span>$</span></p>
                         </div>
                     </div>
                     <div class="div_total_panier">
                         <div class="total_panier btn_ohnous">
                             <a href="">Valider</a>
-                        </div>
-                    </div>
-                </div>
-                <!-- corps detail panier -->                
-                <div class="corps_detail_panier">
-                    <h2 class="titre_panier">Votre panier est vide</h2>
-                    <div class="detail_panier">
-                        <!-- images -->
-                        <div class="div_img_detail_panier">
-                            <img src="./asset/images/produit/produit.jpg" alt="" srcset="">
-                            <div class="div_supp_produit_panier">
-                                <i class="fa fa-trash"></i>
-                            </div>
-                        </div>
-                        <!-- details -->
-                        <div class="infos_detail_panier">
-                            <p class="titre_produit_detail_panier">Nom du produit</p>
-                            <p class="prix_produit_detail_panier">12.99 €</p>
-                            <p class="taille_produit_detail_panier">XL</p>
                         </div>
                     </div>
                 </div>
@@ -77,7 +118,7 @@
             <!-- menu avec panier -->
             <div class="menu_banniere_droit">
                 <a href="" class="menu_banniere_link"><i class="fa fa-user"></i></a>
-                <a href="#" class="menu_banniere_link" id="afficher_panier"><i class="fa fa-shopping-bag"></i><span>0</span></a>
+                <a href="#" class="menu_banniere_link" id="afficher_panier"><i class="fa fa-shopping-bag"></i><span id="nombre_total_panier"><?= $nombre_article ?></span></a>
             </div>
         </div>
         <!-- categories -->

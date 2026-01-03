@@ -67,7 +67,18 @@
 								<div class="section_categorie_nom">
 									<p>'.$detail_category['nom'].'</p>
 								</div>
-								<div class="section_categorie_img" style="background-image: url(\''.$detail_article[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-50,blur-10\');">
+								<div class="section_categorie_img" style="background: '.$detail_article[0]['background'].';">
+									<img 
+										class="blur-up"
+										src="'.$detail_article[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-50,blur-10" 
+										srcset="
+											'.$detail_article[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-80 400w,
+											'.$detail_article[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-800,q-80 800w,
+											'.$detail_article[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-1200,q-80 1200w"
+										sizes="(max-width:768px) 90vw, 600px"
+										loading="lazy"
+										class="blur-up"
+									/>
 								</div>
 							</a>';
 						$category_ids[] = $detail_category['id'];
@@ -102,15 +113,3 @@
 			}
 		?>
 	</div>
-
-	<img 
-		class="blur-up"
-		src="https://ik.imagekit.io/nyombi1997/OhNous/articles/crop_1765131264030_Pl9IhQ-mU.webp?updatedAt=1765131265242/image.webp?tr=w-400,q-50,blur-10" 
-		srcset="
-			https://ik.imagekit.io/nyombi1997/OhNous/articles/crop_1765131264030_Pl9IhQ-mU.webp?updatedAt=1765131265242/image.webp?tr=w-400,q-80 400w,
-			https://ik.imagekit.io/nyombi1997/OhNous/articles/crop_1765131264030_Pl9IhQ-mU.webp?updatedAt=1765131265242/image.webp?tr=w-800,q-80 800w,
-			https://ik.imagekit.io/nyombi1997/OhNous/articles/crop_1765131264030_Pl9IhQ-mU.webp?updatedAt=1765131265242/image.webp?tr=w-1200,q-80 1200w"
-		sizes="(max-width:768px) 90vw, 600px"
-		loading="lazy"
-		class="blur-up"
-	/>

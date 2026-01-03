@@ -36,11 +36,19 @@
     .slide_panier
     {
         width: 75%;
+        overflow: auto;
+    }
+    .div_compte_panier
+    {
+        bottom: 0px;
+        left: 25%;
+        width: 75%;
     }
     .div_img_detail_panier
     {
         width: 35%;
         padding: 2px;
+        height: 180px;
     }
     .div_supp_produit_panier
     {
@@ -74,6 +82,15 @@
     button
     {
         cursor: initial;
+    }
+    .div_affiche_produit
+    {
+        width: 100%;
+        padding: 10px;
+    }
+    .div_img_affiche_produit
+    {
+        height: 450px;
     }
 
 

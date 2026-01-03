@@ -2,25 +2,65 @@
     /* affiche produit */
     function affiche_produit($donnee=null) {
         global $bdd;
+        /* si une donnée est envoyé */
         if($donnee)
         {
             $img = select_bdd($bdd, "image_articles", $where = "article = '".$donnee['id']."'", $limit = null, $offset = 0, $order = null, $random = false);
+            $imgId = 'img_produit_'.$img[0]['id'];
+            $divImgId = 'div_img_produit_'.$img[0]['id'];
+            $imgBackground = $img[0]['background'];
+            $imgStyles = $img[0]['styles'];
+            /* badge */
+            $difference_date = difference_date($donnee['date_ajout'], date("Y-m-d H:i:s"));
+            $badge = '';
+            if($difference_date<2)
+            {
+                $badge = '
+                    <!-- info -->
+                    <span class="info_affiche_produit new">Nouveau</span>';
+            }
+            /* tailles */
+            $tailles = fetch_tailles($donnee['id']);
+            if(empty($tailles))
+            {
+                $tailles = "Unique";
+            }
+            /* si panier */
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+            $key = cartKey($donnee['id'], $tailles);
+            $panier = '';
+            $icone = 'icon-panier_plus';
+            if (isset($_SESSION['cart-ohnous-123456789'][$key])) {
+                $panier = 'active'; 
+                $icone = 'icon-panier_moins';               
+            }
+
             echo '
                 <div class="div_affiche_produit">
                     <div class="affiche_produit">
                         <!-- image -->				
-                        <div class="div_img_affiche_produit">
+                        <div class="div_img_affiche_produit" id="'.$divImgId.'" style="background: '.$imgBackground.';">
                             <a href="">
                                 <img 
+                                    crossorigin="anonymous"
                                     src="'.$img[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-50,blur-10" 
-                                    alt="" 
-                                    class="img_affiche blur-up" 
-                                    id="img_produit_'.$img[0]['id'].'"
+                                    alt="'.$donnee['slug'].'" 
+                                    class="img_affiche blur-up"
+                                    data-img ="'.$img[0]['img'].'" 
+                                    id="'.$imgId.'"
                                     data-src="'.$img[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-50,blur-10"
+                                    style="'.$imgStyles.'"
+                                    srcset="
+                                        '.$img[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-80 400w,
+                                        '.$img[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-800,q-80 800w,
+                                        '.$img[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-1200,q-80 1200w"
+                                    sizes="(max-width:768px) 90vw, 600px"
+                                    loading="lazy"
                                 >
                             </a>
-                            <!-- info -->
-                            <span class="info_affiche_produit new">New</span>
+                            '.$badge.'
                             <!-- like -->
                             <button type="button" class="like_affiche_produit">
                                 <i class="fa-regular fa-heart"></i>
@@ -28,43 +68,21 @@
                         </div>
                         <!-- details -->
                         <div class="div_details_affiche_produit">
-                            <div class="nom">petard</div>
+                            <div class="nom">'.$donnee['nom'].'</div>
                             <!-- panier prix tailles -->
                             <div class="details_affiche_produit">
                                 <div class="prix_taille">
-                                    <div class="taille">xl, xxl</div>
-                                    <div class="prix">$200</div>
+                                    <div class="taille">'.$tailles.'</div>
+                                    <div class="prix">$ '.$donnee['prix'].'</div>
                                 </div>
                                 <div class="boutton_panier_affiche_produit">
-                                    <button type="button"><span class="icon-panier_plus"></span></button>
+                                    <button type="button" class="'.$panier.'" id="btn_panier_'.$donnee['id'].'" onclick="ajouterAuPanier(\''.$img[0]['img'].'\',\''.$donnee['id'].'\',\''.$donnee['nom'].'\',\''.$donnee['slug'].'\',\''.$tailles.'\',\''.$donnee['prix'].'\',\''.$imgStyles.'\',\''.$imgBackground.'\')"><span class="'.$icone.'"></span></button>
                                 </div>
                             </div>
                         </div>
 
                     </div>
-                </div>
-
-                <script>
-                    let img_'.$img[0]['id'].' = document.getElementById("img_produit_'.$img[0]['id'].'");
-                    img_'.$img[0]['id'].'.onload = () => img_'.$img[0]['id'].'.classList.add(\'blur-up-loaded\');
-                    /* recalculer la taille de l\'image pour lui donner un style */
-                    function recalculateImageStyle(imgUrl) {
-                        return new Promise((resolve) => {
-                            const img = new Image();
-                            img.src = imgUrl;
-
-                            img.onload = () => {
-                                if (img.width > img.height) {
-                                    resolve(\'width: 100%; height: auto;\');
-                                } else if (img.width < img.height) {
-                                    resolve(\'width: auto; height: 100%;\');
-                                } else {
-                                    resolve(\'width: 100%; height: 100%;\');
-                                }
-                            };
-                        });
-                    }
-                </script>                
+                </div>             
                 ';
         }
     }
