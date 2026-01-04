@@ -106,7 +106,7 @@
 
 	<div class="container_affiche_produit">
 		<?php
-			$donnee = select_bdd($bdd, "articles", $where = null, $limit = null, $offset = 12, $order = null, $random = false);
+			$donnee = select_bdd($bdd, "articles", $where = null, $limit = 12, $offset = 0, $order = null, $random = false);
 			foreach($donnee as $data)
 			{
 				affiche_produit($data);

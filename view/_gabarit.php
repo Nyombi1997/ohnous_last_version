@@ -56,7 +56,7 @@
 
                                     echo '
                                         <!-- images -->
-                                        <div class="detail_panier" id="detail_panier">
+                                        <div class="detail_panier" id="detail_panier_'.$item['id'].'">
                                             <div class="div_img_detail_panier" style="background: '.$item['background'].'">
                                                 <img
                                                     class="blur-up"
@@ -70,7 +70,7 @@
                                                     style="'.$item['style'].'"
                                                     alt="'.$item['slug'].'"
                                                 />
-                                                <div class="div_supp_produit_panier">
+                                                <div class="div_supp_produit_panier" onclick="ajouterAuPanier(\''.$item['image'].'\',\''.$item['id'].'\',\''.$item['name'].'\',\''.$item['slug'].'\',\''.$item['size'].'\',\''.$item['price'].'\',\''.$item['style'].'\',\''.$item['background'].'\')">
                                                     <i class="fa fa-trash"></i>
                                                 </div>
                                             </div>
@@ -98,7 +98,7 @@
                     <div class="div_total_panier">
                         <div class="total_panier btn_ohnous second">
                             <p>Total : </p>
-                            <p class="prix_total_panier"><span id="prix_total_panier"><?= number_format($total, 2, '.', ' '); ?></span> <span>$</span></p>
+                            <p class="prix_total_panier"><span id="prix_total_panier"><?= $total == 0 ? '0.00' : number_format($total, 2, '.', ' '); ?></span> <span>$</span></p>
                         </div>
                     </div>
                     <div class="div_total_panier">

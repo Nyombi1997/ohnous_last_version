@@ -42,14 +42,33 @@
             ];
         }
     }
-    $results = [
-        "result" => "ok",
-        "msg" => ""
-    ];
+    /* retirer du panier */
+    function removeFromCart($id, $size) {
+        $key = cartKey($id, $size);
+
+        if (isset($_SESSION['cart-ohnous-123456789'][$key])) {
+            unset($_SESSION['cart-ohnous-123456789'][$key]);
+        }
+    }
     /* envoyer les donner pour le panier */
     if(isset($_POST['ajout']))
     {
         addToCart($id, $name, $price, $size, $image, $style, $background, $slug);
+
+        $results = [
+            "result" => "ok",
+            "msg" => ""
+        ];
+    }
+    /* si on veut retirer */
+    elseif(isset($_POST['retire']))
+    {
+        removeFromCart($id, $size);
+
+        $results = [
+            "result" => "ok",
+            "msg" => "lol"
+        ];
     }
 
     // Retour en JSON
