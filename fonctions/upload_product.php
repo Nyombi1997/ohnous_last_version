@@ -12,6 +12,8 @@
     $product_boutique = html_entity_decode(filter_var($_POST['product_boutique'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $product_description = html_entity_decode(filter_var($_POST['product_description'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $product_image_url = html_entity_decode(filter_var($_POST['product_image_url'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+    $style = html_entity_decode(filter_var($_POST['style'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+    $background = html_entity_decode(filter_var($_POST['background'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $slug = generateSlug($product_name);
     $unique_id = uniqid("article_");
     /* ajouter l'article */
@@ -26,19 +28,28 @@
     insert_bdd($bdd, "articles", $insert_data);
     /* ajouter les tailles */
     $id = only_select("articles", $where = "unique_id = '$unique_id'", $order = null, $limit = null);
-    $tailles = explode(',', $product_tailles);
-    foreach ($tailles as $taille)
+    if($product_tailles == "")
     {
-        $insert = [
-            "article" => $id['id'],
-            "taille" => $taille,
-        ];
-        insert_bdd($bdd, "taille_articles", $insert);
     }
+    else
+    {
+        $tailles = explode(',', $product_tailles);
+        foreach ($tailles as $taille)
+        {
+            $insert = [
+                "article" => $id['id'],
+                "taille" => $taille,
+            ];
+            insert_bdd($bdd, "taille_articles", $insert);
+        }
+    }
+    /* ajouter image */
     $insert = [
         "article" => $id['id'],
         "img" => $product_image_url,
         "alt_text" => $slug,
+        "background" => $background,
+        "styles" => $style,
     ];
     insert_bdd($bdd, "image_articles", $insert);
     
@@ -56,7 +67,7 @@
 
     $results = [
         "result" => "ok",
-        "msg" => $unique_id
+        "msg" => $style
     ];
 
     // Retour en JSON

@@ -106,10 +106,14 @@
 
 	<div class="container_affiche_produit">
 		<?php
-			$donnee = select_bdd($bdd, "articles", $where = null, $limit = 12, $offset = 0, $order = null, $random = false);
+			$donnee = select_bdd($bdd, "articles", $where = null, $limit = 12, $offset = 0, $order = null, $random = true);
 			foreach($donnee as $data)
 			{
 				affiche_produit($data);
 			}
+			echo '<!-- HTML !-->
+				<div class="div_btn_voir_plus">
+					<a href="" class="btn_voir_plus" role="button">Voir plus  <i class="fa-solid fa-arrow-right-long"></i></a>
+				</div>';
 		?>
 	</div>

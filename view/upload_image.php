@@ -119,7 +119,7 @@
                 <textarea name="product_description" id="description_article" rows="4" class="input_ajout_image"></textarea>
             </div>
             
-            <button type="submit" class="btn_ohnous btn-success">Créer le produit</button>
+            <button type="submit" class="btn_ohnous btn-success">Créer l'article</button>
         </form>
     </div>
 
@@ -258,6 +258,8 @@
         let aspectRatio = 4/3;
         let firstOpen = false;
         let firstImage = '';
+        let rgb = '';
+        let styles = '';
         //const previewItem = this.createPreviewItem(imageId, e.target.result);
         
         // Drag and drop
@@ -407,9 +409,17 @@
                 <div class="crop-indicator">✓</div>
                 <div class="primary-badge" style="display: none;">Principale</div>
             `;
+            // Appliquer le style une fois l'image chargée
             recalculateImageStyle(dataUrl).then(style => {
-                document.querySelector('img#'+imageId).setAttribute("style", style);
+                const img = document.querySelector("img#" + imageId);
+                if (img) img.setAttribute("style", style);
+                styles = style;
             });
+            // Obtenir la couleur dominante
+            getDominantColorFromDataUrl(dataUrl).then(color => {
+                rgb = 'rgb('+color.r+', '+color.g+', '+color.b+')';
+            });
+
             preview.appendChild(item);
             return item;
         }
@@ -431,32 +441,43 @@
             });
         }
         /* donner la couleur dominante */
-        function getDominantColor(imgUrl) {
-            const canvas = document.createElement("canvas");
-            const ctx = canvas.getContext("2d");
+        function getDominantColorFromDataUrl(dataUrl) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                img.src = dataUrl;
 
-            canvas.width = img.naturalWidth;
-            canvas.height = img.naturalHeight;
+                img.onload = () => {
+                    const canvas = document.createElement("canvas");
+                    const ctx = canvas.getContext("2d");
 
-            ctx.drawImage(img, 0, 0);
+                    canvas.width = img.naturalWidth;
+                    canvas.height = img.naturalHeight;
 
-            const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+                    ctx.drawImage(img, 0, 0);
 
-            let r = 0, g = 0, b = 0;
-            const pixelCount = data.length / 4;
+                    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
 
-            for (let i = 0; i < data.length; i += 4) {
-                r += data[i];
-                g += data[i + 1];
-                b += data[i + 2];
-            }
+                    let r = 0, g = 0, b = 0;
+                    const count = data.length / 4;
 
-            return {
-                r: Math.round(r / pixelCount),
-                g: Math.round(g / pixelCount),
-                b: Math.round(b / pixelCount)
-            };
+                    for (let i = 0; i < data.length; i += 4) {
+                        r += data[i];
+                        g += data[i + 1];
+                        b += data[i + 2];
+                    }
+
+                    resolve({
+                        r: Math.round(r / count),
+                        g: Math.round(g / count),
+                        b: Math.round(b / count)
+                    });
+                };
+
+                img.onerror = reject;
+            });
         }
+
 
         /* Appliquer le croppe */
         function applyCrop() {
@@ -482,6 +503,11 @@
             recalculateImageStyle(croppedDataUrl).then(style => {
                 const img = document.querySelector("img#" + imgId);
                 if (img) img.setAttribute("style", style);
+                styles = style;
+            });
+            // Obtenir la couleur dominante
+            getDominantColorFromDataUrl(croppedDataUrl).then(color => {
+                rgb = 'rgb('+color.r+', '+color.g+', '+color.b+')';
             });
 
             // Reset pour le prochain crop
@@ -634,7 +660,8 @@
                     title: title,
                     text: message,
                     confirmButtonText: "OK",
-                    confirmButtonColor: '#6775d6'
+                    confirmButtonColor: '#6775d6',
+                    timer: 1500
                 }).then(() => {
                     window.location.reload();
                 });
@@ -646,7 +673,6 @@
                     e.returnValue = "";
                 }
             });
-
 
 
             document.querySelectorAll('#imagePreview div img').forEach( function(element){
@@ -700,11 +726,13 @@
                                 product_tailles: tailles_,
                                 product_boutique: document.getElementById("boutique_article").value,
                                 product_description: document.getElementById("description_article").value.trim(),
-                                product_image_url: result.url
+                                product_image_url: result.url,
+                                style: styles,
+                                background: rgb,
                             }, function(data){
                                 if(data.result === "ok")
                                 {
-                                    stopLoading(title = "Succès", message = "Article ajouté avec succès !", type = "success");
+                                    stopLoading(title = "Succès", message = "Article ajouté avec succès !", type = "success", timer = 1500);
                                 }
                                 else
                                 {
