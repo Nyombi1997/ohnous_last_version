@@ -728,6 +728,18 @@ a
     flex-wrap: wrap;
     padding: 5px 0px;
 }
+.details_affiche_produit
+.boutique
+{
+    width: 100%;
+    font-size: 16px;
+    color: var(--base_1_couleur);
+    margin-bottom: 10px;
+    text-decoration: underline;
+    text-underline-offset: 5px;
+    display: block;
+    outline: none;
+}
 .prix_taille
 {
     width: 50%;

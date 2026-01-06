@@ -66,31 +66,6 @@
                 <div class="table" id="table_types">
 
                 </div>
-                <!-- 
-                <table class="table-grid">
-                    <thead>
-                        <tr>
-                        <th>Nom</th>
-                        <th>Prénom</th>
-                        <th>Âge</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        <tr>
-                        <td>Nyombi</td>
-                        <td>Beni</td>
-                        <td>28</td>
-                        </tr>
-                        <tr>
-                        <td>Kabeya</td>
-                        <td>Paul</td>
-                        <td>32</td>
-                        </tr>
-                    </tbody>
-                </table> 
-                -->
-
             </div>
             
             <div class="form_group_ajout_image null" id="tailles_container">
@@ -678,7 +653,7 @@
             document.querySelectorAll('#imagePreview div img').forEach( function(element){
                 dataURLToBlob(element.src).then( (blob) => {
                     // Récupère le token depuis ton PHP
-                    fetch("http://ohnous.new.local/fonctions/auth.php")
+                    fetch("<?= $lien_actuel;  ?>?>/fonctions/auth.php")
                     .then(res => res.json())
                     .then(auth => {
                         imagekit.upload({

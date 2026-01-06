@@ -9,6 +9,9 @@
 
         public function render($title_page = 'OhNous')
         {
+            /* lien du site web */
+            $lien_actuel = "http://ohnous.new.local";
+            
             $template = $this->template;
 
             /* ramener la bdd */

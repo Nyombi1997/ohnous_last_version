@@ -13,7 +13,7 @@
             /* badge */
             $difference_date = difference_date($donnee['date_ajout'], date("Y-m-d H:i:s"));
             $badge = '';
-            if($difference_date<2)
+            if($difference_date<1)
             {
                 $badge = '
                     <!-- info -->
@@ -23,7 +23,7 @@
             $tailles = fetch_tailles($donnee['id']);
             if(empty($tailles))
             {
-                $tailles = "Unique";
+                $tailles = "";
             }
             /* si panier */
             if (session_status() === PHP_SESSION_NONE) {
@@ -35,6 +35,16 @@
             if (isset($_SESSION['cart-ohnous-123456789'][$key])) {
                 $panier = 'active'; 
                 $icone = 'icon-panier_moins';               
+            }
+            /* retrouver la boutique */
+            $boutique = select_bdd($bdd, "boutiques", $where = "id = '".$donnee['boutique']."'", $limit = null, $offset = 0, $order = null, $random = false);
+            if($boutique)
+            {
+                $boutique_nom = $boutique[0]['nom'];
+            }
+            else
+            {
+                $boutique_nom = "OhNous";
             }
 
             echo '
@@ -71,6 +81,7 @@
                             <div class="nom">'.$donnee['nom'].'</div>
                             <!-- panier prix tailles -->
                             <div class="details_affiche_produit">
+                                <a href="" class="boutique"><i class="fa-solid fa-store"></i> '.$boutique_nom.'</a>
                                 <div class="prix_taille">
                                     <div class="taille">'.$tailles.'</div>
                                     <div class="prix">$ '.$donnee['prix'].'</div>

@@ -1,10 +1,10 @@
 <?php
     $host = 'localhost'; // L'adresse de votre serveur de base de données
-    $dbname = 'u946733711_ohnous'; // Le nom de votre base de données
+    $dbname = 'u577654037_ohnous'; // Le nom de votre base de données
     //$dbname = 'ekuke'; // Le nom de votre base de données
-    $username = 'u946733711_ohnous'; // Le nom d'utilisateur de votre base de données
+    $username = 'u577654037_ohnous'; // Le nom d'utilisateur de votre base de données
     //$username = 'root'; // Le nom d'utilisateur de votre base de données
-    $password = 'Kinshasa@1997'; // Le mot de passe de votre base de données
+    $password = 'Kinshasa@2026'; // Le mot de passe de votre base de données
     //$password = ''; // Le mot de passe de votre base de données
 
     try {
@@ -24,8 +24,8 @@
         public static function getConnection() {
             if (self::$pdo === null) {
                 try {
-                    $dsn = "mysql:host=localhost;dbname=u946733711_ohnous;charset=utf8mb4";
-                    self::$pdo = new PDO($dsn, 'u946733711_ohnous', 'Kinshasa@1997');
+                    $dsn = "mysql:host=localhost;dbname=u577654037_ohnous;charset=utf8mb4";
+                    self::$pdo = new PDO($dsn, 'u577654037_ohnous', 'Kinshasa@2026');
                     self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                     self::$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
                 } catch (PDOException $e) {
