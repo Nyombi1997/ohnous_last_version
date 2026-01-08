@@ -141,8 +141,6 @@
             {
                 types_container.classList.add('null');
                 document.querySelector('#table_types').innerHTML = "";
-                tailles_container.classList.add('null');
-                document.querySelector('#table_tailles').innerHTML = "";
             }
             else
             {
@@ -166,6 +164,9 @@
                     }
                 })
             }
+            /* reset les tails */
+            tailles_container.classList.add('null');
+            document.querySelector('#table_tailles').innerHTML = "";
         });
         /* choix types */
         function choixTypes(id){
@@ -649,11 +650,10 @@
                 }
             });
 
-
             document.querySelectorAll('#imagePreview div img').forEach( function(element){
                 dataURLToBlob(element.src).then( (blob) => {
                     // Récupère le token depuis ton PHP
-                    fetch("<?= $lien_actuel;  ?>?>/fonctions/auth.php")
+                    fetch("<?= $lien_actuel?>/fonctions/auth.php")
                     .then(res => res.json())
                     .then(auth => {
                         imagekit.upload({

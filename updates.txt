@@ -1,0 +1,9 @@
+Les tailles (en lettre) des produits dans l'ajout produits ne s'alignent pas correctement avec les autres numéros de taille
+ordre les types dans l'ajour produit afin qu'ils s'affichent par ordre alphabétique.
+penser à une gestion des couleurs en fonction des couleurs principaux des articles.
+Forcer les prix en chiffre uniquement depuis le création de produit.
+Possibilité de plusieurs tailles dans les articles.
+Possibilité de plusieurs images dans la création articles
+Possibilité de supprimer l'image dans image kit
+Ajouter la possibilité de faire un text complet dans les commentaires
+que tout suive un ordre alphabétique et de nombre 
