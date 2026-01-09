@@ -90,7 +90,7 @@
             </div>
             
             <div class="form_group_ajout_image">
-                <label class="label_ajout_image">Description</label>
+                <label class="label_ajout_image">Description (facultatif)</label>
                 <textarea name="product_description" id="description_article" rows="4" class="input_ajout_image"></textarea>
             </div>
             
