@@ -111,7 +111,7 @@
         </div>
     </div>
     <!-- header -->
-    <header>
+    <header class=" <?php if(isset($GLOBALS['categorie'])){ echo 'sans_categorie';}else if(isset($GLOBALS['others'])){ echo 'sans_categorie';}  ?>">
         <!-- logo -->
         <div class="logo">
             <a href="accueil"><img src="<?php echo ASSET; ?>images/icons/logo-2.png" loading="lazy" alt="Logo OhNous"></a>
@@ -122,12 +122,13 @@
             </div>
         </div>
         <!-- categories -->
-        <div class="banniere">
+        <div class="banniere <?php if(isset($GLOBALS['categorie'])){ echo 'null';}else if(isset($GLOBALS['others'])){ echo 'null';}  ?>">
             <div class="categories">
                 <!-- Swiper -->
                 <div class="swiper categories_swiper">
                     <div class="swiper-wrapper">
                         <?php
+                            $all_categories = array();
                             /* afficher les categories */
                             $categories = select_bdd($bdd, "categorie_article", $where = null, $limit = null, $offset = 0, $order = null, $random = false);
                             $category_ids = array();
@@ -139,6 +140,7 @@
                                 echo '
                                     <a href="'.$detail_category['slug'].'" class="swiper-slide">'.$detail_category['nom'].'</a>';
                                 $category_ids[] = $detail_category['id'];
+                                $all_categories[] = $detail_category['nom'];
                             }
                         ?>
                     </div>
@@ -157,10 +159,42 @@
             });
         </script>
     </header>
-    <?php echo $contentPage; ?>   
+    <?php if(isset($GLOBALS['categorie'])){ 
+                echo '
+                    <!-- intro -->
+                    <div class="intro-hero sans_categorie">
+                        <div class="blob-bg"></div>
+                        <div class="intro-text">
+                            <h1><span id="changing-word-container"><span id="changing-word">'.$categorie['nom'].'</span></span></h1>
+                        </div>
+                    </div>';
+            }else if(isset($GLOBALS['others'])){ 
+                echo '
+                    <!-- intro -->
+                    <div class="intro-hero sans_categorie">
+                        <div class="blob-bg"></div>
+                        <div class="intro-text">
+                            <h1><span id="changing-word-container"><span id="changing-word">Articles</span></span></h1>
+                        </div>
+                    </div>';
+            }
+    ?>
+    <!-- afficher le contenue -->
+    <?php echo $contentPage; ?>
+	<!-- barre de recherche -->
+	<div class="div_search_bar all <?php if(isset($GLOBALS['categorie'])){ echo 'sans_categorie';}else if(isset($GLOBALS['others'])){ echo 'sans_categorie';}  ?>" id="div_search_bar_all">
+		<div class="search_bar">
+			<form action="recherche" method="GET">
+				<input type="text" class="input_search_bar" id="input_search_bar" name="query" placeholder="Rechercher un article..." required>
+				<button type="submit" class="button_search_bar"><i class="fa fa-search"></i></button>
+			</form>
+		</div>
+	</div>
     <!-- script panier -->
 	<script src="./asset/js/main_panier_produit.js?<?= filemtime("./asset/js/main_panier_produit.js") ?>"></script>
     <!-- script search bar -->
 	<script src="./asset/js/script_search_bar.js?<?= filemtime("./asset/js/script_search_bar.js") ?>"></script> 
+    <!-- script filtre produit -->
+	<script src="./asset/js/filtre_produit.js?<?= filemtime("./asset/js/filtre_produit.js") ?>"></script> 
 </body>
 </html>

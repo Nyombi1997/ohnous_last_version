@@ -2,7 +2,7 @@
     class View {
         private $template;
 
-        public function __construct($template)
+        public function __construct($template) 
         {
             $this->template = $template;
         }
@@ -34,14 +34,11 @@
 
             include_once $templatePath;
             $contentPage = ob_get_clean();
-
-            // Si le fichier appelé est test.php, on n'utilise pas le gabarit
+            // Si on va vers l’accueille
+            if (basename($templatePath) != 'accueil.php') {
+                $GLOBALS['others'] = 'ok';
+            }
             include_once VIEW . '_gabarit.php';
-            /* if (basename($templatePath) === 'upload_image.php') {
-                echo $contentPage;
-            } else {
-                include_once VIEW . '_gabarit.php';
-            } */
         }
     }
 ?>

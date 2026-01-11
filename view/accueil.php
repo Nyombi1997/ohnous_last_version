@@ -1,17 +1,22 @@
-	<!-- barre de recherche -->
-	<div class="div_search_bar all" id="div_search_bar_all">
-		<div class="search_bar">
-			<form action="recherche" method="GET">
-				<input type="text" class="input_search_bar" id="input_search_bar" name="query" placeholder="Rechercher un article..." required>
-				<button type="submit" class="button_search_bar"><i class="fa fa-search"></i></button>
-			</form>
-		</div>
-	</div>
+	<?php
+		$all_categories = array();
+		/* afficher les categories */
+		$categories = select_bdd($bdd, "categorie_article", $where = null, $limit = null, $offset = 0, $order = null, $random = false);
+		$category_ids = array();
+		foreach ($categories as $category) {
+			$detail_category = only_select("categorie", $where = "id = '".$category['categorie']."'", $order = null, $limit = null);
+			if(in_array($detail_category['id'], $category_ids)) {
+				continue; // Passer à l'itération suivante si l'ID de catégorie a déjà été traité
+			}
+			$category_ids[] = $detail_category['id'];
+			$all_categories[] = $detail_category['nom'];
+		}
+	?>
 	<!-- intro -->
 	<div class="intro-hero">
 		<div class="blob-bg"></div>
 		<div class="intro-text">
-			<h1>Découvrez nos <span id="changing-word-container"><span id="changing-word">Accessoires</span></span></h1>
+			<h1>Découvrez <span id="changing-word-container"><span id="changing-word"><?= (isset($all_categories) ? (count($all_categories) >= 1 ? $all_categories[0] : 'Articles') : 'Articles')  ?></span></span></h1>
 		</div>
 		<!-- bouton decouvrir en bas -->
 		<!-- <button class="scroll-down-btn visible">
@@ -29,7 +34,7 @@
 		</div>
 		<!-- script banniere -->
 		<script>
-			const words = ["Parfums", "Perruques", "Produits de beauté","Accessoires"];
+			const words = [<?php for($i=0;$i<count($all_categories); $i++){if($i==0){echo '"'.$all_categories[$i].'"';}else{echo ',"'.$all_categories[$i].'"';}} ?>];
 			let index = 0;
 			const span = document.getElementById("changing-word");
 			const input_search_bar = document.getElementById("input_search_bar");

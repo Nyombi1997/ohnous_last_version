@@ -7,6 +7,7 @@
                             "" => ["controller" => 'Home', "method" => 'showHome'], 
                             "accueil" => ["controller" => 'Home', "method" => 'showHome'],
                             "ajouter-articles" => ["controller" => 'Home', "method" => 'showAddProduct'],
+                            "articles" => ["controller" => 'Home', "method" => 'showArticles'],
                         ];
 
         public function __construct($request) {
@@ -24,13 +25,17 @@
                 $currentController = new $controller();
                 $currentController->$method();
             } else {
-                    // Sinon, on considère que c’est un slug de produit
-                    include MODEL . 'bdd.php';
+                // Sinon, on considère que c’est un slug de produit
+                include MODEL . 'bdd.php';
                 $slug = $request;
                 /* slug produit */
                 $stmt = $bdd->prepare("SELECT * FROM articles WHERE slug = ?");
                 $stmt->execute([$slug]);
                 $produit = $stmt->fetch(PDO::FETCH_ASSOC);
+                /* slug categorie */
+                $stmt = $bdd->prepare("SELECT * FROM categorie WHERE slug = ?");
+                $stmt->execute([$slug]);
+                $categorie = $stmt->fetch(PDO::FETCH_ASSOC);
                 /* checking slug produit */
                 if ($produit) {
                     // On stocke le produit globalement pour y accéder dans la vue
@@ -38,6 +43,14 @@
                     
                     $view = new View('detail-article');
                     $view->render($produit['nom'] . ' | OhNous');
+                }
+                /* checking slug categorie */
+                elseif ($categorie) {
+                    // On stocke le categorie globalement pour y accéder dans la vue
+                    $GLOBALS['categorie'] = $categorie;
+                    
+                    $view = new View('articles');
+                    $view->render($categorie['nom'] . ' | OhNous');
                 } else {
                     echo '
                     <!DOCTYPE html>

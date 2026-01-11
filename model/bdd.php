@@ -17,32 +17,5 @@
 
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
-    }
-    class Database {
-        private static $pdo = null;
-        
-        public static function getConnection() {
-            if (self::$pdo === null) {
-                try {
-                    $dsn = "mysql:host=localhost;dbname=u577654037_ohnous;charset=utf8mb4";
-                    self::$pdo = new PDO($dsn, 'u577654037_ohnous', 'Kinshasa@2026');
-                    self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-                    self::$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-                } catch (PDOException $e) {
-                    error_log("Database connection failed: " . $e->getMessage());
-                    die("Erreur de connexion à la base de données");
-                }
-            }
-            return self::$pdo;
-        }
-    }
-            
-    // Qualités des images AVEC hauteurs définies
-    $IMAGE_QUALITIES = [
-        'lqip' => ['width' => 20, 'height' => 15, 'quality' => 10],
-        'mobile' => ['width' => 400, 'height' => 300, 'quality' => 60],
-        'tablet' => ['width' => 800, 'height' => 600, 'quality' => 75],
-        'desktop' => ['width' => 1200, 'height' => 900, 'quality' => 85],
-        'hd' => ['width' => 1920, 'height' => 1440, 'quality' => 92]
-    ];   
+    } 
 ?>

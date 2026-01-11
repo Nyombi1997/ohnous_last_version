@@ -226,4 +226,69 @@
         }
     }
 
+    /* gestions des filtres */
+    function select_articles_filtre($bdd, array $filters = [], $limit = null, $offset = 0, $order = null, $random = false)
+    {
+        $sql = "SELECT DISTINCT a.* FROM articles a";
+        $joins = [];
+        $where = [];
+        $params = [];
+
+        // FILTRE CATÉGORIE
+        if (!empty($filters['category'])) {
+            if($filters['category']!=0)
+            {
+                $joins[] = "INNER JOIN categorie_article ac 
+                            ON ac.article = a.id AND ac.categorie = :category";
+                $params[':category'] = (int)$filters['category'];                
+            }
+        }
+
+        // FILTRE TYPE
+        if (!empty($filters['type'])) {
+            if($filters['type']!=0)
+            {
+                $joins[] = "INNER JOIN types_article at 
+                            ON at.article = a.id AND at.types = :type";
+                $params[':type'] = (int)$filters['type'];
+            }
+        }
+
+        // FILTRE TAILLE
+        if (!empty($filters['taille'])) {
+            if($filters['taille']!=0)
+            {
+                $joins[] = "INNER JOIN taille_articles al 
+                            ON al.article = a.id AND al.taille = :taille";
+                $params[':taille'] = (int)$filters['taille'];
+            }
+        }
+
+        // Assemblage final
+        if ($joins) {
+            $sql .= " " . implode(" ", $joins);
+        }
+
+        $sql .= " ORDER BY a.id DESC";
+
+        if ($limit !== null) {
+            $sql .= " LIMIT :limit OFFSET :offset";
+        }
+
+        $stmt = $bdd->prepare($sql);
+
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value, PDO::PARAM_INT);
+        }
+
+        if ($limit !== null) {
+            $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+        }
+
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+
 ?>

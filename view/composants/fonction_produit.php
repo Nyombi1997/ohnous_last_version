@@ -36,7 +36,7 @@
                 $panier = 'active'; 
                 $icone = 'icon-panier_moins';               
             }
-            /* retrouver la boutique */
+            /* retrouver la boutique */ 
             $boutique = select_bdd($bdd, "boutiques", $where = "id = '".$donnee['boutique']."'", $limit = null, $offset = 0, $order = null, $random = false);
             if($boutique)
             {

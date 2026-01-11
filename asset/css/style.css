@@ -34,6 +34,10 @@ header
     top: 0;
     z-index: 4;
 }
+header.sans_categorie
+{
+    height: 50px;
+}
 body
 {
     padding-top: 90px;
@@ -378,7 +382,8 @@ a
     background: var(--noir);
 }
 /* intro */
-.intro-hero {
+.intro-hero 
+{
     margin: 20px 0px;
     padding: 120px 0px;
     position: relative;
@@ -391,6 +396,11 @@ a
     justify-content: center; /* Centre horizontalement */
     text-align: center; /* Texte centré */
     border-radius: 50px;
+}
+.intro-hero.sans_categorie
+{
+    margin-top: 15px;
+    height: 350px;
 }
 
 .blob-bg {
@@ -504,6 +514,10 @@ a
 {
     opacity: 1;
     visibility: visible;
+}
+.div_search_bar.all.sans_categorie
+{
+    top: 50px;
 }
 .search_bar
 {
@@ -629,6 +643,12 @@ p
 
 
 /* produit */
+.parent_container_affiche_produit
+{
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+}
 .container_affiche_produit
 {
     width: 100%;
@@ -636,11 +656,84 @@ p
     flex-wrap: wrap;
     margin: 20px 0px;
 }
+.container_affiche_produit.vue_article
+{
+    width: 75%;
+}
+.container_filtre_produit
+{
+    width: 25%;
+    margin: 20px 0px;
+    padding: 10px;
+}
+.sous_container_filtre_produit
+{
+    background: var(--blanc);
+    border-radius: 5px;
+    padding: 10px;
+}
+.titre_liste_filtre_produit
+{
+    padding: 10px;
+}
+.titre_liste_filtre_produit
+p
+{
+    display: inline-flex;
+    padding: 10px;
+    background: var(--noir);
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    border-radius: 10px;
+    color: var(--blanc);
+}
+.div_detail_liste_filtre_produit,
+.detail_liste_filtre_produit
+{
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 16px;
+}
+.detail_liste_filtre_produit
+{
+    padding: 10px 10px;
+    cursor: pointer;
+    margin: 10px 0px;
+    border-radius: 10px;
+}
+.detail_liste_filtre_produit:active
+{
+    opacity: .5;
+}
+.detail_liste_filtre_produit:hover,
+.detail_liste_filtre_produit.active
+{
+    background: var(--base_2_couleur);
+}
+.detail_liste_filtre_produit
+.nom
+{
+    width: 70%;
+}
+.detail_liste_filtre_produit
+.nombre
+{
+    width: 30%;
+    text-align: right;
+}
+
 .div_affiche_produit
 {
     width: 25%;
     padding: 10px;
     box-sizing: border-box;
+}
+.vue_article
+.div_affiche_produit
+{
+    width: 33.333%;
 }
 .affiche_produit
 {
@@ -702,7 +795,7 @@ a
     padding: 5px 10px;
     background: none;
     cursor: pointer;
-    background: rgba(255, 255, 255, .1);
+    background: rgba(255, 255, 255, .5);
     border: 1px solid rgba(255, 255, 255, .5);
     border-radius: 5px;
 }
@@ -841,6 +934,10 @@ outline: 0;
         min-width: 196px;
     }
 }
+
+
+
+
 
 
 
