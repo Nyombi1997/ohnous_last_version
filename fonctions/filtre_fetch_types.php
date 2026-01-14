@@ -1,48 +1,61 @@
 <?php
     include_once "../model/bdd.php";
-    include_once "../model/select.php";
     header('Content-Type: application/json; charset=utf-8');
 
-    $category_id = html_entity_decode(filter_var($_POST['id'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-    $all_types = select_bdd($bdd, "categorie_types", $where = "categorie = $category_id", $limit = null, $offset = 0, $order = null, $random = false);
-    if(!$all_types)
-    {
-        $results = [
+    $category_id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+
+    if (!$category_id) {
+        echo json_encode([
+            "result" => "error",
+            "msg" => "Catégorie invalide"
+        ]);
+        exit;
+    }
+
+    $sql = "
+        SELECT 
+            t.id,
+            t.nom,
+            COUNT(DISTINCT a.id) AS total
+        FROM types t
+        INNER JOIN types_article at ON at.types = t.id
+        INNER JOIN articles a ON a.id = at.article
+        INNER JOIN categorie_article ac ON ac.article = a.id
+        WHERE ac.categorie = :category_id
+        GROUP BY t.id
+        HAVING total > 0
+        ORDER BY t.nom ASC
+    ";
+
+    $stmt = $bdd->prepare($sql);
+    $stmt->bindValue(':category_id', $category_id, PDO::PARAM_INT);
+    $stmt->execute();
+
+    $types = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    if (!$types) {
+        echo json_encode([
             "result" => "error",
             "msg" => "Aucun type trouvé"
-        ];
-    }
-    else
-    {
-        $tables = "";
-        $array_types = array();
-        for($i = 0, $e = 0; $i < count($all_types); $i++, $e++)
-        {
-            $types = only_select("types", $where = "id = ".$all_types[$i]['types'], $order = null, $limit = null);
-            /* si on a déjà ajouter ce type */
-            if(in_array($types['id'],$array_types))
-            {
-                continue;
-            }
-            /* combien d'article y'a de ce type */
-            $types_nombre = select_bdd($bdd, "types_article", $where = "types = '".$types['id']."'", $limit = null, $offset = 0, $order = null, $random = false);
-            if(count($types_nombre) == 0)
-            {
-                continue;
-            }
-            $array_types[] = $types['id'];
-            $tables .= '
-                        <div class="detail_liste_filtre_produit js_detail_liste_filtre_produit_types js_detail_liste_filtre_produit_types'.$types['id'].'" onclick="filtre_types(\''.$types['id'].'\',\''.$types['nom'].'\',\'\')">
-                            <div class="nom">'.$types['nom'].'</div> <div class="nombre">'.count($types_nombre).'</div>
-                        </div>';
-        }
-
-        $results = [
-            "result" => "ok",
-            "msg" => $tables
-        ];
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
     }
 
-    // Retour en JSON
-    echo json_encode($results, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    $html = "";
+
+    foreach ($types as $type) {
+        $html .= '
+            <div class="detail_liste_filtre_produit 
+                        js_detail_liste_filtre_produit_types 
+                        js_detail_liste_filtre_produit_types'.$type['id'].'"
+                onclick="filtre_types(\''.$type['id'].'\', \''.$type['nom'].'\', \'\')">
+                <div class="nom">'.$type['nom'].'</div>
+                <div class="nombre">'.$type['total'].'</div>
+            </div>';
+    }
+
+    echo json_encode([
+        "result" => "ok",
+        "msg" => $html
+    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 ?>

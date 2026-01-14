@@ -1,0 +1,1 @@
+ajouter slug dans boutique (text, null oui, après description)

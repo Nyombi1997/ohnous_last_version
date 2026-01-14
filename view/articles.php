@@ -54,7 +54,7 @@
         </div>
     </div>
     <!-- afficher les articles -->
-    <div class="container_affiche_produit vue_article">
+    <div class="container_affiche_produit vue_article" id="afficher_article">
         <?php
             $donnee = select_bdd($bdd, "articles", $where = null, $limit = 12, $offset = 0, $order = null, $random = true);
             foreach($donnee as $data)
@@ -68,3 +68,24 @@
         ?>
     </div>
 </div>
+
+
+<?php
+    if(isset($GLOBALS['categorie']))
+    {
+        $categorie = $GLOBALS['categorie'];
+        /* filtrer les categories */
+        $categories = select_bdd($bdd, "categorie_article", $where = "categorie = '".$categorie['id']."'", $limit = null, $offset = 0, $order = null, $random = false);
+        if(count($categories)>0)
+        {
+            $details_categories = select_bdd($bdd, "categorie", $where = "id = '".$categorie['id']."'", $limit = null, $offset = 0, $order = null, $random = false);
+            echo '
+                <script>
+                    document.addEventListener("DOMContentLoaded", () => {
+                        // Votre fonction peut être appelée ici en toute sécurité
+                        filtre_categorie(id = "'.$details_categories[0]['id'].'", nom = "'.$details_categories[0]['nom'].'", slug = "'.$details_categories[0]['slug'].'");
+                    });
+                </script>';
+        }
+    }
+?>

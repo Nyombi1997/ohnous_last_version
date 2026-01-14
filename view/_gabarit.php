@@ -22,6 +22,12 @@
     <!-- sweat alert -->
     <link rel="stylesheet" href="<?= ASSET ?>css/sweetalert2.min.css?<?= filemtime("./asset/css/sweetalert2.min.css") ?>">
     <script src="<?= ASSET ?>js/sweetalert2.all.min.js?<?= filemtime("./asset/js/sweetalert2.all.min.js") ?>"></script>
+    <!-- script panier -->
+	<script src="./asset/js/main_panier_produit.js?<?= filemtime("./asset/js/main_panier_produit.js") ?>" defer></script>
+    <!-- script search bar -->
+	<script src="./asset/js/script_search_bar.js?<?= filemtime("./asset/js/script_search_bar.js") ?>" defer></script> 
+    <!-- script filtre produit -->
+	<script src="./asset/js/filtre_produit.js?<?= filemtime("./asset/js/filtre_produit.js") ?>" defer></script> 
 </head>
 <body>
     <!-- slide panier -->
@@ -185,16 +191,10 @@
 	<div class="div_search_bar all <?php if(isset($GLOBALS['categorie'])){ echo 'sans_categorie';}else if(isset($GLOBALS['others'])){ echo 'sans_categorie';}  ?>" id="div_search_bar_all">
 		<div class="search_bar">
 			<form action="recherche" method="GET">
-				<input type="text" class="input_search_bar" id="input_search_bar" name="query" placeholder="Rechercher un article..." required>
+				<input type="text" class="input_search_bar" id="input_search_bar_2" name="query" placeholder="Rechercher un article..." required>
 				<button type="submit" class="button_search_bar"><i class="fa fa-search"></i></button>
 			</form>
 		</div>
 	</div>
-    <!-- script panier -->
-	<script src="./asset/js/main_panier_produit.js?<?= filemtime("./asset/js/main_panier_produit.js") ?>"></script>
-    <!-- script search bar -->
-	<script src="./asset/js/script_search_bar.js?<?= filemtime("./asset/js/script_search_bar.js") ?>"></script> 
-    <!-- script filtre produit -->
-	<script src="./asset/js/filtre_produit.js?<?= filemtime("./asset/js/filtre_produit.js") ?>"></script> 
 </body>
 </html>

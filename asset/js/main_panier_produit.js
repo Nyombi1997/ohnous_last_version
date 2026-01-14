@@ -193,3 +193,4 @@ function ajouterAuPanier(imgSrc = null, produitId = null, produitNom = null, pro
     /* ajouter au panier */
     editIconAjouterPanier(produitId = produitId, ajouter = true, retire = false, imgSrc = imgSrc, produitNom = produitNom, produitSlug = produitSlug, produitTaille = produitTaille, produitPrix = produitPrix, produitStyle = produitStyle, produitBackground = produitBackground);
 }
+

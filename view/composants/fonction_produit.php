@@ -1,6 +1,6 @@
 <?php
     /* affiche produit */
-    function affiche_produit($donnee=null) {
+    function affiche_produit($donnee=null , $return = false) {
         global $bdd;
         /* si une donnée est envoyé */
         if($donnee)
@@ -47,7 +47,7 @@
                 $boutique_nom = "OhNous";
             }
 
-            echo '
+            $article = '
                 <div class="div_affiche_produit">
                     <div class="affiche_produit">
                         <!-- image -->				
@@ -95,6 +95,16 @@
                     </div>
                 </div>             
                 ';
+
+            /* echo s'il faut pas return */
+            if(!$return)
+            {
+                echo $article;
+            }
+            else
+            {
+                return $article;
+            }
         }
     }
 ?>

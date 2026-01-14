@@ -231,7 +231,6 @@
     {
         $sql = "SELECT DISTINCT a.* FROM articles a";
         $joins = [];
-        $where = [];
         $params = [];
 
         // FILTRE CATÉGORIE
@@ -269,7 +268,13 @@
             $sql .= " " . implode(" ", $joins);
         }
 
-        $sql .= " ORDER BY a.id DESC";
+        if ($random) {
+            $sql .= " ORDER BY RAND()";
+        } elseif ($order !== null) {
+            $sql .= " ORDER BY " . $order;
+        } else {
+            $sql .= " ORDER BY a.id DESC";
+        }
 
         if ($limit !== null) {
             $sql .= " LIMIT :limit OFFSET :offset";

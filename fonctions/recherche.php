@@ -20,7 +20,7 @@
     // Requête multi-tables avec pondération + pertinence
     $sql = "
         (
-            SELECT id, nom COLLATE utf8mb4_general_ci AS label, prix, NULL AS icone, slug COLLATE utf8mb4_general_ci AS slug, 'produit' AS source,
+            SELECT id, nom COLLATE utf8mb4_general_ci AS label, prix, description, slug COLLATE utf8mb4_general_ci AS slug, 'articles' AS source,
                 (
                     (CASE WHEN nom LIKE :start THEN 5
                         WHEN nom LIKE :middle THEN 3
@@ -28,23 +28,23 @@
                     +
                     (CASE WHEN prix LIKE :any THEN 1 ELSE 0 END)
                 ) AS score
-            FROM produit
+            FROM articles
             WHERE (nom LIKE :any OR prix LIKE :any OR (:q_numeric IS NOT NULL AND prix <= :q_numeric))
         )
         UNION
         (
-            SELECT id, nom COLLATE utf8mb4_general_ci AS label, NULL AS prix, NULL AS icone, slug COLLATE utf8mb4_general_ci AS slug, 'etablissement' AS source,
+            SELECT id, nom COLLATE utf8mb4_general_ci AS label, NULL AS prix, description, slug COLLATE utf8mb4_general_ci AS slug, 'boutiques' AS source,
                 (
                     (CASE WHEN nom COLLATE utf8mb4_general_ci LIKE :start THEN 5
                         WHEN nom COLLATE utf8mb4_general_ci LIKE :middle THEN 3
                         WHEN nom COLLATE utf8mb4_general_ci LIKE :any THEN 1 ELSE 0 END)
                 ) AS score
-            FROM etablissement
+            FROM boutiques
             WHERE nom COLLATE utf8mb4_general_ci LIKE :any
         )
         UNION
         (
-            SELECT id, nom COLLATE utf8mb4_general_ci AS label, NULL AS prix, icone, slug COLLATE utf8mb4_general_ci AS slug, 'types' AS source,
+            SELECT id, nom COLLATE utf8mb4_general_ci AS label, NULL AS prix, NULL AS description, NULL AS slug, 'types' AS source,
                 (
                     (CASE WHEN nom COLLATE utf8mb4_general_ci LIKE :start THEN 5
                         WHEN nom COLLATE utf8mb4_general_ci LIKE :middle THEN 3
@@ -55,13 +55,13 @@
         )
         UNION
         (
-            SELECT id, nom COLLATE utf8mb4_general_ci AS label, NULL AS prix, icone, slug COLLATE utf8mb4_general_ci AS slug, 'theme' AS source,
+            SELECT id, nom COLLATE utf8mb4_general_ci AS label, NULL AS prix, commentaire COLLATE utf8mb4_general_ci AS description, NULL AS slug, 'tailles' AS source,
                 (
                     (CASE WHEN nom COLLATE utf8mb4_general_ci LIKE :start THEN 5
                         WHEN nom COLLATE utf8mb4_general_ci LIKE :middle THEN 3
                         WHEN nom COLLATE utf8mb4_general_ci LIKE :any THEN 1 ELSE 0 END)
                 ) AS score
-            FROM theme
+            FROM tailles
             WHERE nom COLLATE utf8mb4_general_ci LIKE :any
         )
         ORDER BY score DESC, label ASC
