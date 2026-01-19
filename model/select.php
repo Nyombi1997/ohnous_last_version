@@ -501,6 +501,109 @@
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+    /* créer une table */
+    function createTable(string $table, array $columns)
+    {
+        global $bdd;
+        
+        $sqlColumns = [];
+
+        foreach ($columns as $column) {
+            $sqlColumns[] = $column;
+        }
+
+        $sql = "
+            CREATE TABLE IF NOT EXISTS `$table` (
+                " . implode(",\n", $sqlColumns) . "
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ";
+
+        $bdd->exec($sql);
+    }
+/* trouver les articles similaires */
+    function getSimilarArticles(int $articleId,int $limit = 8,?string $order = null,bool $random = true) 
+    {
+        global $bdd;
+
+        /* Récupération des références de l'article */
+        $sql = "
+            SELECT 
+                a.boutique,
+                GROUP_CONCAT(DISTINCT ca.categorie) AS categories,
+                GROUP_CONCAT(DISTINCT ta.types) AS types,
+                GROUP_CONCAT(DISTINCT tla.taille) AS tailles
+            FROM articles a
+            LEFT JOIN categorie_article ca ON ca.article = a.id
+            LEFT JOIN types_article ta ON ta.article = a.id
+            LEFT JOIN taille_articles tla ON tla.article = a.id
+            WHERE a.id = ?
+            GROUP BY a.id
+        ";
+
+        $stmt = $bdd->prepare($sql);
+        $stmt->execute([$articleId]);
+        $ref = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$ref) {
+            return [];
+        }
+
+        /* Construction dynamique des conditions */
+        $conditions = [];
+        $params = [$articleId];
+
+        if (!empty($ref['categories'])) {
+            $conditions[] = "ca.categorie IN ({$ref['categories']})";
+        }
+
+        if (!empty($ref['types'])) {
+            $conditions[] = "ta.types IN ({$ref['types']})";
+        }
+
+        if (!empty($ref['tailles'])) {
+            $conditions[] = "tla.taille IN ({$ref['tailles']})";
+        }
+
+        if (!empty($ref['boutique'])) {
+            $conditions[] = "a.boutique = {$ref['boutique']}";
+        }
+
+        if (empty($conditions)) {
+            return [];
+        }
+
+        /* ORDER */
+        $orderBy = "COUNT(*) DESC";
+
+        if ($random === true) {
+            $orderBy = "RAND()";
+        } elseif ($order === 'prix_asc') {
+            $orderBy = "a.prix ASC";
+        } elseif ($order === 'prix_desc') {
+            $orderBy = "a.prix DESC";
+        }
+
+        /* Requête finale */
+        $limit = (int)$limit;
+
+        $sql = "
+            SELECT DISTINCT a.*
+            FROM articles a
+            LEFT JOIN categorie_article ca ON ca.article = a.id
+            LEFT JOIN types_article ta ON ta.article = a.id
+            LEFT JOIN taille_articles tla ON tla.article = a.id
+            WHERE a.id != ?
+            AND (" . implode(" OR ", $conditions) . ")
+            LIMIT $limit
+        ";
+
+        $stmt = $bdd->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+
 
 
 

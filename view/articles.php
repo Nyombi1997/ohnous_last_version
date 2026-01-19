@@ -142,15 +142,20 @@
             /* si c'est une recherche */
             if(isset($_GET['query']))
             {
-                $query =  found($_GET['query'], $limit = null, $offset = 0, $order = null, $random = false);
-                $founded_article = getArticlesFromSearch($query, $limit = null, $offset = 0, $order = null, $random = true);
-
-                var_dump($founded_article[0]);
+                $query =  found($_GET['query'], $limit = null, 0, $order = null, $random = false);
+                $donnee = getArticlesFromSearch($query, $limit = 12, 0, $order = null, $random = false);
+                foreach($donnee as $data)
+                {
+                    affiche_produit($data);
+                }
             }
-            $donnee = select_bdd($bdd, "articles", $where = null, $limit = 12, $offset = 0, $order = null, $random = true);
-            foreach($donnee as $data)
+            else
             {
-                affiche_produit($data);
+                $donnee = select_bdd($bdd, "articles", $where = null, $limit = 12, $offset = 0, $order = null, $random = true);
+                foreach($donnee as $data)
+                {
+                    affiche_produit($data);
+                }
             }
         ?>
     </div>

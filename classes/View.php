@@ -35,8 +35,13 @@
             include_once $templatePath;
             $contentPage = ob_get_clean();
             // Si on va vers l’accueille
-            if (basename($templatePath) != 'accueil.php') {
+            if (basename($templatePath) != 'accueil.php' && basename($templatePath) == 'articles.php') {
                 $GLOBALS['others'] = 'ok';
+            }
+            else if(basename($templatePath) != 'articles.php')
+            {
+                $GLOBALS['others'] = 'ok';
+                $GLOBALS['no_filtre'] = 'ok';
             }
             include_once VIEW . '_gabarit.php';
         }

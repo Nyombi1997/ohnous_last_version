@@ -35,11 +35,50 @@ let details_filtre_tailles = document.getElementById("details_filtre_tailles");
 let div_filtre_types = document.getElementById("div_filtre_types");
 let details_filtre_types = document.getElementById("details_filtre_types");
 let changingWord = document.getElementById("changing-word");
+/* trouver les tailles via le type */
+function fetchTaillesViaTypes(id = 0)
+{
+    $.post("/fonctions/filtre_fetch_tailles.php", {id : id, categorie : categorie_en_cours, taille: taille_en_cours_filtre}, function(data){
+        /* afficher les tailles */
+        if(data.result == "ok")
+        {
+            if(data.msg!="")
+            {
+                div_filtre_tailles.classList.remove("null");
+                details_filtre_tailles.innerHTML = data.msg;
+            }
+        }
+        else
+        {
+            div_filtre_tailles.classList.add("null");
+            details_filtre_tailles.innerHTML = "";
+        }
+        gestionAffichageArticle();
+    })
+}
+/* trouver les types via la categorie */
+function fetchTypesViaCategorie(id = 0)
+{
+    $.post("/fonctions/filtre_fetch_types.php", {id : id, types : types_en_cours, taille : taille_en_cours}, function(data){
+        /* afficher les types */
+        if(data.result == "ok" && data.msg!='')
+        {
+            div_filtre_types.classList.remove("null");
+            details_filtre_types.innerHTML = data.msg;
+        }
+        else
+        {
+            div_filtre_types.classList.add("null");
+            details_filtre_types.innerHTML = "";
+        }
+        gestionAffichageArticle();
+    })
+}
 /* prevaloriser la recherhe */
 function prevalueRecherche(query)
 {
     recherche_en_cours = query;
-    alert(recherche_en_cours);
+    gestionAffichageArticle();
 }
 /* prevaloriser les types */
 function prevalueTypes(id = 0, nom = "", slug = "")
@@ -54,7 +93,6 @@ function prevalueTailles(id = 0, nom = "", slug = "")
     taille_en_cours = id;
     taille_en_cours_nom = nom;
     taille_en_cours_slug = slug;
-    alert("ici 20");
 }
 /* gestion de scroll afficher article */
 let loading = false;
@@ -70,7 +108,6 @@ function checkingScroll()
         if (scrollBottom > docHeight - 600) {
             page = 2;
             loading = true;
-            alert("ici 12");
             gestionAffichageArticle();
         }
     }
@@ -86,70 +123,75 @@ $(window).on("load", function () {
 /* gerer l'affichage des articles */
 function gestionAffichageArticle()
 {
-    alert(categorie_en_cours+"-"+types_en_cours+"-"+taille_en_cours);
-    $.post("/fonctions/filtre_article.php",{
-        categorie : categorie_en_cours,
-        types : types_en_cours,
-        taille : taille_en_cours,
-        boutique : boutique_en_cours,
-        recherche : recherche_en_cours,
-        page : page,
-        offset : offset,
-    },
-    function(data){
-        setUrlAndTitle();
-        /* si c'est la première fois qu'on charge des images mais qu'il n'y aucun produit disponible */
-        if(page==1 && data.msg=="")
-        {
-            document.getElementById("afficher_article").innerHTML = `
-                <!-- HTML !-->
-                <div class="div_btn_voir_plus">
-                    <a class="btn_voir_plus error" role="button">Aucun article disponible <i class="fa-solid fa-triangle-exclamation"></i></a>
-                </div>
-            `;
-            if(document.getElementById("div_btn_voir_plus")==undefined)
+    
+    /* si on est pas à la page d'accueuil */
+    if(typeof home_page === "undefined")
+    {
+        /* informer qu'il faut afficher d'autres articles */
+        $.post("/fonctions/filtre_article.php",{
+            categorie : categorie_en_cours,
+            types : types_en_cours,
+            taille : taille_en_cours,
+            boutique : boutique_en_cours,
+            recherche : recherche_en_cours,
+            page : page,
+            offset : offset,
+        },
+        function(data){
+            setUrlAndTitle();
+            /* si c'est la première fois qu'on charge des images mais qu'il n'y aucun produit disponible */
+            if(page==1 && data.msg=="")
             {
-                document.getElementById("afficher_article").innerHTML += `<!-- HTML !-->
-                                                                            <div class="div_btn_voir_plus" id="div_btn_voir_plus">
-                                                                                <a href="/articles" class="btn_voir_plus" role="button">Decouvrez plus d'articles  <i class="fa-solid fa-arrow-right-long"></i></a>
-                                                                            </div>`;
+                document.getElementById("afficher_article").innerHTML = `
+                    <!-- HTML !-->
+                    <div class="div_btn_voir_plus">
+                        <a class="btn_voir_plus error" role="button">Aucun article disponible <i class="fa-solid fa-triangle-exclamation"></i></a>
+                    </div>
+                `;
+                if(document.getElementById("div_btn_voir_plus")==undefined)
+                {
+                    document.getElementById("afficher_article").innerHTML += `<!-- HTML !-->
+                                                                                <div class="div_btn_voir_plus" id="div_btn_voir_plus">
+                                                                                    <a href="/articles" class="btn_voir_plus" role="button">Decouvrez plus d'articles  <i class="fa-solid fa-arrow-right-long"></i></a>
+                                                                                </div>`;
+                }
             }
-        }
-        else if(data.nombre != 0)
-        {
-            if(page == 1)
+            else if(data.nombre != 0)
             {
-                document.getElementById("afficher_article").innerHTML = data.msg;
-                onImageLoad();
-                loading = false;
+                if(page == 1)
+                {
+                    document.getElementById("afficher_article").innerHTML = data.msg;
+                    onImageLoad();
+                    loading = false;
+                }
+                else
+                {
+                    document.getElementById("afficher_article").innerHTML += data.msg;
+                    onImageLoad();
+                    loading = false;
+                }
+                /* informer qu'il faut afficher d'autres articles */ 
+                if(offset==0)
+                {
+                    offset = 12;
+                }
+                else
+                {
+                    offset *= page;
+                }
             }
             else
             {
-                document.getElementById("afficher_article").innerHTML += data.msg;
-                onImageLoad();
-                loading = false;
+                if(document.getElementById("div_btn_voir_plus")==undefined)
+                {
+                    document.getElementById("afficher_article").innerHTML += `<!-- HTML !-->
+                                                                                <div class="div_btn_voir_plus" id="div_btn_voir_plus">
+                                                                                    <a href="/articles" class="btn_voir_plus" role="button">Decouvrez plus d'articles  <i class="fa-solid fa-arrow-right-long"></i></a>
+                                                                                </div>`;
+                }
             }
-            /* informer qu'il faut afficher d'autres articles */
-            if(offset==0)
-            {
-                offset = 12;
-            }
-            else
-            {
-                offset *= page;
-            }
-        }
-        else
-        {
-            if(document.getElementById("div_btn_voir_plus")==undefined)
-            {
-                document.getElementById("afficher_article").innerHTML += `<!-- HTML !-->
-                                                                            <div class="div_btn_voir_plus" id="div_btn_voir_plus">
-                                                                                <a href="/articles" class="btn_voir_plus" role="button">Decouvrez plus d'articles  <i class="fa-solid fa-arrow-right-long"></i></a>
-                                                                            </div>`;
-            }
-        }
-    })
+        })
+    }
 }
 /* filtrer les catégories */
 function filtre_categorie(id = "", nom = "", slug = "", event = null, recherche = null, autofiltre = null)
@@ -160,7 +202,6 @@ function filtre_categorie(id = "", nom = "", slug = "", event = null, recherche 
         window.location.href = "/categorie/"+slug;
         return;
     }
-    alert("ici 21");
     /* si on a un evenement envoyer */
     if(event)
     {
@@ -221,11 +262,9 @@ function filtre_categorie(id = "", nom = "", slug = "", event = null, recherche 
                         timer: 2000
                     });
                 }
-                alert("ici 1");
                 gestionAffichageArticle();
             })
             /* ajuster le filtre */
-            alert("ici 2");
             gestionAffichageArticle();
             return;
         }
@@ -250,9 +289,7 @@ function filtre_categorie(id = "", nom = "", slug = "", event = null, recherche 
     /* si ça viens pas d'une recherche */
     if(!recherche)
     {
-        alert("ici 30");
         $.post("/fonctions/filtre_fetch_types.php", {id : id, types : types_en_cours, taille : taille_en_cours}, function(data){
-            console.log(data);
             /* placer l'indice sur le choix de la categorie filtre et placer le nom */
             categoreiFiltre.classList.add("active");
             /* vider les tailles par defaut */
@@ -286,13 +323,10 @@ function filtre_categorie(id = "", nom = "", slug = "", event = null, recherche 
             categorie_en_cours_slug = slug;
             if(autofiltre && types_en_cours!=0)
             {
-                alert(categorie_en_cours+"ok");
                 filtre_types(types_en_cours, types_en_cours_nom, types_en_cours_slug, event = null, recherche = null, "ok");
             }
             else
             {
-                alert(taille_en_cours);
-                alert("ici 3");
                 gestionAffichageArticle();
             }
         })
@@ -345,7 +379,6 @@ function filtre_categorie(id = "", nom = "", slug = "", event = null, recherche 
             types_en_cours = id;
             types_en_cours_nom = nom;
             types_en_cours_slug = slug;
-            alert("ici 4");
             gestionAffichageArticle();
         })
     }
@@ -359,7 +392,6 @@ function filtre_types(id = "", nom = "", slug = "", event = null, recherche = nu
         window.location.href = "/type/"+slug;
         return;
     }
-    alert(taille_en_cours+" taille en cours");
     /* si on a un evenement envoyer */
     if(event)
     {
@@ -379,7 +411,6 @@ function filtre_types(id = "", nom = "", slug = "", event = null, recherche = nu
     /* si c'est une anullation de filtre */
     if(typesFiltre==undefined)
     {
-        alert('ici 22');
         types_en_cours = 0;
         types_en_cours_nom = "";
         types_en_cours_slug = "";
@@ -391,7 +422,6 @@ function filtre_types(id = "", nom = "", slug = "", event = null, recherche = nu
         {
             if(typesFiltre.classList.contains("active"))
             {
-                alert('ici 23');
                 types_en_cours = 0;
                 types_en_cours_nom = "";
                 types_en_cours_slug = "";
@@ -429,8 +459,14 @@ function filtre_types(id = "", nom = "", slug = "", event = null, recherche = nu
                         });
                     }
                     /* ajuster le filtre */
-                    alert("ici 5");
-                    gestionAffichageArticle();
+                    if(categorie_en_cours!=0)
+                    {
+                        fetchTypesViaCategorie(categorie_en_cours);
+                    }
+                    else
+                    {
+                        gestionAffichageArticle();
+                    }
                 })
                 return;
             }
@@ -439,7 +475,6 @@ function filtre_types(id = "", nom = "", slug = "", event = null, recherche = nu
     /* vider la recherche et filtre*/
     if(!autofiltre && taille_en_cours==0)
     {
-        alert('ici 24');
         taille_en_cours = 0;
         taille_en_cours_nom = "";
         taille_en_cours_slug = "";
@@ -454,8 +489,6 @@ function filtre_types(id = "", nom = "", slug = "", event = null, recherche = nu
     /* si ça viens pas d'une recherche */
     if(!recherche && id!=0)
     {
-        alert('ici 25');
-        alert(taille_en_cours);
         $.post("/fonctions/filtre_fetch_tailles.php", {id : id, categorie : categorie_en_cours, taille: taille_en_cours_filtre}, function(data){
             /* placer l'indice sur le choix des types filtre*/
             typesFiltre.classList.add("active");
@@ -479,13 +512,10 @@ function filtre_types(id = "", nom = "", slug = "", event = null, recherche = nu
             types_en_cours_slug = slug;
             if(autofiltre || taille_en_cours!=0)
             {
-                alert("ici 31");
-                alert(taille_en_cours);
                 filtre_tailles(taille_en_cours, taille_en_cours_nom, taille_en_cours_slug, null, null, "ok");
             }
             else
             {
-                alert("ici 6");
                 gestionAffichageArticle();
             }
         })
@@ -540,13 +570,11 @@ function filtre_types(id = "", nom = "", slug = "", event = null, recherche = nu
             types_en_cours = id;
             types_en_cours_nom = nom;
             types_en_cours_slug = slug;
-            alert("ici 7");
             gestionAffichageArticle();
         })
     }
     else
     {
-        alert("ici 7 prime");
         gestionAffichageArticle();
     }
 }
@@ -559,8 +587,6 @@ function filtre_tailles(id = "", nom = "", slug = "", event = null, recherche = 
         window.location.href = "/taille/"+slug;
         return;
     }
-    alert("ici 32");
-    alert(id);
     /* si on a un evenement envoyer */
     if(event)
     {
@@ -581,8 +607,6 @@ function filtre_tailles(id = "", nom = "", slug = "", event = null, recherche = 
     {
         if(taillesFiltre.classList.contains("active"))
         {
-            alert("ici 33");
-            alert(autofiltre);
             /* retirer l'indice sur le choix de la taille filtre et placer le nom */
             taillesFiltre.classList.remove("active");
 
@@ -619,9 +643,13 @@ function filtre_tailles(id = "", nom = "", slug = "", event = null, recherche = 
                             timer: 2000
                         });
                     }
-                    alert("ici 8");
                     gestionAffichageArticle();
                 })
+            }
+            /* si il y'a un type actif */
+            else if(types_en_cours!=0)
+            {
+                fetchTaillesViaTypes(id = types_en_cours);
             }
             else
             {
@@ -647,7 +675,6 @@ function filtre_tailles(id = "", nom = "", slug = "", event = null, recherche = 
         taille_en_cours = id;
         taille_en_cours_filtre = id;
         taille_en_cours_slug = slug;
-        alert("ici 9 taille = "+id);
         gestionAffichageArticle();
     }
     else
@@ -704,43 +731,114 @@ function filtre_tailles(id = "", nom = "", slug = "", event = null, recherche = 
             taille_en_cours_filtre = id;
             taille_en_cours_nom = nom;
             taille_en_cours_slug = slug;
-            alert("ici 11");
             gestionAffichageArticle();
         })
     }
 }
+
 /* changer l'url */
 function setUrlAndTitle() {
-    let slug = "articles";
-    /* placer categorie */
-    if(categorie_en_cours_slug!='')
+    
+    /* si on est à la page d'accueuil */
+    if(typeof home_page === "undefined")
     {
-        slug = "categorie/"+categorie_en_cours_slug;
+        let slug = "articles";
+        /* placer categorie */
+        if(categorie_en_cours_slug!='')
+        {
+            slug = "categorie/"+categorie_en_cours_slug;
+        }
+        /* placer types */
+        if(slug!="articles" && types_en_cours_slug!='')
+        {
+            slug += "/type/"+types_en_cours_slug;
+        }
+        else if(types_en_cours_slug!='')
+        {
+            slug = "type/"+types_en_cours_slug;
+        }
+        /* placer tailles */
+        if(slug!="articles" && taille_en_cours_slug!='')
+        {
+            slug += "/taille/"+taille_en_cours_slug;
+        }
+        else if(taille_en_cours_slug!='')
+        {
+            slug = "taille/"+taille_en_cours_slug;
+        }
+        /* si y'a pas de recherche */
+        if(recherche_en_cours=='')
+        {
+            history.pushState(
+                { slug },
+                "",
+                "/" + slug
+            );
+        }
+        /* changer le titre */
+        let title_page = "OhNous";
+        let title = "Articles";
+        /* Si categorie */
+        if(categorie_en_cours_nom!='')
+        {
+            title_page = categorie_en_cours_nom + " | OhNous";
+            title = categorie_en_cours_nom;
+        }
+        /* Si categorie */
+        if(types_en_cours_nom!='')
+        {
+            if(categorie_en_cours_nom!='' && taille_en_cours_nom!='')
+            {
+                title_page = categorie_en_cours_nom + " | " + types_en_cours_nom + " | " + taille_en_cours_nom + " | OhNous";
+                title = categorie_en_cours_nom + " | " + types_en_cours_nom + " | " + taille_en_cours_nom ;
+            }
+            else if(categorie_en_cours_nom!='')
+            {
+                title_page = categorie_en_cours_nom + " | " + types_en_cours_nom + " | OhNous";
+                title = categorie_en_cours_nom + " | " + types_en_cours_nom;
+            }
+            else if(taille_en_cours_nom!='')
+            {
+                title_page = types_en_cours_nom + " | " + taille_en_cours_nom + " | OhNous";
+                title = types_en_cours_nom + " | " + taille_en_cours_nom;
+            }
+            else
+            {
+                title_page = types_en_cours_nom + " | OhNous";
+                title = types_en_cours_nom;
+            }
+        }
+        /* Si taille */
+        if(taille_en_cours_nom!='')
+        {
+            if(categorie_en_cours_nom!='' && types_en_cours_nom!='')
+            {
+                title_page = categorie_en_cours_nom + " | " + types_en_cours_nom + " | " + taille_en_cours_nom + " | OhNous";
+                title = categorie_en_cours_nom + " | " + types_en_cours_nom + " | " + taille_en_cours_nom ;
+            }
+            else if(categorie_en_cours_nom!='')
+            {
+                title_page = categorie_en_cours_nom + " | " + taille_en_cours_nom + " | OhNous";
+                title = categorie_en_cours_nom + " | " + taille_en_cours_nom;
+            }
+            else if(types_en_cours_nom!='')
+            {
+                title_page = types_en_cours_nom + " | " + taille_en_cours_nom + " | OhNous";
+                title = types_en_cours_nom + " | " + taille_en_cours_nom;
+            }
+            else
+            {
+                title_page = taille_en_cours_nom + " | OhNous";
+                title = taille_en_cours_nom;
+            }
+        }
+        /* si c'est une recherche */
+        if(recherche_en_cours!='')
+        {
+            title_page = "Recherche "+recherche_en_cours+" | OhNous";
+            title = '<i class="fa-solid fa-magnifying-glass"></i> '+recherche_en_cours+"";
+        }
+        changingWord.innerHTML = title;
+        document.title = title_page;
     }
-    /* placer types */
-    if(slug!="articles" && types_en_cours_slug!='')
-    {
-        slug += "/type/"+types_en_cours_slug;
-    }
-    else if(types_en_cours_slug!='')
-    {
-        slug = "type/"+types_en_cours_slug;
-    }
-    /* placer tailles */
-    if(slug!="articles" && taille_en_cours_slug!='')
-    {
-        slug += "/taille/"+taille_en_cours_slug;
-    }
-    else if(taille_en_cours_slug!='')
-    {
-        slug = "taille/"+taille_en_cours_slug;
-    }
-    history.pushState(
-        { slug },
-        "",
-        "/" + slug
-    );
-
-    /* changer le titre */
-    alert(taille_en_cours_nom);
 }

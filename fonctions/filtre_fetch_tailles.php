@@ -16,28 +16,54 @@
     /* si on a déterminer la categorie */
     if($category_id!=0 || $taille_id!='')
     {
-        /* $sql = "
-            SELECT 
-                ta.id,
-                ta.nom,
-                ta.slug,
-                COUNT(DISTINCT a.id) AS total
-            FROM tailles ta
-            INNER JOIN taille_articles atl ON atl.taille = ta.id
-            INNER JOIN articles a ON a.id = atl.article
-            INNER JOIN categorie_article ac ON ac.article = a.id
-            INNER JOIN types_article at ON at.article = a.id
-            WHERE ac.categorie = :category_id
-            AND at.types = :type_id
-            GROUP BY ta.id
-            HAVING total > 0
-            ORDER BY ta.nom ASC
-        ";
+        /* si taille */
+        if($category_id!=0)
+        {
+            $sql = "
+                SELECT 
+                    ta.id,
+                    ta.nom,
+                    ta.slug,
+                    COUNT(DISTINCT a.id) AS total
+                FROM tailles ta
+                INNER JOIN taille_articles atl ON atl.taille = ta.id
+                INNER JOIN articles a ON a.id = atl.article
+                INNER JOIN categorie_article ac ON ac.article = a.id
+                INNER JOIN types_article at ON at.article = a.id
+                WHERE ac.categorie = :category_id
+                AND at.types = :type_id
+                GROUP BY ta.id
+                HAVING total > 0
+                ORDER BY ta.nom ASC
+            ";
 
-        $stmt = $bdd->prepare($sql);
-        $stmt->bindValue(':category_id', $category_id, PDO::PARAM_INT);
-        $stmt->bindValue(':type_id', $type_id, PDO::PARAM_INT);
-        $stmt->execute();
+            $stmt = $bdd->prepare($sql);
+            $stmt->bindValue(':category_id', $category_id, PDO::PARAM_INT);
+            $stmt->bindValue(':type_id', $type_id, PDO::PARAM_INT);
+            $stmt->execute();
+        }
+        else
+        {
+            $sql = "
+                SELECT 
+                    ta.id,
+                    ta.nom,
+                    ta.slug,
+                    COUNT(DISTINCT a.id) AS total
+                FROM tailles ta
+                INNER JOIN taille_articles atl ON atl.taille = ta.id
+                INNER JOIN articles a ON a.id = atl.article
+                INNER JOIN types_article at ON at.article = a.id
+                WHERE at.types = :type_id
+                GROUP BY ta.id
+                HAVING total > 0
+                ORDER BY ta.nom ASC
+            ";
+
+            $stmt = $bdd->prepare($sql);
+            $stmt->bindValue(':type_id', $type_id, PDO::PARAM_INT);
+            $stmt->execute();
+        }
 
         $tailles = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -47,10 +73,10 @@
                 "msg" => "Aucune taille trouvée"
             ], JSON_UNESCAPED_UNICODE);
             exit;
-        } */
+        } 
 
         $html = "";
-        /* foreach ($tailles as $taille) {
+        foreach ($tailles as $taille) {
             $active = "";
             if($taille['id'] == $taille_id)
             {
@@ -65,7 +91,7 @@
                     <div class="nom">'.$taille['nom'].'</div>
                     <div class="nombre">'.$taille['total'].'</div>
                 </div>';
-        } */
+        } 
     }
     else
     {

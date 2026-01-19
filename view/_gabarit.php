@@ -178,7 +178,7 @@
                             <h1><span id="changing-word-container"><span id="changing-word">'.$categorie['nom'].'</span></span></h1>
                         </div>
                     </div>';
-            }else if(isset($GLOBALS['others'])){ 
+            }else if(isset($GLOBALS['others']) && !isset($GLOBALS['no_filtre'])){ 
                 echo '
                     <!-- intro -->
                     <div class="intro-hero sans_categorie">
@@ -195,7 +195,7 @@
 	<div class="div_search_bar all <?php if(isset($GLOBALS['categorie'])){ echo 'sans_categorie';}else if(isset($GLOBALS['others'])){ echo 'sans_categorie';}  ?>" id="div_search_bar_all">
 		<div class="search_bar">
 			<form action="/q" method="GET">
-				<input type="text" class="input_search_bar" id="input_search_bar_2" name="query" placeholder="Rechercher un article..." required oninput="rechercheArticles(this.value)" value=<?php if(isset($_GET['query'])){ echo json_encode($_GET['query']); } ?>>
+				<input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="input_search_bar" id="input_search_bar_2" name="query" placeholder="Rechercher un article..." required oninput="rechercheArticles(this.value)" value=<?php if(isset($_GET['query'])){ echo json_encode($_GET['query']); } ?>>
 				<button type="submit" class="button_search_bar"><i class="fa fa-search"></i></button>
 			</form>
             <!-- div des donnés de recherche -->
@@ -284,6 +284,31 @@
             ADD slug TEXT NULL AFTER nom
         ");
     }
+    /* ajouter dans boutiques */
+    $table = "boutiques";
+    $column = "slug";
+
+    $sql = "
+        SELECT COUNT(*) 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = :table
+        AND COLUMN_NAME = :column
+    ";
+
+    $stmt = $bdd->prepare($sql);
+    $stmt->execute([
+        ':table'  => $table,
+        ':column' => $column
+    ]);
+
+    $exists = $stmt->fetchColumn();
+    if ($exists == 0) {
+        $bdd->exec("
+            ALTER TABLE boutiques
+            ADD slug TEXT NULL AFTER nom
+        ");
+    }
 ?>
 
 <!-- ajouter des slugs -->
@@ -327,4 +352,27 @@
             update_bdd($bdd, "categorie", $update_data, "id = '".$categories['id']."'");
         }
     }
+    //boutiques
+    $boutiques = select_bdd($bdd, "boutiques", $where = null, $limit = null, $offset = 0, $order = null, $random = false);
+    foreach($boutiques as $boutique)
+    {
+        if($boutique['slug'] == '' || $boutique['slug'] == NULL)
+        {
+            $slug = generateSlug($boutique['nom'],$separator = '-');
+            $update_data = [
+                "slug" => $slug
+            ];
+            update_bdd($bdd, "boutiques", $update_data, "id = '".$boutique['id']."'");
+        }
+    }
+?>
+<!-- créer la table note article si nécessaire -->
+<?php
+    createTable('notes_article', [
+        'id INT AUTO_INCREMENT PRIMARY KEY',
+        'client_id INT NOT NULL',
+        'article_id INT NOT NULL',
+        'note DOUBLE NOT NULL',
+        'date_ajout DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP'
+    ]);
 ?>

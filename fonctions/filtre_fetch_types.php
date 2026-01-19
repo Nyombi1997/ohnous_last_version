@@ -36,10 +36,8 @@
             INNER JOIN types_article at ON at.types = t.id
             INNER JOIN articles a ON a.id = at.article
             INNER JOIN categorie_article ac ON ac.article = a.id
-            INNER JOIN taille_articles ta ON ta.article = a.id
             WHERE ac.categorie = :category_id
             AND at.types = :types_id
-            AND ta.taille = :taille_id
             GROUP BY t.id
             HAVING total > 0
             ORDER BY t.nom ASC
@@ -48,7 +46,6 @@
         $stmt = $bdd->prepare($sql);
         $stmt->bindValue(':category_id', $category_id, PDO::PARAM_INT);
         $stmt->bindValue(':types_id', $types_id, PDO::PARAM_INT);
-        $stmt->bindValue(':taille_id', $taille_id, PDO::PARAM_INT);
         $stmt->execute();
 
         /* tailles */
@@ -101,6 +98,30 @@
         $stmt->bindValue(':category_id', $category_id, PDO::PARAM_INT);
         $stmt->bindValue(':types_id', $types_id, PDO::PARAM_INT);
         $stmt->execute();
+
+        $sql = "
+            SELECT 
+                ta.id,
+                ta.nom,
+                ta.slug,
+                COUNT(DISTINCT a.id) AS total
+            FROM tailles ta
+            INNER JOIN taille_articles atl ON atl.taille = ta.id
+            INNER JOIN articles a ON a.id = atl.article
+            INNER JOIN categorie_article ac ON ac.article = a.id
+            INNER JOIN types_article at ON at.article = a.id
+            WHERE ac.categorie = :category_id
+            AND at.types = :types_id
+            GROUP BY ta.id
+            HAVING total > 0
+            ORDER BY ta.nom ASC
+        ";
+
+        $stmt_taille = $bdd->prepare($sql);
+        $stmt_taille->bindValue(':category_id', $category_id, PDO::PARAM_INT);
+        $stmt_taille->bindValue(':types_id', $types_id, PDO::PARAM_INT);
+        $stmt_taille->execute();
+        $taille = $stmt_taille->fetchAll(PDO::FETCH_ASSOC);
     }
     else
     {

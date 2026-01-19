@@ -19,6 +19,7 @@ body
     --vert_nuance_1: #3c844dff;
     --bleu: #005eff;
     --rouge: #dc3545;
+    --jaune: #F8C61E;
     box-sizing: border-box;
 }
 /* header */
@@ -749,6 +750,16 @@ p
 {
     width: 75%;
 }
+.container_affiche_produit
+.titre
+{
+    width: 100%;
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 10px;
+    text-align: center;
+    color: var(--base_1_couleur);
+}
 .container_filtre_produit
 {
     width: 25%;
@@ -1030,6 +1041,192 @@ outline: 0;
         min-width: 196px;
     }
 }
+
+
+/* vu article */
+.parent_div_image_vu_article
+{
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    padding: 10px;
+}
+.div_image_vu_article,
+.div_detail_vu_article
+{
+    width: 50%;
+    padding: 10px;
+    color: var(--noir);
+}
+.div_detail_vu_article .nom
+{
+    display: block;
+    width: 100%;
+    font-weight: 600;
+    font-size: 30px;
+    padding-bottom: 10px;
+}
+.div_detail_vu_article .avis
+{
+    color: var(--griz);
+    font-size: 16px;
+    padding-bottom: 10px;
+}
+.div_detail_vu_article .avis i
+{
+    color: var(--jaune);
+}
+.div_detail_vu_article .prix
+{
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--noir);
+    padding-bottom: 10px;
+}
+.div_detail_vu_article .taille
+{
+    width: 100%;
+    padding-bottom: 10px;
+}
+.div_detail_vu_article .taille span
+{
+    padding: 5px 20px;
+    display: inline-block;
+    border: 1px solid var(--griz);
+    margin-right: 5px;
+    border-radius: 10px;
+    background: var(--blanc);
+}
+.div_detail_vu_article .action_panier
+{
+    width: 100%;
+    padding-bottom: 10px;
+    display: flex;
+    flex-wrap: wrap;
+}
+.div_detail_vu_article .action_panier button
+{
+    padding: 10px 5px;
+    width: 48%;
+    margin-right: 1%;
+    outline: none;
+    border: 1px solid var(--griz);
+    border-radius: 10px;
+    background: var(--blanc);
+    color: var(--noir);
+    font-size: 20px;
+}
+.div_detail_vu_article .action_panier button.acheter_directement
+{
+    background: var(--base_1_couleur);
+    color: var(--blanc);
+}
+.div_detail_vu_article .plus_details
+{
+    width: 100%;
+    padding-bottom: 10px;
+}
+.div_detail_vu_article .plus_details .details
+{
+    width: 100%;
+    padding-bottom: 5px;
+    font-size: 16px;
+    color: var(--noir);
+    outline: none;
+}
+.div_detail_vu_article .plus_details .details strong
+{
+    font-weight: bold;
+}
+.div_detail_vu_article .plus_details .details a
+{
+    text-underline-offset: 2.5px;
+    color: var(--noir);
+    font-weight: normal;
+}
+.div_details_article_vu_article
+{
+    width: 100%;
+    padding: 0px 10px;
+    background: var(--blanc);
+    margin: 10px 0px;
+}
+.div_details_article_vu_article
+.div_titre
+{
+    width: 100%;
+    padding: 10px 0px;
+    display: flex;
+    flex-wrap: wrap;
+    position: relative;
+}
+.div_details_article_vu_article
+.div_titre
+.titres
+{
+    width: 50%;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    position: relative;
+    z-index: 2;
+    cursor: pointer;
+}
+.div_details_article_vu_article
+.div_titre
+.background
+{
+    position: absolute;
+    bottom: 0;
+    top: 0;
+    width: 50%;
+    border-bottom: 5px solid var(--base_1_couleur);
+    z-index: 1;
+    transition: .5s;
+}
+.div_details_article_vu_article
+.div_details
+{
+    position: relative;
+    width: 100%;
+    padding: 10px;
+    height: 70vh;
+    overflow: auto;
+    border: 1px solid var(--griz);
+}
+.div_details_article_vu_article
+.div_details
+.titre
+{
+    font-size: 20px;
+    font-weight: bold;
+    padding-bottom: 10px;
+}
+.star {
+font-size: 2rem;
+cursor: pointer;
+color: #ccc; /* Gris par défaut */
+transition: color 0.2s;
+}
+
+.star.active, .star:hover, .star:hover ~ .star {
+color: #ffcc00; /* Jaune or */
+}
+
+/* On inverse l'ordre visuel pour que le hover fonctionne bien en CSS pur ou on gère en JS */
+.stars {
+display: flex;
+flex-direction: row-reverse;
+justify-content: flex-end;
+}
+
+#comment-text {
+display: block;
+width: 100%;
+margin: 10px 0;
+padding: 10px;
+}
+
 
 
 

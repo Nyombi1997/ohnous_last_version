@@ -88,6 +88,34 @@
                     $titre_page = implode(' | ', $titre_page);
                     $view->render($titre_page. ' | OhNous');
                 }
+
+                /* si c'est un article */
+                else if(!empty($params['article']))
+                {
+                    $stmt = $bdd->prepare("SELECT * FROM articles WHERE slug = ?");
+                    $stmt->execute([$params['article']]);
+                    if ($article = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                        $GLOBALS['article'] = $article;
+                        $titre_page[] = $article['nom'];
+                        $view = new View('article-details.php');
+                        $titre_page = implode(' | ', $titre_page);
+                        $view->render($titre_page. ' | OhNous');
+                    }
+                }
+
+                /* si c'est une boutique */
+                else if(!empty($params['boutique']))
+                {
+                    $stmt = $bdd->prepare("SELECT * FROM boutiques WHERE slug = ?");
+                    $stmt->execute([$params['boutique']]);
+                    if ($boutique = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                        $GLOBALS['boutique'] = $boutique;
+                        $titre_page[] = $boutique['nom'];
+                        $view = new View('boutique.php');
+                        $titre_page = implode(' | ', $titre_page);
+                        $view->render($titre_page. ' | OhNous');
+                    }
+                }
                 /* si on a rien trouvé */
                 else if($found_filtre == false){
                     echo '

@@ -30,7 +30,7 @@
 		<div class="div_search_bar" id="div_search_bar">
 			<div class="search_bar" id="search_bar">
 				<form action="/q" method="GET">
-					<input type="text" class="input_search_bar" id="input_search_bar_2" name="query" placeholder="Rechercher un article..." required oninput="rechercheArticles(this.value)">
+					<input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="input_search_bar" id="input_search_bar_2" name="query" placeholder="Rechercher un article..." required oninput="rechercheArticles(this.value)">
 					<button type="submit" class="button_search_bar"><i class="fa fa-search"></i></button>
 				</form>
 				<!-- div des donnés de recherche -->

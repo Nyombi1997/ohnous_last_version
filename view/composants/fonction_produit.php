@@ -41,10 +41,12 @@
             if($boutique)
             {
                 $boutique_nom = $boutique[0]['nom'];
+                $boutique_slug = $boutique[0]['slug'];
             }
             else
             {
                 $boutique_nom = "OhNous";
+                $boutique_slug = "/accueil";
             }
 
             $article = '
@@ -52,7 +54,7 @@
                     <div class="affiche_produit">
                         <!-- image -->				
                         <div class="div_img_affiche_produit" id="'.$divImgId.'" style="background: '.$imgBackground.';">
-                            <a href="">
+                            <a href="/article/'.$donnee['slug'].'">
                                 <img 
                                     crossorigin="anonymous"
                                     src="'.$img[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-50,blur-10" 
@@ -81,13 +83,13 @@
                             <div class="nom">'.$donnee['nom'].'</div>
                             <!-- panier prix tailles -->
                             <div class="details_affiche_produit">
-                                <a href="" class="boutique"><i class="fa-solid fa-store"></i> '.$boutique_nom.'</a>
+                                <a href="/boutique/'.$boutique_slug.'" class="boutique"><i class="fa-solid fa-store"></i> '.$boutique_nom.'</a>
                                 <div class="prix_taille">
                                     <div class="taille">'.$tailles.'</div>
                                     <div class="prix">$ '.$donnee['prix'].'</div>
                                 </div>
                                 <div class="boutton_panier_affiche_produit">
-                                    <button type="button" class="'.$panier.'" id="btn_panier_'.$donnee['id'].'" onclick="ajouterAuPanier(\''.$img[0]['img'].'\',\''.$donnee['id'].'\',\''.$donnee['nom'].'\',\''.$donnee['slug'].'\',\''.$tailles.'\',\''.$donnee['prix'].'\',\''.$imgStyles.'\',\''.$imgBackground.'\')"><span class="'.$icone.'"></span></button>
+                                    <button type="button" class="'.$panier.'" id="btn_panier_'.$donnee['id'].'" onclick=\'ajouterAuPanier('.json_encode($img[0]['img']).','.(int)$donnee['id'].','.json_encode($donnee['nom']).','.json_encode($donnee['slug']).','.json_encode($tailles).','.(int)$donnee['prix'].','.json_encode($imgStyles).','.json_encode($imgBackground).')\'><span class="'.$icone.'"></span></button>
                                 </div>
                             </div>
                         </div>

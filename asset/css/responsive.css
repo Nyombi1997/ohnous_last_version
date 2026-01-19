@@ -147,6 +147,20 @@
     {
         cursor: initial;
     }
+    /* vu article */
+    .div_image_vu_article,
+    .div_detail_vu_article
+    {
+        width: 100%;
+        padding: 10px;
+        color: var(--noir);
+    }
+    .div_details_article_vu_article
+    .div_titre
+    .titres
+    {
+        cursor: initial;
+    }
 
 
 

@@ -209,7 +209,7 @@ function rechercheArticles(value)
             donnee_de_recherche.forEach(function (element){
                 element.innerHTML = "";
                 element.classList.remove("null");
-                element.innerHTML += `<div class="suggestion">Vous recherchez <a href="" onclick="suggestionRecherche(this)">${result.suggestion}</a> ?</div>`;
+                element.innerHTML += `<div class="suggestion">Vous recherchez <a href="/q?query=${result.suggestion}" onclick="suggestionRecherche(this)">${result.suggestion}</a> ?</div>`;
             })
         }
         else if(result.noResult == undefined)
@@ -234,11 +234,13 @@ function rechercheArticles(value)
                     donnee_de_recherche.forEach(function (element){
                         /* si c'est un prix */
                         let prix_article_depuis_recherche = '';
+                        let icone_article_depuis_recherche = '';
                         if (/(\d+)\s*(\$|dollars?|fcfa?|euros?|francs?|\w*)?/i.test(value))
                         {
                             prix_article_depuis_recherche = '| '+item.prix ? '- ' + item.prix + ' USD' : '';
+                            icone_article_depuis_recherche = '<i class="fa-solid fa-magnifying-glass-dollar"></i>';
                         }
-                        element.innerHTML += `<a href="article/${item.slug}" class="link"> ${item.label} ${prix_article_depuis_recherche}</a>`;
+                        element.innerHTML += `<a href="article/${item.slug}" class="link"> ${icone_article_depuis_recherche} ${item.label} ${prix_article_depuis_recherche}</a>`;
                     })
                 }
                 /* si c'est une boutique */

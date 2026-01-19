@@ -16,6 +16,13 @@
 
     if($recherche!="")
     {
+        $query =  found($recherche, $limit = null, 0, $order = null, $random = false);
+        $donnees = getArticlesFromSearch($query, $limit = 12, $offset, $order = null, $random = false);
+        foreach($donnees as $data)
+        {
+            $donnee .= affiche_produit($data, true);
+        }
+        $nombre = count($donnees);
     }
     else
     {
@@ -48,6 +55,7 @@
         "result" => "ok",
         "msg" => $donnee,
         "nombre" => $nombre,
+        "offset" => $offset,
     ];
     echo json_encode($result , JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 ?>
