@@ -19,5 +19,11 @@
             $myView = new View('articles');
             $myView->render('Ohnous | DES BOUTIQUES ET DES ARTICLES DE QUALITÉ !');
         }
+        public function showSearch ()
+        {
+            /* ramener la vers all articles */
+            $myView = new View('articles');
+            $myView->render('Ohnous | DES BOUTIQUES ET DES ARTICLES DE QUALITÉ !');
+        }
     }
 ?>

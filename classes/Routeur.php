@@ -6,8 +6,15 @@
         private $routes = [
                             "" => ["controller" => 'Home', "method" => 'showHome'], 
                             "accueil" => ["controller" => 'Home', "method" => 'showHome'],
+
                             "ajouter-articles" => ["controller" => 'Home', "method" => 'showAddProduct'],
+                            
                             "articles" => ["controller" => 'Home', "method" => 'showArticles'],
+                            "Articles" => ["controller" => 'Home', "method" => 'showArticles'],
+                            "Article" => ["controller" => 'Home', "method" => 'showArticles'],
+                            "article" => ["controller" => 'Home', "method" => 'showArticles'],
+
+                            "q" => ["controller" => 'Home', "method" => 'showSearch'],
                         ];
 
         public function __construct($request) {
@@ -25,33 +32,64 @@
                 $currentController = new $controller();
                 $currentController->$method();
             } else {
-                // Sinon, on considère que c’est un slug de produit
-                include MODEL . 'bdd.php';
-                $slug = $request;
-                /* slug produit */
-                $stmt = $bdd->prepare("SELECT * FROM articles WHERE slug = ?");
-                $stmt->execute([$slug]);
-                $produit = $stmt->fetch(PDO::FETCH_ASSOC);
-                /* slug categorie */
-                $stmt = $bdd->prepare("SELECT * FROM categorie WHERE slug = ?");
-                $stmt->execute([$slug]);
-                $categorie = $stmt->fetch(PDO::FETCH_ASSOC);
-                /* checking slug produit */
-                if ($produit) {
-                    // On stocke le produit globalement pour y accéder dans la vue
-                    $GLOBALS['produit'] = $produit;
-                    
-                    $view = new View('detail-article');
-                    $view->render($produit['nom'] . ' | OhNous');
+                // Sinon, on considère que c’est un slug
+
+                /* recuperer les urls */
+                $segments = explode('/', $request);
+                $params = [];
+
+                for ($i = 0; $i < count($segments); $i += 2) {
+                    if (isset($segments[$i + 1])) {
+                        $params[$segments[$i]] = $segments[$i + 1];
+                    }
                 }
-                /* checking slug categorie */
-                elseif ($categorie) {
-                    // On stocke le categorie globalement pour y accéder dans la vue
-                    $GLOBALS['categorie'] = $categorie;
-                    
+                include MODEL . 'bdd.php';
+
+                $titre_page = [];
+                $found_filtre = false;
+
+                // CATEGORIE
+                if (!empty($params['categorie'])) {
+                    $stmt = $bdd->prepare("SELECT * FROM categorie WHERE slug = ?");
+                    $stmt->execute([$params['categorie']]);
+                    if ($categorie = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                        $GLOBALS['categorie'] = $categorie;
+                        $titre_page[] = $categorie['nom'];
+                        $found_filtre = true;
+                    }
+                }
+
+                // TYPE
+                if (!empty($params['type'])) {
+                    $stmt = $bdd->prepare("SELECT * FROM types WHERE slug = ?");
+                    $stmt->execute([$params['type']]);
+                    if ($types = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                        $GLOBALS['types'] = $types;
+                        $titre_page[] = $types['nom'];
+                        $found_filtre = true;
+                    }
+                }
+
+                // TAILLE
+                if (!empty($params['taille'])) {
+                    $stmt = $bdd->prepare("SELECT * FROM tailles WHERE slug = ?");
+                    $stmt->execute([$params['taille']]);
+                    if ($tailles = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                        $GLOBALS['tailles'] = $tailles;
+                        $titre_page[] = $tailles['nom'];
+                        $found_filtre = true;
+                    }
+                }
+                /* si on a  trouvé des filtre */
+                if($found_filtre == true)
+                {
+                        
                     $view = new View('articles');
-                    $view->render($categorie['nom'] . ' | OhNous');
-                } else {
+                    $titre_page = implode(' | ', $titre_page);
+                    $view->render($titre_page. ' | OhNous');
+                }
+                /* si on a rien trouvé */
+                else if($found_filtre == false){
                     echo '
                     <!DOCTYPE html>
                     <html lang="fr">

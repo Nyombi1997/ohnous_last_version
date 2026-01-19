@@ -295,5 +295,215 @@
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    
+    /* moteur de recherche */
+    function found($q, $limit = null, $offset = 0, $order = null, $random = false)
+    {
+        $q = trim($q);
+
+        if ($q === '' || strlen($q) < 1) {
+            return [];
+        }
+
+        if (preg_match('/(\d+)/', $q, $matches)) {
+            $q_numeric = $matches[1];
+            $q = $matches[1];
+        }
+
+        global $bdd;
+
+        /* ORDER BY */
+        $orderBy = "score DESC, label ASC";
+
+        if ($random === true) {
+            $orderBy = "RAND()";
+        } elseif ($order !== null) {
+            $allowedOrders = [
+                'score'      => 'score DESC',
+                'label'      => 'label ASC',
+                'prix_asc'   => 'prix ASC',
+                'prix_desc'  => 'prix DESC'
+            ];
+            if (isset($allowedOrders[$order])) {
+                $orderBy = $allowedOrders[$order];
+            }
+        }
+
+        /* LIMIT / OFFSET */
+        $limitSql = "";
+        if ($limit !== null) {
+            $limit = (int) $limit;
+            $offset = (int) $offset;
+            $limitSql = "LIMIT $limit OFFSET $offset";
+        }
+
+        $sql = "
+            (
+                SELECT id, nom COLLATE utf8mb4_general_ci AS label, prix, description COLLATE utf8mb4_general_ci AS description, slug COLLATE utf8mb4_general_ci AS slug, 'articles' AS source,
+                    (
+                        (CASE WHEN nom LIKE :start THEN 5
+                            WHEN nom LIKE :middle THEN 3
+                            WHEN nom LIKE :any THEN 1 ELSE 0 END)
+                        +
+                        (CASE WHEN prix LIKE :any THEN 1 ELSE 0 END)
+                    ) AS score
+                FROM articles
+                WHERE (nom LIKE :any OR prix LIKE :any OR (:q_numeric IS NOT NULL AND prix <= :q_numeric)) OR description LIKE :any
+            )
+            UNION
+            (
+                SELECT id, nom COLLATE utf8mb4_general_ci AS label, NULL AS prix, description COLLATE utf8mb4_general_ci AS description, slug COLLATE utf8mb4_general_ci AS slug, 'boutiques' AS source,
+                    (
+                        (CASE WHEN nom COLLATE utf8mb4_general_ci LIKE :start THEN 5
+                            WHEN nom COLLATE utf8mb4_general_ci LIKE :middle THEN 3
+                            WHEN nom COLLATE utf8mb4_general_ci LIKE :any THEN 1 ELSE 0 END)
+                    ) AS score
+                FROM boutiques
+                WHERE nom COLLATE utf8mb4_general_ci LIKE :any OR description LIKE :any
+            )
+            UNION
+            (
+                SELECT id, nom COLLATE utf8mb4_general_ci AS label, NULL AS prix, NULL AS description, slug COLLATE utf8mb4_general_ci AS slug, 'categorie' AS source,
+                    (
+                        (CASE WHEN nom COLLATE utf8mb4_general_ci LIKE :start THEN 5
+                            WHEN nom COLLATE utf8mb4_general_ci LIKE :middle THEN 3
+                            WHEN nom COLLATE utf8mb4_general_ci LIKE :any THEN 1 ELSE 0 END)
+                    ) AS score
+                FROM categorie
+                WHERE nom COLLATE utf8mb4_general_ci LIKE :any
+            )
+            UNION
+            (
+                SELECT id, nom COLLATE utf8mb4_general_ci AS label, NULL AS prix, NULL AS description, slug COLLATE utf8mb4_general_ci AS slug, 'types' AS source,
+                    (
+                        (CASE WHEN nom COLLATE utf8mb4_general_ci LIKE :start THEN 5
+                            WHEN nom COLLATE utf8mb4_general_ci LIKE :middle THEN 3
+                            WHEN nom COLLATE utf8mb4_general_ci LIKE :any THEN 1 ELSE 0 END)
+                    ) AS score
+                FROM types
+                WHERE nom COLLATE utf8mb4_general_ci LIKE :any
+            )
+            UNION
+            (
+                SELECT id, nom COLLATE utf8mb4_general_ci AS label, NULL AS prix, commentaire COLLATE utf8mb4_general_ci AS description, slug COLLATE utf8mb4_general_ci AS slug, 'tailles' AS source,
+                    (
+                        (CASE WHEN nom COLLATE utf8mb4_general_ci LIKE :start THEN 5
+                            WHEN nom COLLATE utf8mb4_general_ci LIKE :middle THEN 3
+                            WHEN nom COLLATE utf8mb4_general_ci LIKE :any THEN 1 ELSE 0 END)
+                    ) AS score
+                FROM tailles
+                WHERE nom COLLATE utf8mb4_general_ci LIKE :any
+            )
+            ORDER BY $orderBy
+            $limitSql
+            ";
+
+        $stmt = $bdd->prepare($sql);
+
+        $q_numeric = is_numeric($q) ? $q : null;
+
+        $stmt->execute([
+            ":start"     => "$q%",
+            ":middle"    => "% $q%",
+            ":any"       => "%$q%",
+            ":q_numeric" => $q_numeric
+        ]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+
+    /* trouveur d'article */
+    function getArticlesFromSearch(array $results, $limit = null, $offset = 0, $order = null, $random = false)
+    {
+        global $bdd;
+
+        $articleIds = [];
+
+        $sourceMap = [
+            'types'     => ['table' => 'types_article',     'col' => 'types'],
+            'tailles'   => ['table' => 'taille_articles',   'col' => 'taille'],
+            'categorie' => ['table' => 'categorie_article', 'col' => 'categorie'],
+            'boutiques' => ['table' => 'articles',          'col' => 'boutique'],
+            'articles'  => ['table' => 'articles',          'col' => 'id'],
+        ];
+
+        foreach ($results as $row) {
+
+            /* articles directs */
+            if ($row['source'] === 'articles') {
+                $articleIds[] = (int)$row['id'];
+                continue;
+            }
+
+            /* sources liées */
+            if (!isset($sourceMap[$row['source']])) {
+                continue;
+            }
+
+            $map = $sourceMap[$row['source']];
+
+            if ($row['source'] === 'boutiques') {
+                $sql = "SELECT id FROM articles WHERE boutique = ?";
+            } else {
+                $sql = "SELECT article FROM {$map['table']} WHERE {$map['col']} = ?";
+            }
+
+            $stmt = $bdd->prepare($sql);
+            $stmt->execute([$row['id']]);
+
+            $ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            $articleIds = array_merge($articleIds, $ids);
+        }
+
+        if (empty($articleIds)) {
+            return [];
+        }
+
+        /* Unicité */
+        $articleIds = array_values(array_unique(array_map('intval', $articleIds)));
+
+        /* ORDER */
+        $orderBy = "a.id DESC";
+
+        if ($random === true) {
+            $orderBy = "RAND()";
+        } elseif ($order) {
+            $allowed = [
+                'prix_asc'  => 'a.prix ASC',
+                'prix_desc' => 'a.prix DESC',
+                'nom'       => 'a.nom ASC'
+            ];
+            if (isset($allowed[$order])) {
+                $orderBy = $allowed[$order];
+            }
+        }
+
+        /* LIMIT / OFFSET */
+        $limitSql = "";
+        if ($limit !== null) {
+            $limitSql = "LIMIT " . (int)$limit . " OFFSET " . (int)$offset;
+        }
+
+        /* Chargement final des articles */
+        $placeholders = implode(',', array_fill(0, count($articleIds), '?'));
+
+        $sql = "
+            SELECT a.*
+            FROM articles a
+            WHERE a.id IN ($placeholders)
+            ORDER BY $orderBy
+            $limitSql
+        ";
+
+        $stmt = $bdd->prepare($sql);
+        $stmt->execute($articleIds);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+
+
+
 
 ?>

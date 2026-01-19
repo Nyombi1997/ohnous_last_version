@@ -34,7 +34,7 @@ function editIconAjouterPanier(produitId = null, ajouter = true, retire = false,
         if(retire)
         {
             $.post(
-                "fonctions/panier.php",
+                "/fonctions/panier.php",
                 {
                     id : produitId,
                     price : produitPrix,
@@ -57,7 +57,7 @@ function editIconAjouterPanier(produitId = null, ajouter = true, retire = false,
         }
         /* ajouter au panier */
         $.post(
-            "fonctions/panier.php",
+            "/fonctions/panier.php",
             {
                 id : produitId,
                 price : produitPrix,
@@ -194,3 +194,107 @@ function ajouterAuPanier(imgSrc = null, produitId = null, produitNom = null, pro
     editIconAjouterPanier(produitId = produitId, ajouter = true, retire = false, imgSrc = imgSrc, produitNom = produitNom, produitSlug = produitSlug, produitTaille = produitTaille, produitPrix = produitPrix, produitStyle = produitStyle, produitBackground = produitBackground);
 }
 
+
+
+/* fonction pour nfaire la recherche d'articles */
+let donnee_de_recherche = document.querySelectorAll("#donnee_de_recherche");
+let input_search_bar_2 = document.getElementById("input_search_bar_2");
+function rechercheArticles(value)
+{
+    $.post("/fonctions/recherche.php",{q : value },function(data){
+        const result = data;
+        /* si on a une suggestion */
+        if(result.suggestion != undefined)
+        {
+            donnee_de_recherche.forEach(function (element){
+                element.innerHTML = "";
+                element.classList.remove("null");
+                element.innerHTML += `<div class="suggestion">Vous recherchez <a href="" onclick="suggestionRecherche(this)">${result.suggestion}</a> ?</div>`;
+            })
+        }
+        else if(result.noResult == undefined)
+        {
+            donnee_de_recherche.forEach(function (element){
+                element.innerHTML = "";
+                element.classList.remove("null");
+            })
+            let tableau = [];
+            result.forEach(function(item){
+                if(tableau.includes(item.label))
+                {
+                    return;
+                }
+                else
+                {
+                    tableau.push(item.label);
+                }
+                /* si c'est une article */
+                if(item.source == "articles")
+                {
+                    donnee_de_recherche.forEach(function (element){
+                        /* si c'est un prix */
+                        let prix_article_depuis_recherche = '';
+                        if (/(\d+)\s*(\$|dollars?|fcfa?|euros?|francs?|\w*)?/i.test(value))
+                        {
+                            prix_article_depuis_recherche = '| '+item.prix ? '- ' + item.prix + ' USD' : '';
+                        }
+                        element.innerHTML += `<a href="article/${item.slug}" class="link"> ${item.label} ${prix_article_depuis_recherche}</a>`;
+                    })
+                }
+                /* si c'est une boutique */
+                else if(item.source == "boutiques")
+                {
+                    donnee_de_recherche.forEach(function (element){
+                        element.innerHTML += `<a href="boutique/${item.slug}" class="link"><i class="fa-solid fa-store"></i> ${item.label}</a>`;
+                    })
+                }
+                /* si c'est une categorie */
+                else if(item.source == "categorie")
+                {
+                    donnee_de_recherche.forEach(function (element){
+                        element.innerHTML += `<a href="categorie/${item.slug}" class="link" onclick="filtre_categorie('${item.id}', '${item.label}', '${item.slug}', event, 'ok')"><i class="fa-solid fa-layer-group"></i> ${item.label}</a>`;
+                    })
+                }
+                /* si c'est un type */
+                else if(item.source == "types")
+                {
+                    donnee_de_recherche.forEach(function (element){
+                        element.innerHTML += `<a href="type/${item.slug}" class="link" onclick="filtre_types('${item.id}', '${item.label}', '${item.slug}', event, 'ok')"><i class="fa-solid fa-list"></i> ${item.label}</a>`;
+                    })
+                }
+                /* si c'est une taille */
+                else if(item.source == "tailles")
+                {
+                    donnee_de_recherche.forEach(function (element){
+                        element.innerHTML += `<a href="taille/${item.slug}" class="link" onclick="filtre_tailles('${item.id}', '${item.label}', '${item.slug}', event, 'ok')"><i class="fa-solid fa-up-right-and-down-left-from-center"></i> ${item.label}</a>`;
+                    })
+                }
+            })
+        }
+        else
+        {
+            donnee_de_recherche.forEach(function (element){
+                element.innerHTML = "";
+                element.classList.remove("null");
+                element.innerHTML += `<div class="no_result">Aucun resultat</div>`;
+            })
+        }
+    })
+}
+/* lire le scroll */
+$(window).on("scroll", function () {
+    donnee_de_recherche.forEach(function (element){
+        element.innerHTML = "";
+        element.classList.add("null");
+    })
+});
+// clic partout sur le document
+document.addEventListener("click", (e) => {
+    // si le clic est en dehors de la div
+    donnee_de_recherche.forEach(function (element){
+        if (!element.contains(e.target)) {
+            element.innerHTML = "";
+            element.classList.add("null");
+        }
+    })
+});

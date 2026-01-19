@@ -1,24 +1,61 @@
 <?php
     // Fonction pour générer un slug à partir d'une chaîne de caractères
-    function generateSlug($string, $separator = '-') 
+    function generateSlug($string,$separator = '-')
     {
-        // Convertir en minuscules
+        global $bdd;
+        // Génération du slug de base
         $slug = strtolower($string);
-
-        // Remplacer les caractères accentués
         $slug = iconv('UTF-8', 'ASCII//TRANSLIT', $slug);
-
-        // Remplacer tout ce qui n'est pas alphanumérique par le séparateur
         $slug = preg_replace('/[^a-z0-9]+/i', $separator, $slug);
-
-        // Supprimer les séparateurs multiples
         $slug = preg_replace('/' . preg_quote($separator, '/') . '+/', $separator, $slug);
-
-        // Supprimer le séparateur au début et à la fin
         $slug = trim($slug, $separator);
+
+        $baseSlug = $slug;
+        $i = 1;
+
+        // Récupérer toutes les tables qui ont une colonne "slug"
+        $sql = "
+            SELECT TABLE_NAME
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+            AND COLUMN_NAME = 'slug'
+        ";
+
+        $tables = $bdd->query($sql)->fetchAll(PDO::FETCH_COLUMN);
+
+        if (empty($tables)) {
+            return $slug; // aucune table avec slug → paix intérieure
+        }
+
+        // Vérifier l’unicité globale
+        do {
+            $exists = false;
+
+            foreach ($tables as $table) {
+                $check = $bdd->prepare("
+                    SELECT 1 
+                    FROM `$table`
+                    WHERE slug = :slug
+                    LIMIT 1
+                ");
+                $check->execute(['slug' => $slug]);
+
+                if ($check->fetch()) {
+                    $exists = true;
+                    break;
+                }
+            }
+
+            if ($exists) {
+                $slug = $baseSlug . $separator . $i;
+                $i++;
+            }
+
+        } while ($exists);
 
         return $slug;
     }
+
     /* add number of days */
     function ajouter_jours($date, $nb_jours)
     {

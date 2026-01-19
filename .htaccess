@@ -1,6 +1,9 @@
 RewriteEngine On
+
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^(.+)$ index.php?r=$1 [QSA,L]
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php?r=$1 [QSA,L]
+
 
 # GZIP
 <IfModule mod_deflate.c>

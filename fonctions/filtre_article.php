@@ -24,13 +24,25 @@
             'type' => $types,
             'taille' => $taille
         ];
-
-        $msg = select_articles_filtre($bdd, $filters, $limit = 12, $offset, $order = null, $random = false);
-        foreach($msg as $msg_)
+        /* si y'a au moins une demande */
+        if($categorie!=0 || $types!=0 || $taille!=0)
         {
-            $donnee .= affiche_produit($msg_ , true);
+            $msg = select_articles_filtre($bdd, $filters, $limit = 12, $offset, $order = null, $random = false);
+            foreach($msg as $msg_)
+            {
+                $donnee .= affiche_produit($msg_ , true);
+            }
+            $nombre = count($msg);
         }
-        $nombre = count($msg);
+        else
+        {
+            $msg = select_bdd($bdd, "articles", $where = null, $limit = 12, $offset = 0, $order = null, $random = true);
+            foreach($msg as $msg_)
+            {
+                $donnee .= affiche_produit($msg_ , true);
+            }
+            $nombre = count($msg);
+        }
     }
     $result = [
         "result" => "ok",

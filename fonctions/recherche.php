@@ -1,84 +1,163 @@
 <?php
     include_once "../model/bdd.php";
-    //header('Content-Type: application/json; charset=utf-8');
+    include_once "../model/select.php";
+    header('Content-Type: application/json; charset=utf-8');
 
     // Récupérer le terme recherché
     $q = $_POST['q'] ?? '';
-    $q = trim($q);
 
-    if ($q === '' || strlen($q) < 1) {
-        echo json_encode([]);
-        exit;
+    $results = found($q);
+    /* trouver le mot le plus proche */
+    function findClosestWord($input, $phrases) {
+        $bestWord = null;
+        $bestDistance = -1;
+
+        foreach ($phrases as $phrase) {
+            $words = explode(' ', $phrase);
+
+            foreach ($words as $word) {
+
+                $lev = levenshtein($input, $word);
+
+                if ($lev === 0) {
+                    return $word;
+                }
+
+                if ($bestDistance < 0 || $lev < $bestDistance) {
+                    $bestDistance = $lev;
+                    $bestWord = $word;
+                }
+            }
+        }
+
+        $maxDistance = getTolerance($input);
+
+        return ($bestDistance <= $maxDistance) ? $bestWord : null;
     }
-    // Extraction d'un montant si la recherche contient "700 $" ou "700 dollars"
-    if (preg_match('/(\d+)\s*(\$|dollars?|fcfa?|euros?|francs?|\w*)?/i', $q, $matches)) {
-        $q_numeric = $matches[1];
-        $q = $matches[1]; // On remplace $q par la valeur numérique extraite
+    /* gestion du niveau de tolerance */
+    function getTolerance($word) {
+        if (is_numeric($word)) return 0;        // prix, tailles
+        if (strlen($word) <= 2) return 0;       // trop ambigu
+        if (strlen($word) <= 3) return 0;       // trop court
+        if (strlen($word) <= 4) return 2;
+        if (strlen($word) <= 7) return 2;
+        if (strlen($word) <= 10) return 3;
+        return 4;
+    }
+    /* normalisation, du mot */
+    function normalize($string) {
+        $string = strtolower($string);
+        $string = iconv('UTF-8', 'ASCII//TRANSLIT', $string);
+        return preg_replace('/[^a-z0-9 ]/', '', $string);
+    }
+    /* correction de phrases */
+    function correctSentence($input, $phrases) {
+        $inputWords = explode(' ', normalize($input));
+        $corrected = [];
+        $hasCorrection = false;
+
+        foreach ($inputWords as $word) {
+
+            // mots trop courts → on ignore
+            if (strlen($word) <= 2) {
+                $corrected[] = $word;
+                continue;
+            }
+
+            $suggestion = findClosestWord($word, $phrases);
+
+            // si correction valable ET différente
+            if ($suggestion !== null && $suggestion !== $word) {
+                $corrected[] = $suggestion;
+                $hasCorrection = true;
+            } else {
+                $corrected[] = $word;
+            }
+        }
+
+        // AUCUNE vraie correction → aucune suggestion
+        if (!$hasCorrection) {
+            return false;
+        }
+
+        return implode(' ', $corrected);
     }
 
 
-    // Requête multi-tables avec pondération + pertinence
-    $sql = "
-        (
-            SELECT id, nom COLLATE utf8mb4_general_ci AS label, prix, description, slug COLLATE utf8mb4_general_ci AS slug, 'articles' AS source,
-                (
-                    (CASE WHEN nom LIKE :start THEN 5
-                        WHEN nom LIKE :middle THEN 3
-                        WHEN nom LIKE :any THEN 1 ELSE 0 END)
-                    +
-                    (CASE WHEN prix LIKE :any THEN 1 ELSE 0 END)
-                ) AS score
-            FROM articles
-            WHERE (nom LIKE :any OR prix LIKE :any OR (:q_numeric IS NOT NULL AND prix <= :q_numeric))
-        )
-        UNION
-        (
-            SELECT id, nom COLLATE utf8mb4_general_ci AS label, NULL AS prix, description, slug COLLATE utf8mb4_general_ci AS slug, 'boutiques' AS source,
-                (
-                    (CASE WHEN nom COLLATE utf8mb4_general_ci LIKE :start THEN 5
-                        WHEN nom COLLATE utf8mb4_general_ci LIKE :middle THEN 3
-                        WHEN nom COLLATE utf8mb4_general_ci LIKE :any THEN 1 ELSE 0 END)
-                ) AS score
-            FROM boutiques
-            WHERE nom COLLATE utf8mb4_general_ci LIKE :any
-        )
-        UNION
-        (
-            SELECT id, nom COLLATE utf8mb4_general_ci AS label, NULL AS prix, NULL AS description, NULL AS slug, 'types' AS source,
-                (
-                    (CASE WHEN nom COLLATE utf8mb4_general_ci LIKE :start THEN 5
-                        WHEN nom COLLATE utf8mb4_general_ci LIKE :middle THEN 3
-                        WHEN nom COLLATE utf8mb4_general_ci LIKE :any THEN 1 ELSE 0 END)
-                ) AS score
-            FROM types
-            WHERE nom COLLATE utf8mb4_general_ci LIKE :any
-        )
-        UNION
-        (
-            SELECT id, nom COLLATE utf8mb4_general_ci AS label, NULL AS prix, commentaire COLLATE utf8mb4_general_ci AS description, NULL AS slug, 'tailles' AS source,
-                (
-                    (CASE WHEN nom COLLATE utf8mb4_general_ci LIKE :start THEN 5
-                        WHEN nom COLLATE utf8mb4_general_ci LIKE :middle THEN 3
-                        WHEN nom COLLATE utf8mb4_general_ci LIKE :any THEN 1 ELSE 0 END)
-                ) AS score
-            FROM tailles
-            WHERE nom COLLATE utf8mb4_general_ci LIKE :any
-        )
-        ORDER BY score DESC, label ASC
-        LIMIT 20
-        ";
 
-    // Préparation et exécution
-    $stmt = $bdd->prepare($sql);
-    $q_numeric = is_numeric($q) ? $q : null;
-    $stmt->execute([
-        ":start"     => "$q%",
-        ":middle"    => "% $q%",
-        ":any"       => "%$q%",
-        ":q_numeric" => $q_numeric
-    ]);
+    /* si on aucun resultat */
+    if(count($results) == 0 && $q != "")
+    {
+        /* rechercher les articles se rapprochant de la recherche */
+        $stmt = $bdd->query("SELECT nom FROM articles");
+        $words = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        $suggestion = correctSentence($q, $words);
+        if($suggestion)
+        {
+            $results = [
+                "suggestion" => $suggestion
+            ];
+        }
+        else
+        {
+            /* rechercher les boutiques se rapprochant de la recherche */
+            $stmt = $bdd->query("SELECT nom FROM boutiques");
+            $words = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            $suggestion = correctSentence($q, $words);
+            if($suggestion)
+            {
+                $results = [
+                    "suggestion" => $suggestion
+                ];
+            }
+            else
+            {
+                /* rechercher les categories se rapprochant de la recherche */
+                $stmt = $bdd->query("SELECT nom FROM categorie");
+                $words = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                $suggestion = correctSentence($q, $words);
+                if($suggestion)
+                {
+                    $results = [
+                        "suggestion" => $suggestion
+                    ];
+                }
+                else
+                {
+                    /* rechercher les types se rapprochant de la recherche */
+                    $stmt = $bdd->query("SELECT nom FROM types");
+                    $words = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                    $suggestion = correctSentence($q, $words);
+                    if($suggestion)
+                    {
+                        $results = [
+                            "suggestion" => $suggestion
+                        ];
+                    }
+                    else
+                    {
+                        /* rechercher les tailles se rapprochant de la recherche */
+                        $stmt = $bdd->query("SELECT nom FROM tailles");
+                        $words = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                        $suggestion = correctSentence($q, $words);
+                        if($suggestion)
+                        {
+                            $results = [
+                                "suggestion" => $suggestion
+                            ];
+                        }
+                        else
+                        {
+                            $results = [
+                                "noResult" => ''
+                            ];                            
+                        }                        
+                    }
+                }
+            }
+        }
+    }
 
-    $results = $stmt->fetchAll();
 
     // Retour en JSON
     echo json_encode($results, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);

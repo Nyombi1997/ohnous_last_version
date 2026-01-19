@@ -3,31 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?=  $title_page ?></title>
+    <title><?= $title_page; ?></title>
     <!-- fav icone -->
     <link rel="icon" type="image/png" href="<?php echo ASSET; ?>images/icons/favicon-1.png"/>
     <!-- fontawesome -->
-    <link rel="stylesheet" href="<?= ASSET ?>css/fontawesome/css/all.min.css?<?= filemtime("./asset/css/fontawesome/css/all.min.css") ?>">
+    <link rel="stylesheet" href="<?= ASSET ?>css/fontawesome/css/all.min.css?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/css/fontawesome/css/all.min.css") ?>">
     <!-- fontedo -->
-    <link rel="stylesheet" href="<?= ASSET ?>css/fontedo/style.css?<?= filemtime("./asset/css/fontedo/style.css") ?>">
+    <link rel="stylesheet" href="<?= ASSET ?>css/fontedo/style.css?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/css/fontedo/style.css") ?>">
     <!-- css -->
-    <link rel="stylesheet" href="<?= ASSET ?>css/style.css?<?= filemtime("./asset/css/style.css") ?>">
-    <link rel="stylesheet" href="<?= ASSET ?>css/responsive.css?<?= filemtime("./asset/css/responsive.css") ?>">
+    <link rel="stylesheet" href="<?= ASSET ?>css/style.css?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/css/style.css") ?>">
+    <link rel="stylesheet" href="<?= ASSET ?>css/responsive.css?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/css/responsive.css") ?>">
     <!-- swiper -->
-    <link rel="stylesheet" href="<?= ASSET ?>css/swiper.min.css?<?= filemtime("./asset/css/swiper.min.css") ?>">
-    <script src="<?= ASSET ?>js/swiper.min.js?<?= filemtime("./asset/js/swiper.min.js") ?>"></script>
+    <link rel="stylesheet" href="<?= ASSET ?>css/swiper.min.css?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/css/swiper.min.css") ?>">
+    <script src="<?= ASSET ?>js/swiper.min.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/swiper.min.js") ?>"></script>
     <script src="https://unpkg.com/@imagekit/javascript@5.0.0/dist/imagekit.min.js"></script>​​
     <!-- jquery -->
-    <script src="<?= ASSET ?>js/jquery-2.2.4.min.js?<?= filemtime("./asset/js/jquery-2.2.4.min.js") ?>"></script>
+    <script src="<?= ASSET ?>js/jquery-2.2.4.min.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/jquery-2.2.4.min.js") ?>"></script>
     <!-- sweat alert -->
-    <link rel="stylesheet" href="<?= ASSET ?>css/sweetalert2.min.css?<?= filemtime("./asset/css/sweetalert2.min.css") ?>">
-    <script src="<?= ASSET ?>js/sweetalert2.all.min.js?<?= filemtime("./asset/js/sweetalert2.all.min.js") ?>"></script>
+    <link rel="stylesheet" href="<?= ASSET ?>css/sweetalert2.min.css?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/css/sweetalert2.min.css") ?>">
+    <script src="<?= ASSET ?>js/sweetalert2.all.min.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/sweetalert2.all.min.js") ?>"></script>
     <!-- script panier -->
-	<script src="./asset/js/main_panier_produit.js?<?= filemtime("./asset/js/main_panier_produit.js") ?>" defer></script>
+	<script src="/asset/js/main_panier_produit.js?<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/asset/js/main_panier_produit.js') ?>" defer></script>
     <!-- script search bar -->
-	<script src="./asset/js/script_search_bar.js?<?= filemtime("./asset/js/script_search_bar.js") ?>" defer></script> 
+	<script src="/asset/js/script_search_bar.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/script_search_bar.js") ?>" defer></script> 
     <!-- script filtre produit -->
-	<script src="./asset/js/filtre_produit.js?<?= filemtime("./asset/js/filtre_produit.js") ?>" defer></script> 
+	<script src="/asset/js/filtre_produit.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/filtre_produit.js") ?>" defer></script> 
+    <!-- fournir la route -->
+    <script>
+        const root_site = '<?=  $_SERVER['DOCUMENT_ROOT']  ?>';
+    </script>
 </head>
 <body>
     <!-- slide panier -->
@@ -74,7 +78,7 @@
                                                     sizes="(max-width:768px) 90vw, 600px"
                                                     loading="lazy"
                                                     style="'.$item['style'].'"
-                                                    alt="'.$item['slug'].'"
+                                                    alt="article/'.$item['slug'].'"
                                                 />
                                                 <div class="div_supp_produit_panier" onclick="ajouterAuPanier(\''.$item['image'].'\',\''.$item['id'].'\',\''.$item['name'].'\',\''.$item['slug'].'\',\''.$item['size'].'\',\''.$item['price'].'\',\''.$item['style'].'\',\''.$item['background'].'\')">
                                                     <i class="fa fa-trash"></i>
@@ -120,7 +124,7 @@
     <header class=" <?php if(isset($GLOBALS['categorie'])){ echo 'sans_categorie';}else if(isset($GLOBALS['others'])){ echo 'sans_categorie';}  ?>">
         <!-- logo -->
         <div class="logo">
-            <a href="accueil"><img src="<?php echo ASSET; ?>images/icons/logo-2.png" loading="lazy" alt="Logo OhNous"></a>
+            <a href="/accueil"><img src="<?php echo ASSET; ?>images/icons/logo-2.png" loading="lazy" alt="Logo OhNous"></a>
             <!-- menu avec panier -->
             <div class="menu_banniere_droit">
                 <a href="" class="menu_banniere_link"><i class="fa fa-user"></i></a>
@@ -144,7 +148,7 @@
                                     continue; // Passer à l'itération suivante si l'ID de catégorie a déjà été traité
                                 }
                                 echo '
-                                    <a href="'.$detail_category['slug'].'" class="swiper-slide">'.$detail_category['nom'].'</a>';
+                                    <a href="categorie/'.$detail_category['slug'].'" class="swiper-slide">'.$detail_category['nom'].'</a>';
                                 $category_ids[] = $detail_category['id'];
                                 $all_categories[] = $detail_category['nom'];
                             }
@@ -190,11 +194,137 @@
 	<!-- barre de recherche -->
 	<div class="div_search_bar all <?php if(isset($GLOBALS['categorie'])){ echo 'sans_categorie';}else if(isset($GLOBALS['others'])){ echo 'sans_categorie';}  ?>" id="div_search_bar_all">
 		<div class="search_bar">
-			<form action="recherche" method="GET">
-				<input type="text" class="input_search_bar" id="input_search_bar_2" name="query" placeholder="Rechercher un article..." required>
+			<form action="/q" method="GET">
+				<input type="text" class="input_search_bar" id="input_search_bar_2" name="query" placeholder="Rechercher un article..." required oninput="rechercheArticles(this.value)" value=<?php if(isset($_GET['query'])){ echo json_encode($_GET['query']); } ?>>
 				<button type="submit" class="button_search_bar"><i class="fa fa-search"></i></button>
 			</form>
+            <!-- div des donnés de recherche -->
+            <div class="donnee_de_recherche null" id="donnee_de_recherche">
+
+            </div>
 		</div>
 	</div>
 </body>
 </html>
+
+<!-- création des tables slugs  -->
+<?php
+    /* ajouter dans types */
+    $table = "types";
+    $column = "slug";
+
+    $sql = "
+        SELECT COUNT(*) 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = :table
+        AND COLUMN_NAME = :column
+    ";
+
+    $stmt = $bdd->prepare($sql);
+    $stmt->execute([
+        ':table'  => $table,
+        ':column' => $column
+    ]);
+
+    $exists = $stmt->fetchColumn();
+    if ($exists == 0) {
+        $bdd->exec("
+            ALTER TABLE types
+            ADD slug TEXT NULL AFTER nom
+        ");
+    }
+    /* ajouter dans tailles */
+    $table = "tailles";
+    $column = "slug";
+
+    $sql = "
+        SELECT COUNT(*) 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = :table
+        AND COLUMN_NAME = :column
+    ";
+
+    $stmt = $bdd->prepare($sql);
+    $stmt->execute([
+        ':table'  => $table,
+        ':column' => $column
+    ]);
+
+    $exists = $stmt->fetchColumn();
+    if ($exists == 0) {
+        $bdd->exec("
+            ALTER TABLE tailles
+            ADD slug TEXT NULL AFTER nom
+        ");
+    }
+    /* ajouter dans categorie */
+    $table = "categorie";
+    $column = "slug";
+
+    $sql = "
+        SELECT COUNT(*) 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = :table
+        AND COLUMN_NAME = :column
+    ";
+
+    $stmt = $bdd->prepare($sql);
+    $stmt->execute([
+        ':table'  => $table,
+        ':column' => $column
+    ]);
+
+    $exists = $stmt->fetchColumn();
+    if ($exists == 0) {
+        $bdd->exec("
+            ALTER TABLE categorie
+            ADD slug TEXT NULL AFTER nom
+        ");
+    }
+?>
+
+<!-- ajouter des slugs -->
+<?php
+    //types
+    $types = select_bdd($bdd, "types", $where = null, $limit = null, $offset = 0, $order = null, $random = false);
+    foreach($types as $type)
+    {
+        if($type['slug'] == '' || $type['slug'] == NULL)
+        {
+            $slug = generateSlug($type['nom'],$separator = '-');
+            $update_data = [
+                "slug" => $slug
+            ];
+            update_bdd($bdd, "types", $update_data, "id = '".$type['id']."'");
+        }
+    }
+    //tailles
+    $tailles = select_bdd($bdd, "tailles", $where = null, $limit = null, $offset = 0, $order = null, $random = false);
+    foreach($tailles as $taille)
+    {
+        if($taille['slug'] == '' || $taille['slug'] == NULL)
+        {
+            $slug = generateSlug($taille['nom'],$separator = '-');
+            $update_data = [
+                "slug" => $slug
+            ];
+            update_bdd($bdd, "tailles", $update_data, "id = '".$taille['id']."'");
+        }
+    }
+    //categorie
+    $categorie = select_bdd($bdd, "categorie", $where = null, $limit = null, $offset = 0, $order = null, $random = false);
+    foreach($categorie as $categories)
+    {
+        if($categories['slug'] == '' || $categories['slug'] == NULL)
+        {
+            $slug = generateSlug($categories['nom'],$separator = '-');
+            $update_data = [
+                "slug" => $slug
+            ];
+            update_bdd($bdd, "categorie", $update_data, "id = '".$categories['id']."'");
+        }
+    }
+?>

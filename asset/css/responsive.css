@@ -5,8 +5,12 @@
     {
         cursor: initial;
     }
+    /* logo */
+    .logo
+    {
+        cursor: initial;
+    }
     /* intro */
-
     .intro-hero {
         margin: 20px 0px;
         padding: 120px 0px;
@@ -59,6 +63,10 @@
     .div_search_bar.all.sans_categorie
     {
         top: 45px;
+    }
+    .button_search_bar
+    {
+        cursor: initial;
     }
     /* panier */
     .slide_panier

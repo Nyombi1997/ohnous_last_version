@@ -12,6 +12,9 @@
 			$all_categories[] = $detail_category['nom'];
 		}
 	?>
+	<script>
+		let home_page = true;
+	</script>
 	<!-- intro -->
 	<div class="intro-hero">
 		<div class="blob-bg"></div>
@@ -26,10 +29,14 @@
 		<!-- barre de recherche -->
 		<div class="div_search_bar" id="div_search_bar">
 			<div class="search_bar" id="search_bar">
-				<form action="recherche" method="GET">
-					<input type="text" class="input_search_bar" id="input_search_bar" name="query" placeholder="Rechercher un article..." required>
+				<form action="/q" method="GET">
+					<input type="text" class="input_search_bar" id="input_search_bar_2" name="query" placeholder="Rechercher un article..." required oninput="rechercheArticles(this.value)">
 					<button type="submit" class="button_search_bar"><i class="fa fa-search"></i></button>
 				</form>
+				<!-- div des donnés de recherche -->
+				<div class="donnee_de_recherche null" id="donnee_de_recherche">
+
+				</div>
 			</div>
 		</div>
 		<!-- script banniere -->
@@ -68,7 +75,7 @@
 						}
 						echo '
 							<!-- details -->
-							<a href="'.$detail_category['slug'].'" class="swiper-slide">
+							<a href="categorie/'.$detail_category['slug'].'" class="swiper-slide">
 								<div class="section_categorie_nom">
 									<p>'.$detail_category['nom'].'</p>
 								</div>
@@ -118,7 +125,7 @@
 			}
 			echo '<!-- HTML !-->
 				<div class="div_btn_voir_plus">
-					<a href="" class="btn_voir_plus" role="button">Voir plus  <i class="fa-solid fa-arrow-right-long"></i></a>
+					<a href="/articles" class="btn_voir_plus" role="button">Voir plus  <i class="fa-solid fa-arrow-right-long"></i></a>
 				</div>';
 		?>
 	</div>
