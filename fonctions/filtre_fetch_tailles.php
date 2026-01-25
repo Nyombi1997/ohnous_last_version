@@ -16,7 +16,7 @@
     /* si on a déterminer la categorie */
     if($category_id!=0 || $taille_id!='')
     {
-        /* si taille */
+        /* si taille */ 
         if($category_id!=0)
         {
             $sql = "

@@ -263,6 +263,16 @@
             }
         }
 
+        // FILTRE BOUTIQUE
+        if (!empty($filters['boutique'])) {
+            if($filters['boutique']!=0)
+            {
+                $joins[] = "INNER JOIN articles ab 
+                            ON ab.id = a.id AND ab.boutique = :boutique";
+                $params[':boutique'] = (int)$filters['boutique'];
+            }
+        }
+
         // Assemblage final
         if ($joins) {
             $sql .= " " . implode(" ", $joins);
@@ -520,86 +530,71 @@
 
         $bdd->exec($sql);
     }
-/* trouver les articles similaires */
+    /* trouver les articles similaires */
     function getSimilarArticles(int $articleId,int $limit = 8,?string $order = null,bool $random = true) 
     {
         global $bdd;
+        
+        $sql = "SELECT 
+                    a.*,
+                    (CASE WHEN EXISTS (
+                        SELECT 1 FROM categorie_article ca1 
+                        WHERE ca1.article = a.id 
+                        AND ca1.categorie IN (
+                            SELECT categorie FROM categorie_article 
+                            WHERE article = :id_article
+                        )
+                    ) THEN 1 ELSE 0 END) +
+                    (CASE WHEN EXISTS (
+                        SELECT 1 FROM taille_articles ta1 
+                        WHERE ta1.article = a.id 
+                        AND ta1.taille IN (
+                            SELECT taille FROM taille_articles 
+                            WHERE article = :id_article
+                        )
+                    ) THEN 1 ELSE 0 END) +
+                    (CASE WHEN EXISTS (
+                        SELECT 1 FROM types_article tp1 
+                        WHERE tp1.article = a.id 
+                        AND tp1.types IN (
+                            SELECT types FROM types_article 
+                            WHERE article = :id_article
+                        )
+                    ) THEN 1 ELSE 0 END) AS score_similarite
+                FROM articles a
+                WHERE a.id != :id_article
+                HAVING score_similarite > 0
+                ORDER BY score_similarite DESC
+                LIMIT $limit";
 
-        /* Récupération des références de l'article */
+        $stmt = $bdd->prepare($sql);
+        $stmt->bindValue(':id_article', $articleId, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /* trouver les categories pour la boutique */
+    function categorieBoutique ($boutique_id = 0)
+    {
+        global $bdd;
+        
         $sql = "
             SELECT 
-                a.boutique,
-                GROUP_CONCAT(DISTINCT ca.categorie) AS categories,
-                GROUP_CONCAT(DISTINCT ta.types) AS types,
-                GROUP_CONCAT(DISTINCT tla.taille) AS tailles
-            FROM articles a
-            LEFT JOIN categorie_article ca ON ca.article = a.id
-            LEFT JOIN types_article ta ON ta.article = a.id
-            LEFT JOIN taille_articles tla ON tla.article = a.id
-            WHERE a.id = ?
-            GROUP BY a.id
+                ca.*,
+                COUNT(DISTINCT ca.id) AS total
+            FROM categorie ca
+            INNER JOIN categorie_article caa ON caa.categorie = ca.id
+            INNER JOIN articles a ON a.id = caa.article
+            INNER JOIN boutiques bo ON bo.id = a.boutique
+            WHERE bo.id = :boutique_id
+            GROUP BY ca.id
+            HAVING total > 0
+            ORDER BY ca.nom ASC
         ";
 
         $stmt = $bdd->prepare($sql);
-        $stmt->execute([$articleId]);
-        $ref = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$ref) {
-            return [];
-        }
-
-        /* Construction dynamique des conditions */
-        $conditions = [];
-        $params = [$articleId];
-
-        if (!empty($ref['categories'])) {
-            $conditions[] = "ca.categorie IN ({$ref['categories']})";
-        }
-
-        if (!empty($ref['types'])) {
-            $conditions[] = "ta.types IN ({$ref['types']})";
-        }
-
-        if (!empty($ref['tailles'])) {
-            $conditions[] = "tla.taille IN ({$ref['tailles']})";
-        }
-
-        if (!empty($ref['boutique'])) {
-            $conditions[] = "a.boutique = {$ref['boutique']}";
-        }
-
-        if (empty($conditions)) {
-            return [];
-        }
-
-        /* ORDER */
-        $orderBy = "COUNT(*) DESC";
-
-        if ($random === true) {
-            $orderBy = "RAND()";
-        } elseif ($order === 'prix_asc') {
-            $orderBy = "a.prix ASC";
-        } elseif ($order === 'prix_desc') {
-            $orderBy = "a.prix DESC";
-        }
-
-        /* Requête finale */
-        $limit = (int)$limit;
-
-        $sql = "
-            SELECT DISTINCT a.*
-            FROM articles a
-            LEFT JOIN categorie_article ca ON ca.article = a.id
-            LEFT JOIN types_article ta ON ta.article = a.id
-            LEFT JOIN taille_articles tla ON tla.article = a.id
-            WHERE a.id != ?
-            AND (" . implode(" OR ", $conditions) . ")
-            LIMIT $limit
-        ";
-
-        $stmt = $bdd->prepare($sql);
-        $stmt->execute($params);
-
+        $stmt->bindValue(':boutique_id', $boutique_id, PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 ?>

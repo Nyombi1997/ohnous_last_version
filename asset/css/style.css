@@ -1230,6 +1230,138 @@ padding: 10px;
 
 
 
+/* boutique */
+.banniere_boutique
+{
+    width: 100%;
+    background: var(--blanc);
+    margin: 20px 0px;
+    padding: 10px;
+    border-radius: 20px;
+    position: relative;
+    padding-top: 150px;
+}
+.background_baniere_boutique
+{
+    position: absolute;
+    z-index: 1;
+    height: 200px;
+    background: var(--base_1_couleur);
+    top: 0;
+    left: 0;
+    right: 0;
+    border-radius: 20px 20px 0px 0px;
+}
+.deconnexion_boutique
+{
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+    outline: none;
+    text-decoration: none;
+    border:2px solid rgba(255, 255, 255, .5);
+    padding: 10px;
+    border-radius: 10px;
+    background: var(--blanc);
+    color: var(--noir);
+}
+.deconnexion_boutique:active
+{
+    opacity: .5;
+}
+.div_profile_boutique
+{
+    width: 100%;
+    z-index: 2;
+    position: relative;
+}
+.profile_boutique
+{
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    overflow: hidden;
+}
+.profile_boutique
+img
+{
+    width: 100%;
+}
+.div_nom_boutique
+{
+    width: 100%;
+}
+.nom_boutique
+{
+    font-size: 20px;
+    color: var(--noir);
+    font-weight: 800;
+    letter-spacing: 2.5px;
+}
+.div_description_boutique
+{
+    width: 100%;
+}
+.div_description_boutique
+{
+    color: var(--noir);
+    font-size: 16px;
+}
+.container_message_edit_social_media_boutique
+{
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+}
+.div_edit_message_boutique
+{
+    width: 50%;
+    padding-right: 10px;
+    padding-top: 10px;
+}
+.editer_boutique
+{
+    padding: 10px;
+    background: var(--base_1_couleur);
+    color: var(--blanc);
+    border-radius: 10px;
+    text-decoration: none;
+    margin-right: 10px;
+}
+.editer_boutique:active
+{
+    opacity: .5;
+}
+.editer_boutique.message
+{
+    background: var(--blanc);
+    color: var(--noir);
+    border: 1px solid var(--noir);
+}
+.social_media_boutique
+{
+    width: 50%;
+    height: auto;
+}
+.social_media_boutique
+a
+{
+    display: inline-block;
+    text-decoration: none;
+    background: var(--base_2_couleur);
+    color: var(--noir);
+    padding: 5px;
+    border-radius: 10px;
+    margin-right: 10px;
+    margin-top: 10px;
+    font-size: 20px;
+}
+
+
+
+
+
 
 
 

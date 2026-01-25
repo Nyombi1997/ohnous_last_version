@@ -14,6 +14,8 @@
                             "Article" => ["controller" => 'Home', "method" => 'showArticles'],
                             "article" => ["controller" => 'Home', "method" => 'showArticles'],
 
+                            "connexion" => ["controller" => 'Home', "method" => 'showLogin'],
+
                             "q" => ["controller" => 'Home', "method" => 'showSearch'],
                         ];
 

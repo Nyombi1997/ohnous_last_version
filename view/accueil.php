@@ -105,16 +105,12 @@
                 spaceBetween: 10,
                 freeMode: true,
                 autoplay: {
-                    delay: 1000,
+                    delay: 2500,
                     disableOnInteraction: true,
                 }
             });
         </script>
 	</div>
-
-	<style>
-
-	</style>
 
 	<div class="container_affiche_produit">
 		<?php

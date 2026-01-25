@@ -240,35 +240,35 @@ function rechercheArticles(value)
                             prix_article_depuis_recherche = '| '+item.prix ? '- ' + item.prix + ' USD' : '';
                             icone_article_depuis_recherche = '<i class="fa-solid fa-magnifying-glass-dollar"></i>';
                         }
-                        element.innerHTML += `<a href="article/${item.slug}" class="link"> ${icone_article_depuis_recherche} ${item.label} ${prix_article_depuis_recherche}</a>`;
+                        element.innerHTML += `<a href="/article/${item.slug}" class="link"> ${icone_article_depuis_recherche} ${item.label} ${prix_article_depuis_recherche}</a>`;
                     })
                 }
                 /* si c'est une boutique */
                 else if(item.source == "boutiques")
                 {
                     donnee_de_recherche.forEach(function (element){
-                        element.innerHTML += `<a href="boutique/${item.slug}" class="link"><i class="fa-solid fa-store"></i> ${item.label}</a>`;
+                        element.innerHTML += `<a href="/boutique/${item.slug}" class="link"><i class="fa-solid fa-store"></i> ${item.label}</a>`;
                     })
                 }
                 /* si c'est une categorie */
                 else if(item.source == "categorie")
                 {
                     donnee_de_recherche.forEach(function (element){
-                        element.innerHTML += `<a href="categorie/${item.slug}" class="link" onclick="filtre_categorie('${item.id}', '${item.label}', '${item.slug}', event, 'ok')"><i class="fa-solid fa-layer-group"></i> ${item.label}</a>`;
+                        element.innerHTML += `<a href="/categorie/${item.slug}" class="link" onclick="filtre_categorie('${item.id}', '${item.label}', '${item.slug}', event, 'ok')"><i class="fa-solid fa-layer-group"></i> ${item.label}</a>`;
                     })
                 }
                 /* si c'est un type */
                 else if(item.source == "types")
                 {
                     donnee_de_recherche.forEach(function (element){
-                        element.innerHTML += `<a href="type/${item.slug}" class="link" onclick="filtre_types('${item.id}', '${item.label}', '${item.slug}', event, 'ok')"><i class="fa-solid fa-list"></i> ${item.label}</a>`;
+                        element.innerHTML += `<a href="/type/${item.slug}" class="link" onclick="filtre_types('${item.id}', '${item.label}', '${item.slug}', event, 'ok')"><i class="fa-solid fa-list"></i> ${item.label}</a>`;
                     })
                 }
                 /* si c'est une taille */
                 else if(item.source == "tailles")
                 {
                     donnee_de_recherche.forEach(function (element){
-                        element.innerHTML += `<a href="taille/${item.slug}" class="link" onclick="filtre_tailles('${item.id}', '${item.label}', '${item.slug}', event, 'ok')"><i class="fa-solid fa-up-right-and-down-left-from-center"></i> ${item.label}</a>`;
+                        element.innerHTML += `<a href="/taille/${item.slug}" class="link" onclick="filtre_tailles('${item.id}', '${item.label}', '${item.slug}', event, 'ok')"><i class="fa-solid fa-up-right-and-down-left-from-center"></i> ${item.label}</a>`;
                     })
                 }
             })

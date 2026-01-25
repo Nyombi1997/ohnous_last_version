@@ -29,10 +29,11 @@
         $filters = [
             'category' => $categorie,
             'type' => $types,
-            'taille' => $taille
+            'taille' => $taille,
+            'boutique' => $boutique
         ];
         /* si y'a au moins une demande */
-        if($categorie!=0 || $types!=0 || $taille!=0)
+        if($categorie!=0 || $types!=0 || $taille!=0 || $boutique!=0)
         {
             $msg = select_articles_filtre($bdd, $filters, $limit = 12, $offset, $order = null, $random = false);
             foreach($msg as $msg_)

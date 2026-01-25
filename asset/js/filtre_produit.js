@@ -138,7 +138,6 @@ function gestionAffichageArticle()
             offset : offset,
         },
         function(data){
-            setUrlAndTitle();
             /* si c'est la première fois qu'on charge des images mais qu'il n'y aucun produit disponible */
             if(page==1 && data.msg=="")
             {

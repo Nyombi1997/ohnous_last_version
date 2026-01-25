@@ -38,7 +38,7 @@
             if (basename($templatePath) != 'accueil.php' && basename($templatePath) == 'articles.php') {
                 $GLOBALS['others'] = 'ok';
             }
-            else if(basename($templatePath) != 'articles.php')
+            else if(basename($templatePath) != 'articles.php' && basename($templatePath) != 'accueil.php')
             {
                 $GLOBALS['others'] = 'ok';
                 $GLOBALS['no_filtre'] = 'ok';
