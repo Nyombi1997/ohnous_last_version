@@ -127,7 +127,7 @@
             <a href="/accueil"><img src="<?php echo ASSET; ?>images/icons/logo-2.png" loading="lazy" alt="Logo OhNous"></a>
             <!-- menu avec panier -->
             <div class="menu_banniere_droit">
-                <a href="" class="menu_banniere_link"><i class="fa fa-user"></i></a>
+                <a href="/connexion" class="menu_banniere_link"><i class="fa fa-user"></i></a>
                 <a href="#" class="menu_banniere_link" id="afficher_panier"><i class="fa fa-shopping-bag"></i><span id="nombre_total_panier"><?= $nombre_article ?></span></a>
             </div>
         </div>

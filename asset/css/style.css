@@ -399,13 +399,20 @@ a
     text-align: center; /* Texte centré */
     border-radius: 50px;
 }
+.intro-hero.plus
+{
+    margin: 0px 0px;
+    height: calc(100vh - 120px);
+
+}
 .intro-hero.sans_categorie
 {
     margin-top: 15px;
-    height: 350px;
+    height: 600px;
 }
 
-.blob-bg {
+.blob-bg 
+{
     position: absolute;
     width: 250px; /* Taille de la bulle sur écran large */
     height: 250px;
@@ -414,6 +421,12 @@ a
     border-radius: 50%;
     animation: blob 5s infinite ease-in-out;
     z-index: 1;
+}
+.plus
+.blob-bg
+{
+    width: 400px; /* Taille de la bulle sur écran large */
+    height: 400px;
 }
 
 @keyframes blob {
@@ -1357,6 +1370,10 @@ a
     margin-top: 10px;
     font-size: 20px;
 }
+
+
+/* login */
+
 
 
 

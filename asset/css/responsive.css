@@ -37,6 +37,12 @@
         width: 150px; /* Taille de la bulle sur écran large */
         height: 150px;
     }
+    .plus
+    .blob-bg
+    {
+        width: 300px; /* Taille de la bulle sur écran large */
+        height: 300px;
+    }
     .sans_categorie
     .intro-text h1
     {

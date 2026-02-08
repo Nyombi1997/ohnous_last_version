@@ -28,8 +28,8 @@
         public function showLogin ()
         {
             /* ramener la vers all articles */
-            $myView = new View('articles');
-            $myView->render('Ohnous | DES BOUTIQUES ET DES ARTICLES DE QUALITÉ !');
+            $myView = new View('login');
+            $myView->render('Ohnous | CONNECTEZ VOUS ET NE RATEZ RIEN DE TOUTES NOS NOUVEAUTÉS !');
         }
     }
 ?>
