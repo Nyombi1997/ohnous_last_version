@@ -15,6 +15,7 @@
                             "article" => ["controller" => 'Home', "method" => 'showArticles'],
 
                             "connexion" => ["controller" => 'Home', "method" => 'showLogin'],
+                            "choix-compte" => ["controller" => 'Home', "method" => 'showAccountChoice'],
 
                             "q" => ["controller" => 'Home', "method" => 'showSearch'],
                         ];

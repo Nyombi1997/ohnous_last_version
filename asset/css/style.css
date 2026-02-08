@@ -112,6 +112,10 @@ input[type="number"] {
 {
     opacity: .5;
 }
+.text-center
+{
+    text-align: center;
+}
 /* logo */
 .logo
 {
@@ -1373,7 +1377,161 @@ a
 
 
 /* login */
-
+.container_login_page
+{
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.div_login_page
+{
+    width: 50%;
+    max-height: 90%;
+    overflow: auto;
+    display: flex;
+    flex-wrap: wrap;
+    padding: 10px;
+    background: rgba(255, 255, 255, .5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 10px;
+}
+.div_detail_login_page
+{
+    width: 100%;
+}
+.div_icone_login_page
+{
+    width: 100%;
+    padding: 10px 0px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.icone_login_page
+{
+    display: inline-block;
+    background: var(--blanc);
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: rgba(0, 0, 0, 0.06) 0px 2px 4px 0px inset;
+}
+.titre_login_page
+{
+    padding: 10px;
+    width: 100%;
+    text-align: center;
+    font-size: 20px;
+    color: var(--noir);
+    font-weight: bold;
+}
+.form_ohnous
+{
+    width: 100%;
+    margin: 10px 0px;
+    border: 1px solid var(--griz);
+    background: var(--blanc);
+    font-size: 16px;
+    border-radius: 10px;
+    padding: 5px;
+    padding-left: 25px;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+    height: 35px;
+}
+.form_ohnous
+input
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 5px;
+    font-size: 16px;
+    padding-left: 30px;
+    border: none;
+    background: var(--blanc);
+    outline: none;
+    display: flex;
+    justify-content: center;
+    align-items:first baseline;
+}
+.form_ohnous.password
+input
+{
+    padding-right: 30px;
+}
+.form_ohnous
+i
+{
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.form_ohnous
+i.vu_password_form_ohnous
+{
+    right: 0;
+    left: auto;
+    cursor: pointer;
+}
+.form_ohnous
+i.vu_password_form_ohnous:active
+{
+    opacity: .5;
+    border-left: 1px solid var(--griz);
+}
+.form_ohnous
+button
+{
+    width: 100%;
+}
+.form_ohnous.word,
+.form_ohnous.submit
+{
+    background: none;
+    border: none;
+    height: auto;
+    padding: 0 0;
+}
+.form_ohnous
+a
+{
+    text-decoration: none;
+    outline: none;
+    display: block;
+    width: 100%;
+    text-align: right;
+    color: var(--bleu);
+    text-decoration: underline;
+    text-underline-offset: 2.5px;
+    font-size: 16px;
+}
+.form_ohnous
+a.link
+{
+    text-align: center;
+    color: var(--noir);
+    font-size: 20px;
+    font-weight: 600;
+    text-underline-offset: 3px;
+}
 
 
 

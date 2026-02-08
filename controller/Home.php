@@ -31,5 +31,11 @@
             $myView = new View('login');
             $myView->render('Ohnous | CONNECTEZ VOUS ET NE RATEZ RIEN DE TOUTES NOS NOUVEAUTÉS !');
         }
+        public function showAccountChoice ()
+        {
+            /* ramener la vers all articles */
+            $myView = new View('choice-signin');
+            $myView->render('Ohnous | INSCRIVEZ VOUS ET NE RATEZ RIEN DE TOUTES NOS NOUVEAUTÉS !');
+        }
     }
 ?>
