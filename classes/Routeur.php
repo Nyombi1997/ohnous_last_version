@@ -16,6 +16,7 @@
 
                             "connexion" => ["controller" => 'Home', "method" => 'showLogin'],
                             "choix-compte" => ["controller" => 'Home', "method" => 'showAccountChoice'],
+                            "inscription-boutique" => ["controller" => 'Home', "method" => 'showSigninStore'],
 
                             "q" => ["controller" => 'Home', "method" => 'showSearch'],
                         ];

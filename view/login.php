@@ -1,4 +1,7 @@
 
+<script>
+    let home_page = true;
+</script>
 	<!-- intro -->
 	<div class="intro-hero plus">
 		<div class="blob-bg"></div>

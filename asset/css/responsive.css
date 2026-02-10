@@ -168,6 +168,21 @@
         cursor: initial;
     }
     /* login */
+    .div_login_page
+    {
+        width: 90%;
+    }
+    .choix_de_compte
+    {
+        width: 100%;
+        height: 25vh;
+        border: none;
+    }
+    .choix_de_compte:first-child
+    {
+        border: none;
+        border-bottom: 10px solid var(--blanc);
+    }
 
 
 

@@ -1,3 +1,6 @@
+<script>
+    let home_page = true;
+</script>
 <!DOCTYPE html>
 <html lang="fr">
 <head>

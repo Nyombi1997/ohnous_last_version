@@ -37,5 +37,11 @@
             $myView = new View('choice-signin');
             $myView->render('Ohnous | INSCRIVEZ VOUS ET NE RATEZ RIEN DE TOUTES NOS NOUVEAUTÉS !');
         }
+        public function showSigninStore ()
+        {
+            /* ramener la vers inscription comme boutique */
+            $myView = new View('signin-store.php');
+            $myView->render('Ohnous | INSCRIVEZ VOTRE BOUTIQUE COMMENCEZ L\'EXPERIENCE OHNOUS !');
+        }
     }
 ?>
