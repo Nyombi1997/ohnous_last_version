@@ -40,8 +40,32 @@
         public function showSigninStore ()
         {
             /* ramener la vers inscription comme boutique */
-            $myView = new View('signin-store.php');
+            $myView = new View('signin-store');
             $myView->render('Ohnous | INSCRIVEZ VOTRE BOUTIQUE COMMENCEZ L\'EXPERIENCE OHNOUS !');
+        }
+        public function showStore ()
+        {
+            /* ramener la vers  boutique */
+            $myView = new View('boutique');
+            $myView->render('Ohnous | BOUTIQUE OHNOUS !');
+        }
+        public function showLogout ()
+        {
+            /* ramener la vers  deconnexion */
+            $myView = new View('logout');
+            $myView->render('Ohnous | BOUTIQUE OHNOUS !');
+        }
+        public function showEditStore ()
+        {
+            /* ramener la vers  editer boutique */
+            $myView = new View('edit-boutique');
+            $myView->render('Ohnous | MODIFIER BOUTIQUE OHNOUS !');
+        }
+        public function showEditStoreProfile ()
+        {
+            /* ramener la vers  editer profile boutique */
+            $myView = new View('edit-profile-boutique');
+            $myView->render('Ohnous | MODIFIER BOUTIQUE OHNOUS !');
         }
     }
 ?>

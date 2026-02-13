@@ -1,3 +1,8 @@
+<?php
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -127,7 +132,40 @@
             <a href="/accueil"><img src="<?php echo ASSET; ?>images/icons/logo-2.png" loading="lazy" alt="Logo OhNous"></a>
             <!-- menu avec panier -->
             <div class="menu_banniere_droit">
-                <a href="/connexion" class="menu_banniere_link"><i class="fa fa-user"></i></a>
+                    <?php
+                        if(isset($_SESSION['store_ohnous_987654321']))
+                        {
+                            $verif_boutique = select_bdd($bdd, "boutiques", $where = "unique_id = '".$_SESSION['store_ohnous_987654321']."'", $limit = null, $offset = 0, $order = null, $random = false);
+                            if(count($verif_boutique)==0)
+                            {
+                                echo '
+                                    <a href="/connexion" class="menu_banniere_link">
+                                        <i class="fa fa-user"></i>
+                                    </a>';
+                            }
+                            elseif($verif_boutique[0]['profile'] == "")
+                            {
+                                echo '
+                                    <a href="/boutique" class="menu_banniere_link">
+                                        <i class="fa-solid fa-store"></i>
+                                    </a>';
+                            }
+                            else
+                            {
+                                echo '
+                                    <a href="/boutique" class="menu_banniere_link">
+                                        <img src="'.$verif_boutique[0]['profile'].'" alt="" class="">
+                                    </a>';
+                            }
+                        }
+                        else
+                        {
+                            echo '
+                                <a href="/connexion" class="menu_banniere_link">
+                                    <i class="fa fa-user"></i>
+                                </a>';
+                        }
+                    ?>
                 <a href="#" class="menu_banniere_link" id="afficher_panier"><i class="fa fa-shopping-bag"></i><span id="nombre_total_panier"><?= $nombre_article ?></span></a>
             </div>
         </div>
@@ -374,6 +412,14 @@
         'client_id INT NOT NULL',
         'article_id INT NOT NULL',
         'note DOUBLE NOT NULL',
+        'date_ajout DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP'
+    ]);
+    createTable('messages', [
+        'id INT AUTO_INCREMENT PRIMARY KEY',
+        'client_id INT NOT NULL',
+        'boutique_id INT NOT NULL',
+        'from_id INT NOT NULL',
+        'messages TEXT NOT NULL',
         'date_ajout DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP'
     ]);
 ?>
@@ -686,6 +732,110 @@
         $bdd->exec("
             ALTER TABLE boutiques
             ADD profile TEXT NULL AFTER slug
+        ");
+    }
+
+    /* ajouter unique_id dans boutiques */
+    $table = "boutiques";
+    $column = "unique_id";
+
+    $sql = "
+        SELECT COUNT(*) 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = :table
+        AND COLUMN_NAME = :column
+    ";
+
+    $stmt = $bdd->prepare($sql);
+    $stmt->execute([
+        ':table'  => $table,
+        ':column' => $column
+    ]);
+
+    $exists = $stmt->fetchColumn();
+    if ($exists == 0) {
+        $bdd->exec("
+            ALTER TABLE boutiques
+            ADD unique_id TEXT NULL AFTER id
+        ");
+    }
+
+    /* ajouter lu dans messages */
+    $table = "messages";
+    $column = "lu";
+
+    $sql = "
+        SELECT COUNT(*) 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = :table
+        AND COLUMN_NAME = :column
+    ";
+
+    $stmt = $bdd->prepare($sql);
+    $stmt->execute([
+        ':table'  => $table,
+        ':column' => $column
+    ]);
+
+    $exists = $stmt->fetchColumn();
+    if ($exists == 0) {
+        $bdd->exec("
+            ALTER TABLE messages
+            ADD lu INT NOT NULL AFTER messages
+        ");
+    }
+
+    /* ajouter fileId dans boutiques */
+    $table = "boutiques";
+    $column = "fileId";
+
+    $sql = "
+        SELECT COUNT(*) 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = :table
+        AND COLUMN_NAME = :column
+    ";
+
+    $stmt = $bdd->prepare($sql);
+    $stmt->execute([
+        ':table'  => $table,
+        ':column' => $column
+    ]);
+
+    $exists = $stmt->fetchColumn();
+    if ($exists == 0) {
+        $bdd->exec("
+            ALTER TABLE boutiques
+            ADD fileId TEXT NULL AFTER profile
+        ");
+    }
+
+    /* ajouter fileId dans image_articles */
+    $table = "image_articles";
+    $column = "fileId";
+
+    $sql = "
+        SELECT COUNT(*) 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = :table
+        AND COLUMN_NAME = :column
+    ";
+
+    $stmt = $bdd->prepare($sql);
+    $stmt->execute([
+        ':table'  => $table,
+        ':column' => $column
+    ]);
+
+    $exists = $stmt->fetchColumn();
+    if ($exists == 0) {
+        $bdd->exec("
+            ALTER TABLE image_articles
+            ADD fileId TEXT NULL AFTER img
         ");
     }
 ?>

@@ -213,6 +213,62 @@
         }
         return $stmt->execute();
     }
+    // Fonction pour générer un slug à partir d'une chaîne de caractères
+    function generateSlug($string,$separator = '-')
+    {
+        global $bdd;
+        // Génération du slug de base
+        $slug = strtolower($string);
+        $slug = iconv('UTF-8', 'ASCII//TRANSLIT', $slug);
+        $slug = preg_replace('/[^a-z0-9]+/i', $separator, $slug);
+        $slug = preg_replace('/' . preg_quote($separator, '/') . '+/', $separator, $slug);
+        $slug = trim($slug, $separator);
+
+        $baseSlug = $slug;
+        $i = 1;
+
+        // Récupérer toutes les tables qui ont une colonne "slug"
+        $sql = "
+            SELECT TABLE_NAME
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+            AND COLUMN_NAME = 'slug'
+        ";
+
+        $tables = $bdd->query($sql)->fetchAll(PDO::FETCH_COLUMN);
+
+        if (empty($tables)) {
+            return $slug; // aucune table avec slug → paix intérieure
+        }
+
+        // Vérifier l’unicité globale
+        do {
+            $exists = false;
+
+            foreach ($tables as $table) {
+                $check = $bdd->prepare("
+                    SELECT 1 
+                    FROM `$table`
+                    WHERE slug = :slug
+                    LIMIT 1
+                ");
+                $check->execute(['slug' => $slug]);
+
+                if ($check->fetch()) {
+                    $exists = true;
+                    break;
+                }
+            }
+
+            if ($exists) {
+                $slug = $baseSlug . $separator . $i;
+                $i++;
+            }
+
+        } while ($exists);
+
+        return $slug;
+    }
     /* créer un slug aux s'il y'en a pas */
     function createSlugIfNeeded($bdd, $base) {
         $request = "SELECT id, nom FROM $base WHERE slug IS NULL OR slug = ''";

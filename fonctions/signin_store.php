@@ -1,0 +1,59 @@
+<?php
+    include_once "../model/bdd.php";
+    include_once "../model/select.php";
+    header('Content-Type: application/json; charset=utf-8');
+
+    $user_name = html_entity_decode(filter_var($_POST['user_name'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+    $email = html_entity_decode(filter_var($_POST['email'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+    $unique_id = uniqid('user_', true);
+    // Hachage du mot de passe
+    $mdp = password_hash(
+        html_entity_decode(filter_var($_POST['mdp'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)),
+        PASSWORD_DEFAULT
+    );
+
+    $verif_pseudo = only_select("boutiques", "nom = '$user_name'", $order = null, $limit = null);
+    $verif_email = only_select("boutiques", "adresse_email = '$email'", $order = null, $limit = null);
+    
+    if($verif_pseudo)
+    {
+        $results = [
+            "result" => "error",
+            "msg" => "Le nom de boutique est déjà utiliser"
+        ];
+    }
+    else if($verif_email)
+    {
+        $results = [
+            "result" => "error",
+            "msg" => "L'adresse email est déjà utiliser"
+        ];
+    }
+    else
+    {
+        $insert_data = [
+            "nom" => $user_name,
+            "adresse_email" => $email,
+            "mdp" => $mdp,
+            "unique_id" => $unique_id
+        ];
+
+        insert_bdd($bdd, "boutiques", $insert_data);
+
+        /* creer des slugs s'il y'en a pas */
+        createSlugIfNeeded($bdd, "boutiques");
+
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $_SESSION['store_ohnous_987654321'] = $unique_id;
+
+        $results = [
+            "result" => "ok",
+            "msg" => ""
+        ];
+    }
+
+    // Retour en JSON
+    echo json_encode($results, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+?>

@@ -171,6 +171,12 @@ input[type="number"] {
     align-items: center;
     justify-content: center;
 }
+.menu_banniere_link img
+{
+    height: 18px;
+    width: 18px;
+    border-radius: 50%;
+}
 .menu_banniere_link:hover
 {
     background: var(--base_3_couleur);
@@ -1356,6 +1362,20 @@ img
     color: var(--noir);
     border: 1px solid var(--noir);
 }
+.editer_boutique
+span
+{
+    display: inline-flex;
+    width: 25px;
+    height: 25px;
+    font-size: 16px;
+    justify-content: center;
+    align-items: center;
+    background: var(--base_2_couleur);
+    border-radius: 50%;
+    font-weight: 800;
+    color: var(--blanc);
+}
 .social_media_boutique
 {
     width: 50%;
@@ -1433,6 +1453,7 @@ a
     color: var(--noir);
     font-weight: bold;
 }
+.choix_form_ohnous,
 .form_ohnous
 {
     width: 100%;
@@ -1447,6 +1468,28 @@ a
     position: relative;
     overflow: hidden;
     height: 35px;
+}
+.choix_form_ohnous
+{
+    background: none;
+    height: auto;
+}
+.choix_form_ohnous
+a
+{
+    display: inline-block;
+    padding: 10px;
+    color: var(--noir);
+    background: var(--blanc);
+    text-decoration: none;
+    margin: 10px;
+    border-radius: 10px;
+    border: 1px solid var(--griz);
+}
+.choix_form_ohnous
+a:active
+{
+    opacity: .5;
 }
 .form_ohnous
 input
@@ -1595,6 +1638,31 @@ i
     font-weight: 800;
     color: var(--base_1_couleur_nuance_1);
     letter-spacing: 2.5px;
+}
+.form_edit_boutique
+{
+    padding: 10px 0px;
+    border-top: 2px solid var(--griz);
+}
+.div_edit_profil_boutique
+{
+    width: 100%;
+    padding: 5px 0px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.edit_profil_boutique
+{
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    overflow: hidden;
+}
+.edit_profil_boutique
+img
+{
+    width: 100%;
 }
 
 

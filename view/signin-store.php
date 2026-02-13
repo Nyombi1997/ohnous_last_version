@@ -20,7 +20,9 @@
                     <form method="POST" action="" class="div_form_ohnous" id="form">
                         <div class="form_ohnous">
                             <i class="fa-solid fa-store"></i>
-                            <input type="text" name="" id="nom_boutique" autocomplete="off" placeholder="Nom boutique" required>
+                            <input type="text" name="" id="nom" autocomplete="off" placeholder="Nom boutique" required>
+                        </div>
+                        <div class="choix_form_ohnous null" id="choix_form_ohnous">
                         </div>
                         <div class="form_ohnous">
                             <i class="fa-solid fa-envelope"></i>

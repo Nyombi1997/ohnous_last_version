@@ -1,61 +1,4 @@
 <?php
-    // Fonction pour générer un slug à partir d'une chaîne de caractères
-    function generateSlug($string,$separator = '-')
-    {
-        global $bdd;
-        // Génération du slug de base
-        $slug = strtolower($string);
-        $slug = iconv('UTF-8', 'ASCII//TRANSLIT', $slug);
-        $slug = preg_replace('/[^a-z0-9]+/i', $separator, $slug);
-        $slug = preg_replace('/' . preg_quote($separator, '/') . '+/', $separator, $slug);
-        $slug = trim($slug, $separator);
-
-        $baseSlug = $slug;
-        $i = 1;
-
-        // Récupérer toutes les tables qui ont une colonne "slug"
-        $sql = "
-            SELECT TABLE_NAME
-            FROM INFORMATION_SCHEMA.COLUMNS
-            WHERE TABLE_SCHEMA = DATABASE()
-            AND COLUMN_NAME = 'slug'
-        ";
-
-        $tables = $bdd->query($sql)->fetchAll(PDO::FETCH_COLUMN);
-
-        if (empty($tables)) {
-            return $slug; // aucune table avec slug → paix intérieure
-        }
-
-        // Vérifier l’unicité globale
-        do {
-            $exists = false;
-
-            foreach ($tables as $table) {
-                $check = $bdd->prepare("
-                    SELECT 1 
-                    FROM `$table`
-                    WHERE slug = :slug
-                    LIMIT 1
-                ");
-                $check->execute(['slug' => $slug]);
-
-                if ($check->fetch()) {
-                    $exists = true;
-                    break;
-                }
-            }
-
-            if ($exists) {
-                $slug = $baseSlug . $separator . $i;
-                $i++;
-            }
-
-        } while ($exists);
-
-        return $slug;
-    }
-
     /* add number of days */
     function ajouter_jours($date, $nb_jours)
     {
@@ -170,5 +113,29 @@
     /* id pour le panier */
     function cartKey($id, $size) {
         return $id . '_' . $size; 
+    }
+    /* gestion nombre */
+    function formatNumberShort($number) {
+        if ($number >= 1000000000) {
+            return round($number / 1000000000, 1) . 'B';
+        } elseif ($number >= 1000000) {
+            return round($number / 1000000, 1) . 'M';
+        } elseif ($number >= 1000) {
+            return round($number / 1000, 1) . 'K';
+        } else {
+            return $number;
+        }
+    }
+    /* gestion 9plus */
+    function gestion_9_plus($number)
+    {
+        if($number>9)
+        {
+            return "+9";
+        }
+        else
+        {
+            return $number;
+        }
     }
 ?>

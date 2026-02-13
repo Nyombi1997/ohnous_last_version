@@ -17,6 +17,11 @@
                             "connexion" => ["controller" => 'Home', "method" => 'showLogin'],
                             "choix-compte" => ["controller" => 'Home', "method" => 'showAccountChoice'],
                             "inscription-boutique" => ["controller" => 'Home', "method" => 'showSigninStore'],
+                            "deconnexion" => ["controller" => 'Home', "method" => 'showLogout'],
+
+                            "boutique" => ["controller" => 'Home', "method" => 'showStore'],
+                            "editer-boutique" => ["controller" => 'Home', "method" => 'showEditStore'],
+                            "editer-profile-boutique" => ["controller" => 'Home', "method" => 'showEditStoreProfile'],
 
                             "q" => ["controller" => 'Home', "method" => 'showSearch'],
                         ];

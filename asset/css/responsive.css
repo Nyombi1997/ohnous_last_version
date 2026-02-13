@@ -183,6 +183,12 @@
         border: none;
         border-bottom: 10px solid var(--blanc);
     }
+    .choix_form_ohnous
+    a
+    {
+        padding: 5px;
+        margin: 5px;
+    }
 
 
 

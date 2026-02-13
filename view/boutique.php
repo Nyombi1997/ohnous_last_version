@@ -1,4 +1,7 @@
 <?php
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
     /* si boutique */
     if(isset($GLOBALS['boutique']))
     {
@@ -39,6 +42,41 @@
             exit();            
         }
     }
+    else if(isset($_SESSION['store_ohnous_987654321']))
+    {
+        $boutique = select_bdd($bdd, "boutiques", $where = 'unique_id = "'.$_SESSION['store_ohnous_987654321'].'"', $limit = null, $offset = 0, $order = null, $random = false);
+        if(count($boutique)!=0)
+        {
+            $boutique = $boutique[0];
+            $backgrounds = "";
+            if($boutique['backgrounds']!='')
+            {
+                $backgrounds = 'style="background : '.$boutique['backgrounds'].';"';
+            }
+            $profile = '<img src="'.ASSET.'images/profile/default.jpg" alt="" srcset="">';
+            if($boutique['profile']!='')
+            {
+                $profile = '
+                            <img 
+                                class="blur-up"
+                                src="'.$boutique['profile'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-50,blur-10" 
+                                srcset="
+                                    '.$boutique['profile'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-80 400w,
+                                    '.$boutique['profile'].'?updatedAt=1765131265242/image.webp?tr=w-800,q-80 800w,
+                                    '.$boutique['profile'].'?updatedAt=1765131265242/image.webp?tr=w-1200,q-80 1200w"
+                                sizes="(max-width:768px) 90vw, 600px"
+                                loading="lazy"
+                                class="blur-up"
+                            />';
+            }
+        }
+        else
+        {
+            // Rediriger vers une page d'erreur ou afficher un message
+            header("Location:/404");
+            exit();
+        }
+    }
     else
     {
         // Rediriger vers une page d'erreur ou afficher un message
@@ -59,9 +97,9 @@
 
         <!-- logout -->
         <?php
-            if(isset($_SESSION['SESSION_OHNOUS_BOUTIQUE_1997']))
+            if(isset($_SESSION['store_ohnous_987654321']))
             {
-                echo '<a href="" class="deconnexion_boutique">Deconnexion</a>';
+                echo '<a href="/deconnexion" class="deconnexion_boutique">Deconnexion</a>';
             }
         ?>
 
@@ -88,13 +126,21 @@
         <div class="container_message_edit_social_media_boutique">
             <div class="div_edit_message_boutique">
                 <?php
-                    if(isset($_SESSION['SESSION_OHNOUS_BOUTIQUE_1997']))
+                    if(isset($_SESSION['store_ohnous_987654321']))
                     {
                         echo '
-                        <a href="" class="editer_boutique">Editer</a>';
+                        <a href="/editer-boutique" class="editer_boutique">Editer</a>';
                     }
                 ?>
-                <a href="" class="editer_boutique message">Message</a>
+                <a href="" class="editer_boutique message">Message <?php
+                    if(isset($_SESSION['store_ohnous_987654321']))
+                    {
+                        $messages = select_bdd($bdd, "messages", $where = "boutique_id = '".$boutique['id']."' AND lu = '0'", $limit = null, $offset = 0, $order = null, $random = false);
+                        $messages = gestion_9_plus(count($messages));
+                        echo '
+                        <span>'.$messages.'</span>';
+                    }
+                ?></a>
             </div>
             <div class="social_media_boutique">
                 <?php
