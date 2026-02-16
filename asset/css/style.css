@@ -69,6 +69,19 @@ input[type="number"] {
     appearance: textfield;
 }
 /* btn */
+.rotate
+{
+    display: inline-block;
+    animation: rotation 2s linear infinite;
+}
+@keyframes rotation {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
 .btn_ohnous,
 .btn_ohnous.btn-primary
 {
@@ -81,6 +94,9 @@ input[type="number"] {
     border-radius: 5px;
     cursor: pointer;
     transition: .5s;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
 }
 .btn_ohnous:hover,
 .btn_ohnous.btn-primary:hover
@@ -1453,6 +1469,15 @@ a
     color: var(--noir);
     font-weight: bold;
 }
+.text_login_page
+{
+    padding: 10px;
+    width: 100%;
+    text-align: center;
+    font-size: 16px;
+    color: var(--noir);
+    font-weight: normal;
+}
 .choix_form_ohnous,
 .form_ohnous
 {
@@ -1526,6 +1551,17 @@ i
     display: flex;
     justify-content: center;
     align-items: center;
+}
+.form_ohnous.submit
+i
+{
+    position: relative;
+    z-index: 1;
+    top: auto;
+    left: auto;
+    bottom: auto;
+    width: auto;
+    display: inline-block;
 }
 .form_ohnous
 i.vu_password_form_ohnous

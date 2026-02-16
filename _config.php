@@ -20,6 +20,7 @@
             define('CLASSES', ROOT . 'classes/');
             define('MODEL', ROOT . 'model/');
             define('FONCTION', ROOT . 'fonctions/');
+            define('VENDOR', ROOT . 'vendor/');
             define('PAGE', ROOT . 'page/');
             
             // Qualités des images AVEC hauteurs définies

@@ -143,7 +143,6 @@ form.addEventListener("submit",function(e){
     /* si c'est une incription boutique */
     if(new_boutique != undefined)
     {
-        console.log(email.value.trim());
         $.post("fonctions/signin_store.php",
             {
                 email: email.value.trim(),

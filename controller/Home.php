@@ -67,5 +67,17 @@
             $myView = new View('edit-profile-boutique');
             $myView->render('Ohnous | MODIFIER BOUTIQUE OHNOUS !');
         }
+        public function showPassword ()
+        {
+            /* ramener la vers  changer mot de passe */
+            $myView = new View('changer-mot-de-passe');
+            $myView->render('Ohnous | MODIFIER MOT DE PASSE OHNOUS !');
+        }
+        public function showNewPassword ()
+        {
+            /* ramener la vers  nouveau mot de passe */
+            $myView = new View('nouveau-mot-de-passe');
+            $myView->render('Ohnous | NOUVEAU MOT DE PASSE OHNOUS !');
+        }
     }
 ?>

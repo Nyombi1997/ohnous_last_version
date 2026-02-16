@@ -34,6 +34,7 @@
                                 class="blur-up"
                             />';
             }
+
         }
         else
         {
@@ -68,6 +69,16 @@
                                 loading="lazy"
                                 class="blur-up"
                             />';
+            }
+            /* verifier si l'utilisateur a déjà reçu l'email de bienvenue */
+            $verif_welcome_email = select_bdd($bdd, "bienvenue_email", $where = 'client_unique_id = "'.$boutique['unique_id'].'"', $limit = null, $offset = 0, $order = null, $random = false);
+            if(count($verif_welcome_email)==0)
+            {
+                welcome($email = $boutique['adresse_email']);
+                $insert_data = [
+                    "client_unique_id" => $boutique['unique_id']
+                ];
+                insert_bdd($bdd, "bienvenue_email", $insert_data);
             }
         }
         else

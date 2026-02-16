@@ -18,3 +18,4 @@ Ajouter la possibilité de charger des vidéos
 ajouter la possibilité de verifier l'email que ce soit à la connexion ou que ce soit au moment de changer d'email
 bloquer toutes boutiques et toute article et tout filtre et recherche ainsi que slug les concernant quand ils sont disable.
 ajouter les addresses des réseaux sociaux et la possibilité d'envoyer directement des messages whatsapp
+mettre le chargement dans tous les procédures pour le login

@@ -422,6 +422,11 @@
         'messages TEXT NOT NULL',
         'date_ajout DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP'
     ]);
+    createTable('bienvenue_email', [
+        'id INT AUTO_INCREMENT PRIMARY KEY',
+        'client_unique_id TEXT NULL',
+        'date_ajout DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP'
+    ]);
 ?>
 
 <!-- création des tables slugs, background  -->
@@ -836,6 +841,32 @@
         $bdd->exec("
             ALTER TABLE image_articles
             ADD fileId TEXT NULL AFTER img
+        ");
+    }
+
+    /* ajouter code_password dans boutiques */
+    $table = "boutiques";
+    $column = "code_password";
+
+    $sql = "
+        SELECT COUNT(*) 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = :table
+        AND COLUMN_NAME = :column
+    ";
+
+    $stmt = $bdd->prepare($sql);
+    $stmt->execute([
+        ':table'  => $table,
+        ':column' => $column
+    ]);
+
+    $exists = $stmt->fetchColumn();
+    if ($exists == 0) {
+        $bdd->exec("
+            ALTER TABLE boutiques
+            ADD code_password TEXT NULL AFTER mdp
         ");
     }
 ?>

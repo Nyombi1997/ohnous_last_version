@@ -18,6 +18,9 @@
                             "choix-compte" => ["controller" => 'Home', "method" => 'showAccountChoice'],
                             "inscription-boutique" => ["controller" => 'Home', "method" => 'showSigninStore'],
                             "deconnexion" => ["controller" => 'Home', "method" => 'showLogout'],
+                            "changer-mot-de-passe" => ["controller" => 'Home', "method" => 'showPassword'],
+                            "code-mot-de-passe" => ["controller" => 'Home', "method" => 'showCodePassword'],
+                            "nouveau-mot-de-passe" => ["controller" => 'Home', "method" => 'showNewPassword'],
 
                             "boutique" => ["controller" => 'Home', "method" => 'showStore'],
                             "editer-boutique" => ["controller" => 'Home', "method" => 'showEditStore'],
