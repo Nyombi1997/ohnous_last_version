@@ -25,6 +25,8 @@
                             "boutique" => ["controller" => 'Home', "method" => 'showStore'],
                             "editer-boutique" => ["controller" => 'Home', "method" => 'showEditStore'],
                             "editer-profile-boutique" => ["controller" => 'Home', "method" => 'showEditStoreProfile'],
+                            "activer-boutique" => ["controller" => 'Home', "method" => 'showActiveStore'],
+                            "message" => ["controller" => 'Home', "method" => 'showMessage'],
 
                             "q" => ["controller" => 'Home', "method" => 'showSearch'],
                         ];

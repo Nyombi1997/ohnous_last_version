@@ -427,6 +427,12 @@
         'client_unique_id TEXT NULL',
         'date_ajout DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP'
     ]);
+    createTable('admins', [
+        'id INT AUTO_INCREMENT PRIMARY KEY',
+        'email TEXT NULL',
+        'mdp TEXT NULL',
+        'date_ajout DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP'
+    ]);
 ?>
 
 <!-- création des tables slugs, background  -->
@@ -869,4 +875,32 @@
             ADD code_password TEXT NULL AFTER mdp
         ");
     }
+
+    /* ajouter activer dans boutiques */
+    $table = "boutiques";
+    $column = "activer";
+
+    $sql = "
+        SELECT COUNT(*) 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = :table
+        AND COLUMN_NAME = :column
+    ";
+
+    $stmt = $bdd->prepare($sql);
+    $stmt->execute([
+        ':table'  => $table,
+        ':column' => $column
+    ]);
+
+    $exists = $stmt->fetchColumn();
+    if ($exists == 0) {
+        $bdd->exec("
+            ALTER TABLE boutiques
+            ADD activer INT NOT NULL AFTER backgrounds
+        ");
+    }
 ?>
+
+<!-- les admins -->

@@ -271,3 +271,50 @@ document.querySelectorAll(".vu_password_form_ohnous").forEach(function(element){
         }
     })
 })
+
+/* lire l'écriture de la description */
+let
+description = document.getElementById("description"),
+form_description = document.getElementById("form_description"),
+valid_description = document.getElementById("valid_description");
+form_description.addEventListener("submit",function(e){
+    e.preventDefault();
+    valid_description.setAttribute("disabled","");
+    let temp_btn = valid_description.innerHTML;
+    valid_description.innerHTML = `<i class="fa-solid fa-circle-notch rotate"></i>`;
+    $.post("fonctions/check_edit_description_boutique.php",
+        {
+            description: description.value.trim(),
+        },
+        function(data){
+            if(data.result == "error")
+            {
+                Swal.fire({
+                    icon: "error",
+                    title: data.msg,
+                    text: "",
+                    confirmButtonText: "OK",
+                    confirmButtonColor: "#6775d6"
+                })
+                valid_description.removeAttribute("disabled");
+                valid_description.innerHTML = temp_btn;
+                return;
+            }
+            else
+            {
+                Swal.fire({
+                    icon: "success",
+                    title: "La descriprion de la boutique a été changer !",
+                    text: "",
+                    confirmButtonText: "OK",
+                    confirmButtonColor: "#6775d6",
+                    iconColor: "#6775d6",
+                    timer: 1000
+                })
+                valid_description.removeAttribute("disabled");
+                valid_description.innerHTML = temp_btn;
+            }
+        }
+    )
+
+})

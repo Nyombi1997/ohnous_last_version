@@ -79,5 +79,17 @@
             $myView = new View('nouveau-mot-de-passe');
             $myView->render('Ohnous | NOUVEAU MOT DE PASSE OHNOUS !');
         }
+        public function showActiveStore ()
+        {
+            /* ramener la vers  nouveau mot de passe */
+            $myView = new View('activer-boutique');
+            $myView->render('Ohnous | ACTIVER BOUTIQUE OHNOUS !');
+        }
+        public function showMessage ()
+        {
+            /* ramener la vers  nouveau mot de passe */
+            $myView = new View('message');
+            $myView->render('Ohnous | MESSAGE OHNOUS !');
+        }
     }
 ?>

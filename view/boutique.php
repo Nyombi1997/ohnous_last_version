@@ -140,10 +140,17 @@
                     if(isset($_SESSION['store_ohnous_987654321']))
                     {
                         echo '
-                        <a href="/editer-boutique" class="editer_boutique">Editer</a>';
+                        <a href="/editer-boutique" class="editer_boutique message">Editer</a>';
                     }
                 ?>
-                <a href="" class="editer_boutique message">Message <?php
+                <?php
+                    if(isset($_SESSION['store_ohnous_987654321']) && $boutique['activer'] == 0)
+                    {
+                        echo '
+                        <a href="/activer-boutique" class="editer_boutique message">Activer boutique <i class="fa-solid fa-triangle-exclamation"></i></a>';
+                    }
+                ?>
+                <a href="/message" class="editer_boutique message">Message <?php
                     if(isset($_SESSION['store_ohnous_987654321']))
                     {
                         $messages = select_bdd($bdd, "messages", $where = "boutique_id = '".$boutique['id']."' AND lu = '0'", $limit = null, $offset = 0, $order = null, $random = false);
@@ -195,15 +202,9 @@
                         echo '
                         <a href="'.$boutique['tiktok'].'" target="_blank"><i class="fa-brands fa-tiktok"></i></a>';
                     }
-                ?>
-                
-                
-                
-                
-                
-                
+                ?>                
             </div>
-        </div>   
+        </div>
 
         <!-- div categories -->
         <div class="parent_div_section_categorie">

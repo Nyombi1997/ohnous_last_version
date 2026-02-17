@@ -123,6 +123,15 @@
                                 <a href="/changer-mot-de-passe">Mot de passe oublié ?</a> 
                             </div>
                         </form>
+                        <!-- details -->
+                        <form action="" method="post" id="form_description" class="form_edit_boutique">
+                            <div class="form_ohnous description">
+                                <textarea name="" id="description" placeholder="La description de votre boutique"><?= $boutique['description'] ?></textarea>
+                            </div>
+                            <div class="form_ohnous submit">
+                                <button type="submit" class="btn_ohnous" id="valid_description">Modifier</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
