@@ -4,14 +4,13 @@
 </script>
 	<!-- intro -->
 	<div class="intro-hero plus">
-		<div class="blob-bg"><span id="new_boutique"></span></div>
         <!-- container login page -->
         <div class="container_login_page">
             <div class="div_login_page">
                 <div class="div_detail_login_page">
                     <div class="div_icone_login_page">
                         <div class="icone_login_page">
-                            <i class="fa-solid fa-store"></i>
+                            <i class="fa-solid fa-user"></i>
                         </div>
                     </div>
                     <div class="titre_login_page">
@@ -19,8 +18,8 @@
                     </div>
                     <form method="POST" action="" class="div_form_ohnous" id="form">
                         <div class="form_ohnous">
-                            <i class="fa-solid fa-store"></i>
-                            <input type="text" name="" id="nom" autocomplete="off" placeholder="Nom boutique" required>
+                            <i class="fa-solid fa-user"></i>
+                            <input type="text" name="" id="nom" autocomplete="off" placeholder="Nom utilisateur" required>
                         </div>
                         <div class="choix_form_ohnous null" id="choix_form_ohnous">
                         </div>
@@ -51,4 +50,4 @@
 	</div>
 
     <!-- script signin -->
-	<script src="/asset/js/signin_check.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/signin_check.js") ?>" defer></script> 
+	<script src="/asset/js/signin_check_user.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/signin_check_user.js") ?>" defer></script> 

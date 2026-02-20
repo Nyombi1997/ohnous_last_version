@@ -70,6 +70,7 @@ form.addEventListener("submit",function(e){
             mdp: password[0].value,
         },
         function(data){
+            console.log(data);
             if(data.result == "error")
             {
                 Swal.fire({

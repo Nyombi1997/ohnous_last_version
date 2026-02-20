@@ -10,7 +10,8 @@
         PASSWORD_DEFAULT
     );
     $boutique = select_bdd($bdd, "boutiques", $where = 'adresse_email = "'.$email.'"', $limit = null, $offset = 0, $order = null, $random = false);
-    if(count($boutique)==0)
+    $user = select_bdd($bdd, "utilisateur", $where = 'adresse_email = "'.$email.'"', $limit = null, $offset = 0, $order = null, $random = false);
+    if(count($boutique)==0 && count($user)==0)
     {
         $results = [
             "result" => "error",
@@ -19,20 +20,41 @@
     }
     else
     {
-        if(password_verify($_POST['mdp'], $boutique[0]['mdp']))
+        if(count($boutique)>0)
         {
-            $results = [
-                "result" => "ok",
-                "msg" => "boutique"
-            ];
-            $_SESSION['store_ohnous_987654321'] = $boutique[0]['unique_id'];
+            if(password_verify($_POST['mdp'], $boutique[0]['mdp']))
+            {
+                $results = [
+                    "result" => "ok",
+                    "msg" => "boutique"
+                ];
+                $_SESSION['store_ohnous_987654321'] = $boutique[0]['unique_id'];
+            }
+            else
+            {
+                $results = [
+                    "result" => "error",
+                    "msg" => "L'adresse email ou le mot de passe est incorrect."
+                ];
+            }
         }
-        else
+        else if(count($user)>0)
         {
-            $results = [
-                "result" => "error",
-                "msg" => "L'adresse email ou le mot de passe est incorrect."
-            ];
+            if(password_verify($_POST['mdp'], $user[0]['mdp']))
+            {
+                $results = [
+                    "result" => "ok",
+                    "msg" => "compte"
+                ];
+                $_SESSION['user_ohnous_987654321'] = $user[0]['unique_id'];
+            }
+            else
+            {
+                $results = [
+                    "result" => "error",
+                    "msg" => "L'adresse email ou le mot de passe est incorrect."
+                ];
+            }
         }
     }
 

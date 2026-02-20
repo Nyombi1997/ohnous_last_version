@@ -54,15 +54,15 @@
             "unique_id" => $unique_id
         ];
 
-        insert_bdd($bdd, "boutiques", $insert_data);
+        insert_bdd($bdd, "utilisateur", $insert_data);
 
         /* creer des slugs s'il y'en a pas */
-        createSlugIfNeeded($bdd, "boutiques");
+        createSlugIfNeeded($bdd, "utilisateur");
 
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
-        $_SESSION['store_ohnous_987654321'] = $unique_id;
+        $_SESSION['user_ohnous_987654321'] = $unique_id;
 
         $results = [
             "result" => "ok",

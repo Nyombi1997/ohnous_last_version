@@ -19,3 +19,4 @@ ajouter la possibilité de verifier l'email que ce soit à la connexion ou que c
 bloquer toutes boutiques et toute article et tout filtre et recherche ainsi que slug les concernant quand ils sont disable.
 ajouter les addresses des réseaux sociaux et la possibilité d'envoyer directement des messages whatsapp
 mettre le chargement dans tous les procédures pour le login
+option pour faire certifier le nom d'utilisateur pour les boutiques dont le nom d'utilisateur a été utiliser par un  autre

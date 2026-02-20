@@ -139,7 +139,7 @@
                             if(count($verif_boutique)==0)
                             {
                                 echo '
-                                    <a href="/connexion" class="menu_banniere_link">
+                                    <a href="/connexion-1" class="menu_banniere_link">
                                         <i class="fa fa-user"></i>
                                     </a>';
                             }
@@ -155,6 +155,31 @@
                                 echo '
                                     <a href="/boutique" class="menu_banniere_link">
                                         <img src="'.$verif_boutique[0]['profile'].'" alt="" class="">
+                                    </a>';
+                            }
+                        }
+                        elseif(isset($_SESSION['user_ohnous_987654321']))
+                        {
+                            $verif_user = select_bdd($bdd, "utilisateur", $where = "unique_id = '".$_SESSION['user_ohnous_987654321']."'", $limit = null, $offset = 0, $order = null, $random = false);
+                            if(count($verif_user)==0)
+                            {
+                                echo '
+                                    <a href="/connexion-2" class="menu_banniere_link">
+                                        <i class="fa fa-user"></i>
+                                    </a>';
+                            }
+                            elseif($verif_user[0]['profile'] == "")
+                            {
+                                echo '
+                                    <a href="/compte" class="menu_banniere_link">
+                                        <i class="fa-regular fa-user"></i>
+                                    </a>';
+                            }
+                            else
+                            {
+                                echo '
+                                    <a href="/compte" class="menu_banniere_link">
+                                        <img src="'.$verif_user[0]['profile'].'" alt="" class="">
                                     </a>';
                             }
                         }
@@ -431,6 +456,20 @@
         'id INT AUTO_INCREMENT PRIMARY KEY',
         'email TEXT NULL',
         'mdp TEXT NULL',
+        'date_ajout DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP'
+    ]);
+    createTable('utilisateur', [
+        'id INT AUTO_INCREMENT PRIMARY KEY',
+        'unique_id TEXT NULL',
+        'nom TEXT NULL',
+        'adresse_email TEXT NULL',
+        'mdp TEXT NULL',
+        'code_password TEXT NULL',
+        'description TEXT NULL',
+        'slug TEXT NULL',
+        'profile TEXT NULL',
+        'field TEXT NULL',
+        'backgrounds TEXT NULL',
         'date_ajout DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP'
     ]);
 ?>
@@ -901,6 +940,60 @@
             ADD activer INT NOT NULL AFTER backgrounds
         ");
     }
+
+    /* ajouter fileId dans utilisateur */
+    $table = "utilisateur";
+    $column = "fileId";
+
+    $sql = "
+        SELECT COUNT(*) 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = :table
+        AND COLUMN_NAME = :column
+    ";
+
+    $stmt = $bdd->prepare($sql);
+    $stmt->execute([
+        ':table'  => $table,
+        ':column' => $column
+    ]);
+
+    $exists = $stmt->fetchColumn();
+    if ($exists == 0) {
+        $bdd->exec("
+            ALTER TABLE utilisateur
+            ADD fileId TEXT NULL AFTER profile
+        ");
+    }
 ?>
 
-<!-- les admins -->
+<?php
+    /* retirer nom_utilisateur dans boutiques */
+    $table = "boutiques";
+    $column = "nom_utilisateur";
+
+    $sql = "
+        SELECT COUNT(*) 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = :table
+        AND COLUMN_NAME = :column
+    ";
+
+    $stmt = $bdd->prepare($sql);
+    $stmt->execute([
+        ':table'  => $table,
+        ':column' => $column
+    ]);
+
+    $exists = $stmt->fetchColumn();
+
+    if ($exists > 0) {
+        $bdd->exec("
+            ALTER TABLE boutiques
+            DROP COLUMN nom_utilisateur
+        ");
+    }
+
+?>

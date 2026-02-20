@@ -9,7 +9,8 @@
 
     $email = html_entity_decode(filter_var($_POST['email'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $verif_email = select_bdd($bdd, "boutiques", $where = "adresse_email = '$email'", $limit = null, $offset = 0, $order = null, $random = false);
-    if(count($verif_email)==0)
+    $verif_email_user = select_bdd($bdd, "utilisateur", $where = "adresse_email = '$email'", $limit = null, $offset = 0, $order = null, $random = false);
+    if(count($verif_email)==0 && count($verif_email_user)==0)
     {
         $results = [
             "result" => "error",
@@ -18,7 +19,6 @@
     }
     else
     {
-        $_SESSION['email_ohnous_987654321'] = $verif_email[0]['unique_id'];
         $nombre_aleatoire = rand(100000, 999999);
         // Hachage du mot de passe
         $nombre_aleatoire_ach = password_hash(
@@ -28,8 +28,18 @@
         $update_data = [
             "code_password" => $nombre_aleatoire_ach
         ];
-        update_bdd($bdd, "boutiques", $update_data, $where = "adresse_email = '$email'");
-        code_verification($email = $verif_email[0]['adresse_email'], $code = $nombre_aleatoire);
+        if(count($verif_email)>0)
+        {
+            $_SESSION['email_ohnous_987654321'] = $verif_email[0]['unique_id'];
+            update_bdd($bdd, "boutiques", $update_data, $where = "adresse_email = '$email'");
+            code_verification($email = $verif_email[0]['adresse_email'], $code = $nombre_aleatoire);
+        }
+        else
+        {
+            $_SESSION['email_ohnous_987654321'] = $verif_email_user[0]['unique_id'];
+            update_bdd($bdd, "utilisateur", $update_data, $where = "adresse_email = '$email'");
+            code_verification($email = $verif_email_user[0]['adresse_email'], $code = $nombre_aleatoire);
+        }
         $results = [
             "result" => "ok",
             "msg" => ""

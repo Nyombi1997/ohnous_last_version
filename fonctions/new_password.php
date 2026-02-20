@@ -14,8 +14,9 @@
             PASSWORD_DEFAULT
         );
         $boutique = select_bdd($bdd, "boutiques", $where = 'unique_id = "'.$_SESSION['email_ohnous_987654321'].'"', $limit = null, $offset = 0, $order = null, $random = false);
+        $utilisateur = select_bdd($bdd, "utilisateur", $where = 'unique_id = "'.$_SESSION['email_ohnous_987654321'].'"', $limit = null, $offset = 0, $order = null, $random = false);
         
-        if(count($boutique)==0)
+        if(count($boutique)==0 && count($utilisateur)==0)
         {
             $results = [
                 "result" => "error1",
@@ -24,17 +25,29 @@
         }
         else
         {
-                $_SESSION['store_ohnous_987654321'] = $boutique[0]['unique_id'];
-                $update_data = 
-                [
-                    "mdp" => $mdp,
-                ];
-                update_bdd($bdd, "boutiques", $update_data, $where);
-                unset($_SESSION['email_ohnous_987654321']);
+            $update_data = 
+            [
+                "mdp" => $mdp,
+            ];
+            if(count($boutique)>0)
+            {
+                $_SESSION['store_ohnous_987654321'] = $boutique[0]['unique_id'];      
+                update_bdd($bdd, "boutiques", $update_data, $where);     
                 $results = [
                     "result" => "ok",
                     "msg" => "boutique"
-                ];
+                ];     
+            }
+            else
+            {
+                $_SESSION['user_ohnous_987654321'] = $utilisateur[0]['unique_id'];      
+                update_bdd($bdd, "utilisateur", $update_data, $where);     
+                $results = [
+                    "result" => "ok",
+                    "msg" => "compte"
+                ];     
+            }
+            unset($_SESSION['email_ohnous_987654321']);
         }
     }
     else

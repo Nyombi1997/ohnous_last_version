@@ -7,6 +7,10 @@
     {
         unset($_SESSION['store_ohnous_987654321']);
     }
+    if(isset($_SESSION['user_ohnous_987654321']))
+    {
+        unset($_SESSION['user_ohnous_987654321']);
+    }
     header('Location: accueil');
     exit();
 ?>

@@ -21,12 +21,16 @@
                             "changer-mot-de-passe" => ["controller" => 'Home', "method" => 'showPassword'],
                             "code-mot-de-passe" => ["controller" => 'Home', "method" => 'showCodePassword'],
                             "nouveau-mot-de-passe" => ["controller" => 'Home', "method" => 'showNewPassword'],
+                            "inscription-utilisateur" => ["controller" => 'Home', "method" => 'showUserAccount'],
+                            "editer-user" => ["controller" => 'Home', "method" => 'showEditUser'],
+                            "editer-profile-utilisateur" => ["controller" => 'Home', "method" => 'showEditUserProfile'],
 
                             "boutique" => ["controller" => 'Home', "method" => 'showStore'],
                             "editer-boutique" => ["controller" => 'Home', "method" => 'showEditStore'],
                             "editer-profile-boutique" => ["controller" => 'Home', "method" => 'showEditStoreProfile'],
                             "activer-boutique" => ["controller" => 'Home', "method" => 'showActiveStore'],
                             "message" => ["controller" => 'Home', "method" => 'showMessage'],
+                            "compte" => ["controller" => 'Home', "method" => 'showUserAccount'],
 
                             "q" => ["controller" => 'Home', "method" => 'showSearch'],
                         ];

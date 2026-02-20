@@ -15,7 +15,8 @@
             PASSWORD_DEFAULT
         );
         $boutique = select_bdd($bdd, "boutiques", $where = 'unique_id = "'.$unique_id.'"', $limit = null, $offset = 0, $order = null, $random = false);
-        if(count($boutique)==0)
+        $utilisateur = select_bdd($bdd, "utilisateur", $where = 'unique_id = "'.$unique_id.'"', $limit = null, $offset = 0, $order = null, $random = false);
+        if(count($boutique)==0 && count($utilisateur)==0)
         {
             $results = [
                 "result" => "error1",
@@ -24,19 +25,47 @@
         }
         else
         {
-            if(password_verify($_POST['code'], $boutique[0]['code_password']))
+            if(count($boutique)>0)
             {
-                $results = [
-                    "result" => "ok",
-                    "msg" => ""
-                ];
+                if(password_verify($_POST['code'], $boutique[0]['code_password']))
+                {
+                    $results = [
+                        "result" => "ok",
+                        "msg" => ""
+                    ];
+                    $update_data = [
+                        "code_password" => null
+                    ];
+                    update_bdd($bdd, "boutiques", $update_data, "unique_id = '$unique_id'");
+                }
+                else
+                {
+                    $results = [
+                        "result" => "error",
+                        "msg" => "Ce code est incorrect."
+                    ];
+                }
             }
-            else
+            else if(count($utilisateur)>0)
             {
-                $results = [
-                    "result" => "error",
-                    "msg" => "Ce code est incorrect."
-                ];
+                if(password_verify($_POST['code'], $utilisateur[0]['code_password']))
+                {
+                    $results = [
+                        "result" => "ok",
+                        "msg" => ""
+                    ];
+                    $update_data = [
+                        "code_password" => null
+                    ];
+                    update_bdd($bdd, "utilisateur", $update_data, "unique_id = '$unique_id'");
+                }
+                else
+                {
+                    $results = [
+                        "result" => "error",
+                        "msg" => "Ce code est incorrect."
+                    ];
+                }
             }
         }
     }

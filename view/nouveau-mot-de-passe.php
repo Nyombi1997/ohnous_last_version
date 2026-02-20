@@ -5,7 +5,27 @@
     }
     if(!isset($_SESSION['email_ohnous_987654321']))
     {
-        header("location:: /changer-mot-de-passe");
+        header("location:/changer-mot-de-passe");
+    }
+    else
+    {
+        $unique_id = $_SESSION['email_ohnous_987654321'];
+        $boutique = select_bdd($bdd, "boutiques", $where = 'unique_id = "'.$unique_id.'"', $limit = null, $offset = 0, $order = null, $random = false);
+        $utilisateur = select_bdd($bdd, "utilisateur", $where = 'unique_id = "'.$unique_id.'"', $limit = null, $offset = 0, $order = null, $random = false);
+        if(count($boutique)>0)
+        {
+            if($boutique[0]['code_password']!=null)
+            {
+                header("location:/changer-mot-de-passe");
+            }            
+        }
+        elseif(count($utilisateur)>0)
+        {
+            if($utilisateur[0]['code_password']!=null)
+            {
+                header("location:/changer-mot-de-passe");
+            }            
+        }
     }
 ?>
 <script>

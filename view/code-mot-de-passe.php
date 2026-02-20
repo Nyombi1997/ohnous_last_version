@@ -5,7 +5,7 @@
     }
     if(!isset($_SESSION['email_ohnous_987654321']))
     {
-        header("location:: /changer-mot-de-passe");
+        header("location:/changer-mot-de-passe");
     }
 ?>
 <script>

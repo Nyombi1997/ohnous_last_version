@@ -3,28 +3,28 @@
         session_start();
     }
     /* SI ON EST CONNECTER */
-    if(isset($_SESSION['store_ohnous_987654321']))
+    if(isset($_SESSION['user_ohnous_987654321']))
     {
-        $boutique = select_bdd($bdd, "boutiques", $where = 'unique_id = "'.$_SESSION['store_ohnous_987654321'].'"', $limit = null, $offset = 0, $order = null, $random = false);
-        if(count($boutique)!=0)
+        $user = select_bdd($bdd, "utilisateur", $where = 'unique_id = "'.$_SESSION['user_ohnous_987654321'].'"', $limit = null, $offset = 0, $order = null, $random = false);
+        if(count($user)!=0)
         {
-            $boutique = $boutique[0];
+            $user = $user[0];
             $backgrounds = "";
-            if($boutique['backgrounds']!='')
+            if($user['backgrounds']!='')
             {
-                $backgrounds = 'style="background : '.$boutique['backgrounds'].';"';
+                $backgrounds = 'style="background : '.$user['backgrounds'].';"';
             }
             $profile = '<img src="'.ASSET.'images/profile/default.jpg" alt="" srcset="">';
-            if($boutique['profile']!='')
+            if($user['profile']!='')
             {
                 $profile = '
                             <img 
                                 class="blur-up"
-                                src="'.$boutique['profile'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-50,blur-10" 
+                                src="'.$user['profile'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-50,blur-10" 
                                 srcset="
-                                    '.$boutique['profile'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-80 400w,
-                                    '.$boutique['profile'].'?updatedAt=1765131265242/image.webp?tr=w-800,q-80 800w,
-                                    '.$boutique['profile'].'?updatedAt=1765131265242/image.webp?tr=w-1200,q-80 1200w"
+                                    '.$user['profile'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-80 400w,
+                                    '.$user['profile'].'?updatedAt=1765131265242/image.webp?tr=w-800,q-80 800w,
+                                    '.$user['profile'].'?updatedAt=1765131265242/image.webp?tr=w-1200,q-80 1200w"
                                 sizes="(max-width:768px) 90vw, 600px"
                                 loading="lazy"
                                 class="blur-up"
@@ -442,7 +442,7 @@
                     confirmButtonColor: '#6775d6',
                     timer: 1500
                 }).then(() => {
-                    window.location = "/editer-boutique";
+                    window.location = "/editer-user";
                 });
             }
             /* si on veut quitter la page ou recharger */
@@ -461,7 +461,7 @@
                     .then(auth => {
                         imagekit.upload({
                             file: blob,
-                            fileName: "<?= $boutique['slug'] ?>_" + Date.now() + ".webp",
+                            fileName: "<?= $user['slug'] ?>_" + Date.now() + ".webp",
                             folder: "/OhNous/profile/",
                             token: auth.token,
                             signature: auth.signature,
@@ -478,7 +478,7 @@
                             }
                             else{
                             }
-                            $.post("/fonctions/upload_profile_boutique.php", {
+                            $.post("/fonctions/upload_profile_utilisateur.php", {
                                 product_image_url: result.url,
                                 fileId: result.fileId,
                                 style: styles,
@@ -605,7 +605,7 @@
                     .then(auth => {
                         imagekit.upload({
                             file: blob,
-                            fileName: "<?= $boutique['slug'] ?>_" + Date.now() + ".webp",
+                            fileName: "<?= $user['slug'] ?>_" + Date.now() + ".webp",
                             folder: "/OhNous/profile/",
                             token: auth.token,
                             signature: auth.signature,
@@ -622,7 +622,7 @@
                             }
                             else{
                             }
-                            $.post("/fonctions/upload_profile_boutique.php", {
+                            $.post("/fonctions/upload_profile_utilisateur.php", {
                                 product_image_url: result.url,
                                 fileId: result.fileId,
                                 style: styles,

@@ -162,7 +162,7 @@
         return (int)$result['count'];
     }
 
-    function update_bdd($bdd, $base, $update_data, $where) 
+    function update_bdd($bdd, $base, $update_data, $where)
     {
         /**
          * Tableau associatif contenant les données à mettre à jour.

@@ -73,6 +73,12 @@
             $myView = new View('changer-mot-de-passe');
             $myView->render('Ohnous | MODIFIER MOT DE PASSE OHNOUS !');
         }
+        public function showCodePassword ()
+        {
+            /* ramener la vers  changer mot de passe */
+            $myView = new View('code-mot-de-passe');
+            $myView->render('Ohnous | CODE DE VERIFICATION OHNOUS !');
+        }
         public function showNewPassword ()
         {
             /* ramener la vers  nouveau mot de passe */
@@ -90,6 +96,30 @@
             /* ramener la vers  nouveau mot de passe */
             $myView = new View('message');
             $myView->render('Ohnous | MESSAGE OHNOUS !');
+        }
+        public function showSigninUser ()
+        {
+            /* ramener la vers  nouveau mot de passe */
+            $myView = new View('signin-user');
+            $myView->render('Ohnous | INSCRIPTION UTILISATEUR OHNOUS !');
+        }
+        public function showUserAccount ()
+        {
+            /* ramener la vers  nouveau mot de passe */
+            $myView = new View('user');
+            $myView->render('Ohnous | INSCRIPTION UTILISATEUR OHNOUS !');
+        }
+        public function showEditUser ()
+        {
+            /* ramener la vers  nouveau mot de passe */
+            $myView = new View('edit-user');
+            $myView->render('Ohnous | MODIFIER UTILISATEUR OHNOUS !');
+        }
+        public function showEditUserProfile ()
+        {
+            /* ramener la vers  nouveau mot de passe */
+            $myView = new View('edit-profile-utilisateur');
+            $myView->render('Ohnous | MODIFIER PROFILE UTILISATEUR OHNOUS !');
         }
     }
 ?>

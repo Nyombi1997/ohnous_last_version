@@ -3,7 +3,6 @@ nom = document.getElementById("nom"),
 email = document.getElementById("email"),
 password = document.querySelectorAll("#password"),
 form = document.getElementById("form"),
-new_boutique = document.getElementById("new_boutique"),
 choix_form_ohnous = document.getElementById("choix_form_ohnous");
 let emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 let
@@ -22,12 +21,6 @@ form.addEventListener("submit",function(e){
         value_nom = nom.value.replace(/ +/g,"");
         let erreur = "Entrez un nom d'utilisateur";
         let link = "check_nom_utilisateur";
-        /* si c'est une boutique */
-        if(new_boutique != undefined)
-        {
-            erreur = "Entrez un nom de boutique";
-            link = "check_nom_boutique";
-        }
         /* si le text est vide */
         if(value_nom == "")
         {
@@ -103,7 +96,7 @@ form.addEventListener("submit",function(e){
         }
         else
         {
-            $.post("fonctions/check_email_boutique.php",
+            $.post("fonctions/check_email_user.php",
                 {email: email.value.trim()},
                 function(data){
                     if(data.result == "error")
@@ -160,33 +153,32 @@ form.addEventListener("submit",function(e){
     }
 
     /* si c'est une incription boutique */
-    if(new_boutique != undefined)
-    {
-        $.post("fonctions/signin_store.php",
+    $.post("fonctions/signin_user.php",
+        {
+            email: email.value.trim(),
+            user_name: nom.value.trim(),
+            mdp: password[0].value,
+        },
+        function(data){
+            if(data.result == "error")
             {
-                email: email.value.trim(),
-                user_name: nom.value.trim(),
-                mdp: password[0].value,
-            },
-            function(data){
-                if(data.result == "error")
-                {
-                    Swal.fire({
-                        icon: "error",
-                        title: data.msg,
-                        text: "",
-                        confirmButtonText: "OK",
-                        confirmButtonColor: "#6775d6"
-                    })
-                    return;
-                }
-                else
-                {
-                    window.location = '/boutique';
-                }
+                Swal.fire({
+                    icon: "error",
+                    title: data.msg,
+                    text: "",
+                    confirmButtonText: "OK",
+                    confirmButtonColor: "#6775d6"
+                })
+                btn.removeAttribute("disabled");
+                btn.innerHTML = temp_btn;
+                return;
             }
-        )        
-    }
+            else
+            {
+                window.location = '/compte';
+            }
+        }
+    )
 })
 
 /* afficher password */

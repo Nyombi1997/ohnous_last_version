@@ -22,7 +22,7 @@
                             </div>
                         </a>
                         <!-- details -->
-                        <a href="" class="choix_de_compte">
+                        <a href="inscription-utilisateur" class="choix_de_compte">
                             <div class="div_detail_choix_de_compte">
                                 <div class="detail_choix_de_compte_icone">
                                     <i class="fa-solid fa-user"></i>
