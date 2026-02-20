@@ -21,7 +21,7 @@
                             "changer-mot-de-passe" => ["controller" => 'Home', "method" => 'showPassword'],
                             "code-mot-de-passe" => ["controller" => 'Home', "method" => 'showCodePassword'],
                             "nouveau-mot-de-passe" => ["controller" => 'Home', "method" => 'showNewPassword'],
-                            "inscription-utilisateur" => ["controller" => 'Home', "method" => 'showUserAccount'],
+                            "inscription-utilisateur" => ["controller" => 'Home', "method" => 'showSigninUser'],
                             "editer-user" => ["controller" => 'Home', "method" => 'showEditUser'],
                             "editer-profile-utilisateur" => ["controller" => 'Home', "method" => 'showEditUserProfile'],
 
