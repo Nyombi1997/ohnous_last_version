@@ -3,12 +3,35 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+include_once __DIR__ . '/dependances.php';
 
+/**
+ * Prépare PHPMailer uniquement au moment où l'envoi est demandé.
+ * Ainsi, le front peut continuer à s'afficher même si vendor/ manque.
+ */
+function ohnous_build_mailer()
+{
+    if (!ohnous_load_phpmailer()) {
+        error_log(ohnous_missing_phpmailer_message());
+        return false;
+    }
+
+    try {
+        return new PHPMailer(true);
+    } catch (Exception $e) {
+        error_log('Impossible d\'initialiser PHPMailer : ' . $e->getMessage());
+        return false;
+    }
+}
 
 /* email bienvenue */
 function welcome($email = "")
 {
-    $mail = new PHPMailer(true);
+    $mail = ohnous_build_mailer();
+    if ($mail === false) {
+        return false;
+    }
+
     $mail->isSMTP();
     $mail->Host = 'smtp.hostinger.com';
     $mail->SMTPAuth = true;
@@ -94,7 +117,7 @@ function welcome($email = "")
         </div>
         <div class="content">
             <h1 class="titre">Bienvenue sur <strong class="en-valeur">OhNous</strong></h1>
-            <p class="texte">Commencez votre nouvelle expérience avec OhNous</p>
+            <p class="texte">Commencez votre nouvelle expÃ©rience avec OhNous</p>
             <div class="div-lien">
                 <a href="https://ohnous.store" style="color:#ffffff; text-decoration:none; font-weight:bold;" target="_blank" class="lien">Visiter le site</a>
             </div>
@@ -103,14 +126,18 @@ function welcome($email = "")
     </html>
     ';
 
-    $mail->send();
+    return $mail->send();
 }
 
 
 /* email code de verification */
 function code_verification($email = "", $code = 000000)
 {
-    $mail = new PHPMailer(true);
+    $mail = ohnous_build_mailer();
+    if ($mail === false) {
+        return false;
+    }
+
     $mail->isSMTP();
     $mail->Host = 'smtp.hostinger.com';
     $mail->SMTPAuth = true;
@@ -206,8 +233,8 @@ function code_verification($email = "", $code = 000000)
             <img src="https://ohnous.store/asset/images/icons/logo-1.png" alt="" srcset="" class="image-banniere">
         </div>
         <div class="content">
-            <h1 class="titre">Code de vérification <strong class="en-valeur">OhNous</strong></h1>
-            <p class="texte">Voici votre code de vérification</p>
+            <h1 class="titre">Code de vÃ©rification <strong class="en-valeur">OhNous</strong></h1>
+            <p class="texte">Voici votre code de vÃ©rification</p>
             <div class="code_verification">
                 '.$code.'
             </div>
@@ -216,7 +243,7 @@ function code_verification($email = "", $code = 000000)
     </html>
     ';
 
-    $mail->send();
+    return $mail->send();
 }
 
 

@@ -26,6 +26,34 @@ function onImageLoad() {
 }
 onImageLoad();
 
+/* préparer les URLs ImageKit côté JS pour le HTML injecté dynamiquement */
+function buildImageKitUrl(url, transformations) {
+    if (!url) {
+        return "";
+    }
+
+    if (!transformations || transformations.length === 0) {
+        return url;
+    }
+
+    var separator = url.indexOf("?") === -1 ? "?" : "&";
+    return url + separator + "tr=" + transformations.join(",");
+}
+
+function buildLiquidImagePayload(url, sizes) {
+    return {
+        placeholder: buildImageKitUrl(url, ["w-80", "q-20"]),
+        fallback: buildImageKitUrl(url, ["w-400", "q-45"]),
+        high: buildImageKitUrl(url, ["w-800", "q-82"]),
+        srcset: [
+            buildImageKitUrl(url, ["w-400", "q-82"]) + " 400w",
+            buildImageKitUrl(url, ["w-800", "q-82"]) + " 800w",
+            buildImageKitUrl(url, ["w-1200", "q-85"]) + " 1200w"
+        ].join(", "),
+        sizes: sizes || "(max-width: 768px) 35vw, 180px"
+    };
+}
+
 /* éditer icone ajouter au panier */
 function editIconAjouterPanier(produitId = null, ajouter = true, retire = false, imgSrc = "", produitNom = "", produitSlug = "", produitTaille = "", produitPrix = "", produitStyle = "", produitBackground = "") {
     if(produitId!=null)
@@ -144,18 +172,19 @@ function ajouterAuPanier(imgSrc = null, produitId = null, produitNom = null, pro
         confirmButtonColor: '#6775d6',
         timer: 1500
     });
+    let liquidImage = buildLiquidImagePayload(imgSrc, "(max-width: 768px) 35vw, 180px");
     /* ajouter au panier */
     let detail = `
                 <!-- images -->
                 <div class="div_img_detail_panier" style="background: ${produitBackground}">
                     <img
-                        class="blur-up"
-                        src="${imgSrc}?updatedAt=1765131265242/image.webp?tr=w-400,q-50,blur-10" 
-                        srcset="
-                            ${imgSrc}?updatedAt=1765131265242/image.webp?tr=w-400,q-80 400w,
-                            ${imgSrc}?updatedAt=1765131265242/image.webp?tr=w-800,q-80 800w,
-                            ${imgSrc}?updatedAt=1765131265242/image.webp?tr=w-1200,q-80 1200w"
-                        sizes="(max-width:768px) 90vw, 600px"
+                        class="blur-up js-liquid-image"
+                        src="${liquidImage.placeholder}"
+                        data-image-base="${imgSrc}"
+                        data-image-fallback="${liquidImage.fallback}"
+                        data-image-high="${liquidImage.high}"
+                        data-image-srcset="${liquidImage.srcset}"
+                        data-image-sizes="${liquidImage.sizes}"
                         loading="lazy"
                         style="${produitStyle}"
                         alt="${produitSlug}"
@@ -190,6 +219,9 @@ function ajouterAuPanier(imgSrc = null, produitId = null, produitNom = null, pro
     calculPrixTotalPanier();
     /* afficher les images après le floutage */
     onImageLoad();
+    if (typeof window.initLiquidImages === "function") {
+        window.initLiquidImages();
+    }
     /* ajouter au panier */
     editIconAjouterPanier(produitId = produitId, ajouter = true, retire = false, imgSrc = imgSrc, produitNom = produitNom, produitSlug = produitSlug, produitTaille = produitTaille, produitPrix = produitPrix, produitStyle = produitStyle, produitBackground = produitBackground);
 }

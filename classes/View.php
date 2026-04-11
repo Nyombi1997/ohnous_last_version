@@ -22,10 +22,9 @@
             include_once VIEW.'composants/fonction_produit.php';
             /* ramener les fonctions */
             include_once FONCTION.'fonctions.php';
+            /* chargeur des dépendances externes */
+            include_once FONCTION.'dependances.php';
             /* ramener les emails */
-            include_once VENDOR.'phpmailer/phpmailer/src/Exception.php';
-            include_once VENDOR.'phpmailer/phpmailer/src/PHPMailer.php';
-            include_once VENDOR.'phpmailer/phpmailer/src/SMTP.php';
             include_once FONCTION.'email.php';
             global $bdd;
 

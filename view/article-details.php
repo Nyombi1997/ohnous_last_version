@@ -23,6 +23,7 @@
                 <?php
                     /* afficher les images de l'article */
                     $image_article = select_bdd($bdd, "image_articles", $where = "article = '".$article['id']."'", $limit = null, $offset = 0, $order = null, $random = false);
+                    $liquid_image = ohnous_prepare_liquid_image($image_article[0]['img']);
                     $image_article_id = 'img_produit_'.$image_article[0]['id'];
                     $image_article_style = $image_article[0]['styles'];
                     $image_article_div_img_id = 'div_img_produit_'.$image_article[0]['id'];
@@ -31,18 +32,17 @@
                         <div class="div_img_affiche_produit" id="'.$image_article_div_img_id.'" style="background: '.$image_article_background.';">
                             <img
                                 crossorigin="anonymous"
-                                src="'.$image_article[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-50,blur-10" 
+                                src="'.$liquid_image['placeholder'].'"
                                 alt="'.$article['slug'].'" 
-                                class="img_affiche blur-up"
-                                data-img ="'.$image_article[0]['img'].'" 
+                                class="img_affiche blur-up js-liquid-image"
+                                data-img ="'.$image_article[0]['img'].'"
+                                data-image-base="'.$liquid_image['base'].'"
+                                data-image-fallback="'.$liquid_image['fallback'].'"
+                                data-image-high="'.$liquid_image['high'].'"
+                                data-image-srcset="'.$liquid_image['srcset'].'"
+                                data-image-sizes="'.$liquid_image['sizes'].'"
                                 id="'.$image_article_id.'"
-                                data-src="'.$image_article[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-50,blur-10"
                                 style="'.$image_article_style.'"
-                                srcset="
-                                    '.$image_article[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-80 400w,
-                                    '.$image_article[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-800,q-80 800w,
-                                    '.$image_article[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-1200,q-80 1200w"
-                                sizes="(max-width:768px) 90vw, 600px"
                                 loading="lazy"
                             >
                         </div>';

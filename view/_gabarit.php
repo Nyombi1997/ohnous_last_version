@@ -27,6 +27,7 @@
     <!-- sweat alert -->
     <link rel="stylesheet" href="<?= ASSET ?>css/sweetalert2.min.css?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/css/sweetalert2.min.css") ?>">
     <script src="<?= ASSET ?>js/sweetalert2.all.min.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/sweetalert2.all.min.js") ?>"></script>
+    <script src="<?= ASSET ?>js/image_loader.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/image_loader.js") ?>" defer></script>
     <!-- script panier -->
 	<script src="/asset/js/main_panier_produit.js?<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/asset/js/main_panier_produit.js') ?>" defer></script>
     <!-- script search bar -->
@@ -68,19 +69,20 @@
                                 foreach ($_SESSION['cart-ohnous-123456789'] as $item) {
                                     $subtotal = $item['price'] * $item['qty'];
                                     $total += $subtotal;
+                                    $liquid_image = ohnous_prepare_liquid_image($item['image'], '(max-width: 768px) 35vw, 180px');
 
                                     echo '
                                         <!-- images -->
                                         <div class="detail_panier" id="detail_panier_'.$item['id'].'">
                                             <div class="div_img_detail_panier" style="background: '.$item['background'].'">
                                                 <img
-                                                    class="blur-up"
-                                                    src="'.$item['image'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-50,blur-10" 
-                                                    srcset="
-                                                        '.$item['image'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-80 400w,
-                                                        '.$item['image'].'?updatedAt=1765131265242/image.webp?tr=w-800,q-80 800w,
-                                                        '.$item['image'].'?updatedAt=1765131265242/image.webp?tr=w-1200,q-80 1200w"
-                                                    sizes="(max-width:768px) 90vw, 600px"
+                                                    class="blur-up js-liquid-image"
+                                                    src="'.$liquid_image['placeholder'].'"
+                                                    data-image-base="'.$liquid_image['base'].'"
+                                                    data-image-fallback="'.$liquid_image['fallback'].'"
+                                                    data-image-high="'.$liquid_image['high'].'"
+                                                    data-image-srcset="'.$liquid_image['srcset'].'"
+                                                    data-image-sizes="'.$liquid_image['sizes'].'"
                                                     loading="lazy"
                                                     style="'.$item['style'].'"
                                                     alt="article/'.$item['slug'].'"

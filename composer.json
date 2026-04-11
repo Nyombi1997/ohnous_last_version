@@ -1,5 +1,6 @@
 {
     "require": {
-        "imagekit/imagekit": "^4.0"
+        "imagekit/imagekit": "^4.0",
+        "phpmailer/phpmailer": "^7.0"
     }
 }

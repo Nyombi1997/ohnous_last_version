@@ -6,6 +6,7 @@
         if($donnee)
         {
             $img = select_bdd($bdd, "image_articles", $where = "article = '".$donnee['id']."'", $limit = null, $offset = 0, $order = null, $random = false);
+            $liquid_image = ohnous_prepare_liquid_image($img[0]['img']);
             $imgId = 'img_produit_'.$img[0]['id'];
             $divImgId = 'div_img_produit_'.$img[0]['id'];
             $imgBackground = $img[0]['background'];
@@ -57,18 +58,17 @@
                             <a href="/article/'.$donnee['slug'].'">
                                 <img 
                                     crossorigin="anonymous"
-                                    src="'.$img[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-50,blur-10" 
+                                    src="'.$liquid_image['placeholder'].'"
                                     alt="'.$donnee['slug'].'" 
-                                    class="img_affiche blur-up"
-                                    data-img ="'.$img[0]['img'].'" 
+                                    class="img_affiche blur-up js-liquid-image"
+                                    data-img ="'.$img[0]['img'].'"
+                                    data-image-base="'.$liquid_image['base'].'"
+                                    data-image-fallback="'.$liquid_image['fallback'].'"
+                                    data-image-high="'.$liquid_image['high'].'"
+                                    data-image-srcset="'.$liquid_image['srcset'].'"
+                                    data-image-sizes="'.$liquid_image['sizes'].'"
                                     id="'.$imgId.'"
-                                    data-src="'.$img[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-50,blur-10"
                                     style="'.$imgStyles.'"
-                                    srcset="
-                                        '.$img[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-80 400w,
-                                        '.$img[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-800,q-80 800w,
-                                        '.$img[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-1200,q-80 1200w"
-                                    sizes="(max-width:768px) 90vw, 600px"
                                     loading="lazy"
                                 >
                             </a>

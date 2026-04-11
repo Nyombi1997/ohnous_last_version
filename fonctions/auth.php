@@ -1,7 +1,15 @@
 <?php
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-require_once '../vendor/autoload.php';
+require_once '../fonctions/dependances.php';
+
+if (!ohnous_load_imagekit()) {
+    header("Content-Type: application/json");
+    echo json_encode([
+        "error" => "ImageKit est introuvable. Réinstallez les dépendances Composer du projet."
+    ]);
+    exit;
+}
 
 use ImageKit\ImageKit;
 

@@ -138,4 +138,56 @@
             return $number;
         }
     }
+
+    /* construire une URL ImageKit propre avec transformations */
+    function ohnous_imagekit_url($url, array $transformations = [])
+    {
+        $url = trim((string)$url);
+        if($url === '')
+        {
+            return '';
+        }
+
+        if(empty($transformations))
+        {
+            return $url;
+        }
+
+        $separator = (strpos($url, '?') === false) ? '?' : '&';
+
+        return $url.$separator.'tr='.implode(',', $transformations);
+    }
+
+    /* préparer les URLs pour un chargement progressif et fiable des images */
+    function ohnous_prepare_liquid_image($url, $sizes = '(max-width: 768px) 90vw, 600px')
+    {
+        $base_url = trim((string)$url);
+
+        if($base_url === '')
+        {
+            return [
+                'placeholder' => '',
+                'fallback' => '',
+                'high' => '',
+                'srcset' => '',
+                'sizes' => $sizes,
+                'base' => '',
+            ];
+        }
+
+        $placeholder = ohnous_imagekit_url($base_url, ['w-80', 'q-20']);
+        $fallback = ohnous_imagekit_url($base_url, ['w-400', 'q-45']);
+        $high_400 = ohnous_imagekit_url($base_url, ['w-400', 'q-82']);
+        $high_800 = ohnous_imagekit_url($base_url, ['w-800', 'q-82']);
+        $high_1200 = ohnous_imagekit_url($base_url, ['w-1200', 'q-85']);
+
+        return [
+            'placeholder' => $placeholder,
+            'fallback' => $fallback,
+            'high' => $high_800,
+            'srcset' => $high_400.' 400w, '.$high_800.' 800w, '.$high_1200.' 1200w',
+            'sizes' => $sizes,
+            'base' => $base_url,
+        ];
+    }
 ?>

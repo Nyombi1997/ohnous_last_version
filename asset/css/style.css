@@ -1023,10 +1023,17 @@ button.active
 }
 .blur-up {
     filter: blur(20px);
-    transition: filter 0.5s ease-out;
+    transform: scale(1.02);
+    opacity: .92;
+    transition: filter 0.5s ease-out, opacity 0.5s ease-out, transform 0.5s ease-out;
 }
 .blur-up-loaded {
     filter: blur(0);
+    opacity: 1;
+    transform: scale(1);
+}
+.is-image-retrying {
+    opacity: .96;
 }
 
 /* voir plus */

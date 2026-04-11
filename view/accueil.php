@@ -70,6 +70,7 @@
 					foreach ($categories as $category) {
 						$detail_category = only_select("categorie", $where = "id = '".$category['categorie']."'", $order = null, $limit = null);
 						$detail_article = select_bdd($bdd, "image_articles", $where = "article = '".$category['article']."'", $limit = null, $offset = 0, $order = null, $random = true);
+						$liquid_image = ohnous_prepare_liquid_image($detail_article[0]['img'], '(max-width: 768px) 35vw, 180px');
 						if(in_array($detail_category['id'], $category_ids)) {
 							continue; // Passer à l'itération suivante si l'ID de catégorie a déjà été traité
 						}
@@ -81,15 +82,15 @@
 								</div>
 								<div class="section_categorie_img" style="background: '.$detail_article[0]['background'].';">
 									<img 
-										class="blur-up"
-										src="'.$detail_article[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-50,blur-10" 
-										srcset="
-											'.$detail_article[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-80 400w,
-											'.$detail_article[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-800,q-80 800w,
-											'.$detail_article[0]['img'].'?updatedAt=1765131265242/image.webp?tr=w-1200,q-80 1200w"
-										sizes="(max-width:768px) 90vw, 600px"
+										class="blur-up js-liquid-image"
+										src="'.$liquid_image['placeholder'].'"
+										data-image-base="'.$liquid_image['base'].'"
+										data-image-fallback="'.$liquid_image['fallback'].'"
+										data-image-high="'.$liquid_image['high'].'"
+										data-image-srcset="'.$liquid_image['srcset'].'"
+										data-image-sizes="'.$liquid_image['sizes'].'"
 										loading="lazy"
-										class="blur-up"
+										alt="'.$detail_category['nom'].'"
 									/>
 								</div>
 							</a>';
