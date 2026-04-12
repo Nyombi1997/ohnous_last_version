@@ -1,6 +1,7 @@
 <?php
     include_once "../model/bdd.php";
     include_once "../model/select.php";
+    include_once "fonctions.php";
     header('Content-Type: application/json; charset=utf-8');
 
     // Récupérer le terme recherché

@@ -52,6 +52,12 @@
 
         public static function autoload($class)
         {
+            // Les classes externes namespacées (Composer, PHPMailer, ImageKit, etc.)
+            // ne doivent pas être résolues par l'autoload MVC maison.
+            if (strpos($class, '\\') !== false) {
+                return;
+            }
+
             if(file_exists(MODEL.$class.'.php')) {
                 include_once MODEL.$class.'.php';
             } elseif(file_exists(CONTROLLER.$class.'.php')) {
@@ -60,8 +66,6 @@
                 include_once CLASSES.$class.'.php';
             } elseif(file_exists(VIEW.$class.'.php')) {
                 include_once VIEW.$class.'.php';
-            } else {
-                throw new Exception("Class $class not found.");
             }
         }
     }

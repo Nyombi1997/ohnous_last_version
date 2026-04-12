@@ -11,6 +11,14 @@
     {
         unset($_SESSION['user_ohnous_987654321']);
     }
+    if(isset($_SESSION['admin_ohnous_987654321']))
+    {
+        unset($_SESSION['admin_ohnous_987654321']);
+    }
+    if(isset($_SESSION['admin_reset_ohnous_987654321']))
+    {
+        unset($_SESSION['admin_reset_ohnous_987654321']);
+    }
     header('Location: accueil');
     exit();
 ?>

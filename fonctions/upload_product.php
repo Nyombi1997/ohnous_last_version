@@ -4,72 +4,153 @@
     include_once "fonctions.php";
     header('Content-Type: application/json; charset=utf-8');
 
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    if(!isset($_SESSION['store_ohnous_987654321']))
+    {
+        echo json_encode([
+            "result" => "error",
+            "msg" => "Vous n'êtes plus connecté."
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
+
+    $boutique = only_select("boutiques", "unique_id = '".$_SESSION['store_ohnous_987654321']."'", null, null);
+    if(!$boutique)
+    {
+        echo json_encode([
+            "result" => "error",
+            "msg" => "Boutique introuvable."
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
+
+    if(!ohnous_is_store_active($boutique))
+    {
+        echo json_encode([
+            "result" => "error",
+            "msg" => "Votre boutique doit être active pour publier des articles."
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
+
     $product_name = html_entity_decode(filter_var($_POST['product_name'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $product_price = html_entity_decode(filter_var($_POST['product_price'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $product_category = html_entity_decode(filter_var($_POST['product_category'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $product_types = html_entity_decode(filter_var($_POST['product_types'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $product_tailles = html_entity_decode(filter_var($_POST['product_tailles'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-    $product_boutique = html_entity_decode(filter_var($_POST['product_boutique'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $product_description = html_entity_decode(filter_var($_POST['product_description'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-    $product_image_url = html_entity_decode(filter_var($_POST['product_image_url'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-    $style = html_entity_decode(filter_var($_POST['style'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-    $background = html_entity_decode(filter_var($_POST['background'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+    $product_images_json = $_POST['product_images'] ?? '';
+
+    if(trim($product_name) === '' || trim($product_price) === '' || (int)$product_category <= 0)
+    {
+        echo json_encode([
+            "result" => "error",
+            "msg" => "Les informations principales de l'article sont incomplètes."
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
+
+    $productImages = json_decode($product_images_json, true);
+    if(!is_array($productImages) || empty($productImages))
+    {
+        $fallbackUrl = html_entity_decode(filter_var($_POST['product_image_url'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        if($fallbackUrl !== '')
+        {
+            $productImages = [[
+                'url' => $fallbackUrl,
+                'style' => html_entity_decode(filter_var($_POST['style'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS)),
+                'background' => html_entity_decode(filter_var($_POST['background'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS)),
+                'fileId' => html_entity_decode(filter_var($_POST['fileId'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS))
+            ]];
+        }
+    }
+
+    if(empty($productImages))
+    {
+        echo json_encode([
+            "result" => "error",
+            "msg" => "Ajoutez au moins une image."
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
+
     $slug = generateSlug($product_name);
     $unique_id = uniqid("article_");
-    /* ajouter l'article */
+
     $insert_data = [
         "nom" => $product_name,
         "unique_id" => $unique_id,
         "slug" => $slug,
         "prix" => $product_price,
         "description" => $product_description,
-        "boutique" => $product_boutique,
+        "boutique" => (int)$boutique['id'],
     ];
     insert_bdd($bdd, "articles", $insert_data);
-    /* ajouter les tailles */
-    $id = only_select("articles", $where = "unique_id = '$unique_id'", $order = null, $limit = null);
-    if($product_tailles == "")
+
+    $article = only_select("articles", "unique_id = '".$unique_id."'", null, null);
+    if(!$article)
     {
+        echo json_encode([
+            "result" => "error",
+            "msg" => "Impossible de créer l'article."
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
     }
-    else
+
+    if(trim($product_tailles) !== "")
     {
         $tailles = explode(',', $product_tailles);
         foreach ($tailles as $taille)
         {
-            $insert = [
-                "article" => $id['id'],
-                "taille" => $taille,
-            ];
-            insert_bdd($bdd, "taille_articles", $insert);
+            insert_bdd($bdd, "taille_articles", [
+                "article" => (int)$article['id'],
+                "taille" => (int)$taille,
+            ]);
         }
     }
-    /* ajouter image */
-    $insert = [
-        "article" => $id['id'],
-        "img" => $product_image_url,
-        "alt_text" => $slug,
-        "background" => $background,
-        "styles" => $style,
-    ];
-    insert_bdd($bdd, "image_articles", $insert);
-    
-    $insert = [
-        "article" => $id['id'],
-        "types" => $product_types,
-    ];
-    insert_bdd($bdd, "types_article", $insert);
-    
-    $insert = [
-        "article" => $id['id'],
-        "categorie" => $product_category,
-    ];
-    insert_bdd($bdd, "categorie_article", $insert);
 
-    $results = [
+    if((int)$product_types > 0)
+    {
+        insert_bdd($bdd, "types_article", [
+            "article" => (int)$article['id'],
+            "types" => (int)$product_types,
+        ]);
+    }
+
+    insert_bdd($bdd, "categorie_article", [
+        "article" => (int)$article['id'],
+        "categorie" => (int)$product_category,
+    ]);
+
+    foreach($productImages as $index => $image)
+    {
+        if(empty($image['url']))
+        {
+            continue;
+        }
+
+        $insert = [
+            "article" => (int)$article['id'],
+            "img" => $image['url'],
+            "alt_text" => $slug,
+            "background" => $image['background'] ?? '',
+            "styles" => $image['style'] ?? '',
+        ];
+
+        if(ohnous_column_exists('image_articles', 'fileId'))
+        {
+            $insert['fileId'] = $image['fileId'] ?? '';
+        }
+
+        insert_bdd($bdd, "image_articles", $insert);
+    }
+
+    echo json_encode([
         "result" => "ok",
-        "msg" => $style
-    ];
-
-    // Retour en JSON
-    echo json_encode($results, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        "msg" => "Article ajouté avec succès.",
+        "slug" => $slug
+    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 ?>

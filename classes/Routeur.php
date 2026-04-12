@@ -29,6 +29,16 @@
                             "editer-boutique" => ["controller" => 'Home', "method" => 'showEditStore'],
                             "editer-profile-boutique" => ["controller" => 'Home', "method" => 'showEditStoreProfile'],
                             "activer-boutique" => ["controller" => 'Home', "method" => 'showActiveStore'],
+                            "articles-aimes" => ["controller" => 'Home', "method" => 'showLikedArticles'],
+                            "admin-activation-boutique" => ["controller" => 'Home', "method" => 'showAdminStoreActivation'],
+                            "admin-login" => ["controller" => 'Home', "method" => 'showAdminLogin'],
+                            "admin" => ["controller" => 'Home', "method" => 'showAdminDashboard'],
+                            "admin-boutiques" => ["controller" => 'Home', "method" => 'showAdminStores'],
+                            "admin-boutique" => ["controller" => 'Home', "method" => 'showAdminStoreDetails'],
+                            "admin-articles" => ["controller" => 'Home', "method" => 'showAdminArticles'],
+                            "admin-editer-article" => ["controller" => 'Home', "method" => 'showAdminEditArticle'],
+                            "admin-mot-de-passe" => ["controller" => 'Home', "method" => 'showAdminPassword'],
+                            "admin-nouveau-mot-de-passe" => ["controller" => 'Home', "method" => 'showAdminNewPassword'],
                             "message" => ["controller" => 'Home', "method" => 'showMessage'],
                             "compte" => ["controller" => 'Home', "method" => 'showUserAccount'],
 
@@ -113,6 +123,12 @@
                     $stmt = $bdd->prepare("SELECT * FROM articles WHERE slug = ?");
                     $stmt->execute([$params['article']]);
                     if ($article = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                        if(!ohnous_is_article_visible($article))
+                        {
+                            http_response_code(404);
+                            echo 'Article introuvable.';
+                            exit();
+                        }
                         $GLOBALS['article'] = $article;
                         $titre_page[] = $article['nom'];
                         $view = new View('article-details.php');
@@ -127,6 +143,17 @@
                     $stmt = $bdd->prepare("SELECT * FROM boutiques WHERE slug = ?");
                     $stmt->execute([$params['boutique']]);
                     if ($boutique = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                        $currentAccount = ohnous_get_current_account();
+                        $isOwner = $currentAccount['connected']
+                            && $currentAccount['type'] === 'boutique'
+                            && (int)$currentAccount['id'] === (int)$boutique['id'];
+
+                        if(!ohnous_is_store_active($boutique) && !$isOwner)
+                        {
+                            http_response_code(404);
+                            echo 'Boutique introuvable.';
+                            exit();
+                        }
                         $GLOBALS['boutique'] = $boutique;
                         $titre_page[] = $boutique['nom'];
                         $view = new View('boutique.php');

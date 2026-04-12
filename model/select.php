@@ -285,7 +285,7 @@
     /* gestions des filtres */
     function select_articles_filtre($bdd, array $filters = [], $limit = null, $offset = 0, $order = null, $random = false)
     {
-        $sql = "SELECT DISTINCT a.* FROM articles a";
+        $sql = "SELECT DISTINCT a.* FROM articles a INNER JOIN boutiques bo ON bo.id = a.boutique AND bo.activer = 1";
         $joins = [];
         $params = [];
 
@@ -326,6 +326,14 @@
                 $joins[] = "INNER JOIN articles ab 
                             ON ab.id = a.id AND ab.boutique = :boutique";
                 $params[':boutique'] = (int)$filters['boutique'];
+            }
+        }
+
+        // FILTRE PROMOTION
+        if (!empty($filters['promotion']) && (int)$filters['promotion'] === 1 && function_exists('ohnous_column_exists')) {
+            if(ohnous_column_exists('articles', 'promo_actif'))
+            {
+                $sql .= " AND a.promo_actif = 1";
             }
         }
 
@@ -403,6 +411,31 @@
             $limitSql = "LIMIT $limit OFFSET $offset";
         }
 
+        $promoScoreSql = "0";
+        $promoWhereSql = "";
+        $queryLower = mb_strtolower($q);
+        $promoKeywords = ['promo', 'promotion', 'promotions', 'solde', 'soldes', 'offre', 'offres'];
+        $promoSearch = false;
+
+        foreach($promoKeywords as $keyword)
+        {
+            if(strpos($queryLower, $keyword) !== false)
+            {
+                $promoSearch = true;
+                break;
+            }
+        }
+
+        if(function_exists('ohnous_column_exists') && ohnous_column_exists('articles', 'promo_actif'))
+        {
+            $promoScoreSql = " + (CASE WHEN promo_actif = 1 THEN 4 ELSE 0 END)";
+
+            if($promoSearch)
+            {
+                $promoWhereSql = " OR promo_actif = 1";
+            }
+        }
+
         $sql = "
             (
                 SELECT id, nom COLLATE utf8mb4_general_ci AS label, prix, description COLLATE utf8mb4_general_ci AS description, slug COLLATE utf8mb4_general_ci AS slug, 'articles' AS source,
@@ -412,9 +445,11 @@
                             WHEN nom LIKE :any THEN 1 ELSE 0 END)
                         +
                         (CASE WHEN prix LIKE :any THEN 1 ELSE 0 END)
+                        ".$promoScoreSql."
                     ) AS score
                 FROM articles
-                WHERE (nom LIKE :any OR prix LIKE :any OR (:q_numeric IS NOT NULL AND prix <= :q_numeric)) OR description LIKE :any
+                INNER JOIN boutiques bo_articles ON bo_articles.id = articles.boutique AND bo_articles.activer = 1
+                WHERE (nom LIKE :any OR prix LIKE :any OR (:q_numeric IS NOT NULL AND prix <= :q_numeric)".$promoWhereSql.") OR description LIKE :any
             )
             UNION
             (
@@ -425,7 +460,7 @@
                             WHEN nom COLLATE utf8mb4_general_ci LIKE :any THEN 1 ELSE 0 END)
                     ) AS score
                 FROM boutiques
-                WHERE nom COLLATE utf8mb4_general_ci LIKE :any OR description LIKE :any
+                WHERE activer = 1 AND (nom COLLATE utf8mb4_general_ci LIKE :any OR description LIKE :any)
             )
             UNION
             (
@@ -557,6 +592,7 @@
         $sql = "
             SELECT a.*
             FROM articles a
+            INNER JOIN boutiques bo ON bo.id = a.boutique AND bo.activer = 1
             WHERE a.id IN ($placeholders)
             ORDER BY $orderBy
             $limitSql
@@ -590,38 +626,75 @@
     function getSimilarArticles(int $articleId,int $limit = 8,?string $order = null,bool $random = true) 
     {
         global $bdd;
-        
-        $sql = "SELECT 
+
+        $limit = (int)$limit;
+        if($limit <= 0)
+        {
+            $limit = 8;
+        }
+
+        /* score pondéré pour proposer de vrais articles proches :
+           catégorie > type > taille > même boutique > prix proche */
+        $sql = "SELECT
                     a.*,
-                    (CASE WHEN EXISTS (
-                        SELECT 1 FROM categorie_article ca1 
-                        WHERE ca1.article = a.id 
-                        AND ca1.categorie IN (
-                            SELECT categorie FROM categorie_article 
-                            WHERE article = :id_article
-                        )
-                    ) THEN 1 ELSE 0 END) +
-                    (CASE WHEN EXISTS (
-                        SELECT 1 FROM taille_articles ta1 
-                        WHERE ta1.article = a.id 
-                        AND ta1.taille IN (
-                            SELECT taille FROM taille_articles 
-                            WHERE article = :id_article
-                        )
-                    ) THEN 1 ELSE 0 END) +
-                    (CASE WHEN EXISTS (
-                        SELECT 1 FROM types_article tp1 
-                        WHERE tp1.article = a.id 
-                        AND tp1.types IN (
-                            SELECT types FROM types_article 
-                            WHERE article = :id_article
-                        )
-                    ) THEN 1 ELSE 0 END) AS score_similarite
+                    (
+                        (
+                            SELECT COUNT(*)
+                            FROM categorie_article ca1
+                            WHERE ca1.article = a.id
+                            AND ca1.categorie IN (
+                                SELECT categorie
+                                FROM categorie_article
+                                WHERE article = :id_article
+                            )
+                        ) * 5
+                    ) +
+                    (
+                        (
+                            SELECT COUNT(*)
+                            FROM types_article tp1
+                            WHERE tp1.article = a.id
+                            AND tp1.types IN (
+                                SELECT types
+                                FROM types_article
+                                WHERE article = :id_article
+                            )
+                        ) * 4
+                    ) +
+                    (
+                        (
+                            SELECT COUNT(*)
+                            FROM taille_articles ta1
+                            WHERE ta1.article = a.id
+                            AND ta1.taille IN (
+                                SELECT taille
+                                FROM taille_articles
+                                WHERE article = :id_article
+                            )
+                        ) * 3
+                    ) +
+                    (
+                        CASE
+                            WHEN a.boutique = ref.boutique THEN 2
+                            ELSE 0
+                        END
+                    ) +
+                    (
+                        CASE
+                            WHEN a.prix IS NULL OR ref.prix IS NULL THEN 0
+                            WHEN ABS(a.prix - ref.prix) <= 5 THEN 3
+                            WHEN ABS(a.prix - ref.prix) <= 15 THEN 2
+                            WHEN ABS(a.prix - ref.prix) <= 30 THEN 1
+                            ELSE 0
+                        END
+                    ) AS score_similarite,
+                    ABS(COALESCE(a.prix, 0) - COALESCE(ref.prix, 0)) AS ecart_prix
                 FROM articles a
+                INNER JOIN articles ref ON ref.id = :id_article
                 WHERE a.id != :id_article
                 HAVING score_similarite > 0
-                ORDER BY score_similarite DESC
-                LIMIT $limit";
+                ORDER BY score_similarite DESC, ecart_prix ASC, a.date_ajout DESC
+                LIMIT ".$limit;
 
         $stmt = $bdd->prepare($sql);
         $stmt->bindValue(':id_article', $articleId, PDO::PARAM_INT);
@@ -641,7 +714,7 @@
             FROM categorie ca
             INNER JOIN categorie_article caa ON caa.categorie = ca.id
             INNER JOIN articles a ON a.id = caa.article
-            INNER JOIN boutiques bo ON bo.id = a.boutique
+            INNER JOIN boutiques bo ON bo.id = a.boutique AND bo.activer = 1
             WHERE bo.id = :boutique_id
             GROUP BY ca.id
             HAVING total > 0

@@ -94,6 +94,20 @@
         header("Location:/404");
         exit();
     }
+
+    $currentAccount = ohnous_get_current_account();
+    $isOwner = $currentAccount['connected']
+        && $currentAccount['type'] === 'boutique'
+        && (int)$currentAccount['id'] === (int)$boutique['id'];
+    $isActiveStore = ohnous_is_store_active($boutique);
+
+    if(!$isActiveStore && !$isOwner)
+    {
+        header("Location:/404");
+        exit();
+    }
+
+    $storeSocials = $isActiveStore ? ohnous_get_store_social_links($boutique) : [];
 ?>
 <script>
     let home_page = true;
@@ -126,6 +140,10 @@
             <h1 class="nom_boutique"><?= $boutique['nom'] ?></h1>
         </div>
 
+        <div class="store-status-pill <?= $isActiveStore ? 'is-active' : 'is-pending' ?>">
+            <?= $isActiveStore ? 'Boutique active' : 'Boutique en attente d’activation' ?>
+        </div>
+
         <!-- description boutique -->
         <div class="div_description_boutique">
             <p class="div_description_boutique">
@@ -137,24 +155,46 @@
         <div class="container_message_edit_social_media_boutique">
             <div class="div_edit_message_boutique">
                 <?php
-                    if(isset($_SESSION['store_ohnous_987654321']))
+                    if($isOwner)
                     {
                         echo '
                         <a href="/editer-boutique" class="editer_boutique message">Editer</a>';
                     }
                 ?>
                 <?php
-                    if(isset($_SESSION['store_ohnous_987654321']) && $boutique['activer'] == 0)
+                    if($isOwner && !$isActiveStore)
                     {
                         echo '
                         <a href="/activer-boutique" class="editer_boutique message">Activer boutique <i class="fa-solid fa-triangle-exclamation"></i></a>';
                     }
                 ?>
-                <a href="/message" class="editer_boutique message">Message <?php
-                    if(isset($_SESSION['store_ohnous_987654321']))
+                <?php
+                    if($isOwner && $isActiveStore)
                     {
-                        $messages = select_bdd($bdd, "messages", $where = "boutique_id = '".$boutique['id']."' AND lu = '0'", $limit = null, $offset = 0, $order = null, $random = false);
-                        $messages = gestion_9_plus(count($messages));
+                        echo '<a href="/ajouter-articles" class="editer_boutique message">Ajouter un article</a>';
+                    }
+                ?>
+                <?php
+                    if($currentAccount['connected'])
+                    {
+                        echo '<a href="/articles-aimes" class="editer_boutique message">Articles aimés</a>';
+                    }
+                ?>
+                <?php
+                    $messageLink = '/connexion';
+                    if($isOwner)
+                    {
+                        $messageLink = '/message';
+                    }
+                    elseif($currentAccount['connected'] && $currentAccount['type'] === 'utilisateur')
+                    {
+                        $messageLink = '/message?client='.(int)$currentAccount['id'].'&boutique='.(int)$boutique['id'];
+                    }
+                ?>
+                <a href="<?= $messageLink ?>" class="editer_boutique message">Message <?php
+                    if($isOwner)
+                    {
+                        $messages = gestion_9_plus(ohnous_get_unread_messages_count($currentAccount));
                         echo '
                         <span>'.$messages.'</span>';
                     }
@@ -162,45 +202,10 @@
             </div>
             <div class="social_media_boutique">
                 <?php
-                    if($boutique['facebook']!='')
+                    foreach($storeSocials as $social)
                     {
                         echo '
-                        <a href="'.$boutique['facebook'].'" target="_blank"><i class="fa-brands fa-square-facebook"></i></a>';
-                    }
-                ?>
-                <?php
-                    if($boutique['twitter']!='')
-                    {
-                        echo '
-                        <a href="'.$boutique['twitter'].'" target="_blank"><i class="fa-brands fa-square-twitter"></i></a>';
-                    }
-                ?>
-                <?php
-                    if($boutique['trends']!='')
-                    {
-                        echo '
-                        <a href="'.$boutique['trends'].'" target="_blank"><i class="fa-brands fa-square-threads"></i></a>';
-                    }
-                ?>
-                <?php
-                    if($boutique['instagram']!='')
-                    {
-                        echo '
-                        <a href="'.$boutique['instagram'].'" target="_blank"><i class="fa-brands fa-square-instagram"></i></a>';
-                    }
-                ?>
-                <?php
-                    if($boutique['whatsapp']!='')
-                    {
-                        echo '
-                        <a href="'.$boutique['whatsapp'].'" target="_blank"><i class="fa-brands fa-square-whatsapp"></i></a>';
-                    }
-                ?>
-                <?php
-                    if($boutique['tiktok']!='')
-                    {
-                        echo '
-                        <a href="'.$boutique['tiktok'].'" target="_blank"><i class="fa-brands fa-tiktok"></i></a>';
+                        <a href="'.htmlspecialchars($social['url'], ENT_QUOTES, 'UTF-8').'" target="_blank" rel="noopener"><i class="fa-brands '.$social['icon'].'"></i></a>';
                     }
                 ?>                
             </div>
@@ -213,12 +218,16 @@
                 <div class="swiper-wrapper">
                     <?php
                         /* afficher les categories */
-                        $categories = categorieBoutique ($boutique['id']);
+                        $categories = $isActiveStore ? categorieBoutique($boutique['id']) : [];
                         $category_ids = array();
                         foreach ($categories as $category) {
                             $detail_category = only_select("categorie", $where = "id = '".$category['id']."'", $order = null, $limit = null);
                             $category = only_select("categorie_article", $where = "categorie = '".$category['id']."'", $order = null, $limit = null);
                             $detail_article = select_bdd($bdd, "image_articles", $where = "article = '".$category['article']."'", $limit = null, $offset = 0, $order = null, $random = true);
+                            if(empty($detail_article))
+                            {
+                                continue;
+                            }
                             $liquid_image = ohnous_prepare_liquid_image($detail_article[0]['img'], '(max-width: 768px) 35vw, 180px');
                             if(in_array($detail_category['id'], $category_ids)) {
                                 continue; // Passer à l'itération suivante si l'ID de catégorie a déjà été traité
@@ -268,19 +277,26 @@
 <!-- afficher les articles -->
 <div class="container_affiche_produit" id="afficher_article">
     <?php
+        if(!$isActiveStore)
+        {
+            echo '<div class="empty-liquid-state"><div class="empty-liquid-state__icon"><i class="fa-solid fa-store-slash"></i></div><p>Cette boutique n’est pas encore visible sur le site. Dès l’activation, ses articles apparaîtront ici.</p></div>';
+        }
         /* si c'est une recherche */
-        if(isset($_GET['query']))
+        else if(isset($_GET['query']))
         {
             $query =  found($_GET['query'], $limit = null, 0, $order = null, $random = false);
-            $donnee = getArticlesFromSearch($query, $limit = 12, 0, $order = null, $random = false);
+            $donnee = ohnous_filter_visible_articles(getArticlesFromSearch($query, $limit = 24, 0, $order = null, $random = false));
             foreach($donnee as $data)
             {
-                affiche_produit($data);
+                if((int)$data['boutique'] === (int)$boutique['id'])
+                {
+                    affiche_produit($data);
+                }
             }
         }
         else
         {
-            $donnee = select_bdd($bdd, "articles", $where = "boutique = '".$boutique['id']."'", $limit = null, $offset = 0, $order = null, $random = true);
+            $donnee = ohnous_filter_visible_articles(select_bdd($bdd, "articles", $where = "boutique = '".$boutique['id']."'", $limit = null, $offset = 0, $order = null, $random = true));
             foreach($donnee as $data)
             {
                 affiche_produit($data);

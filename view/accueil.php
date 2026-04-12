@@ -1,128 +1,137 @@
-	<?php
-		$all_categories = array();
-		/* afficher les categories */
-		$categories = select_bdd($bdd, "categorie_article", $where = null, $limit = null, $offset = 0, $order = null, $random = false);
-		$category_ids = array();
-		foreach ($categories as $category) {
-			$detail_category = only_select("categorie", $where = "id = '".$category['categorie']."'", $order = null, $limit = null);
-			if(in_array($detail_category['id'], $category_ids)) {
-				continue; // Passer à l'itération suivante si l'ID de catégorie a déjà été traité
-			}
-			$category_ids[] = $detail_category['id'];
-			$all_categories[] = $detail_category['nom'];
-		}
-	?>
-	<script>
-		let home_page = true;
-	</script>
-	<!-- intro -->
-	<div class="intro-hero">
-		<div class="blob-bg"></div>
-		<div class="intro-text">
-			<h1>Découvrez <span id="changing-word-container"><span id="changing-word"><?= (isset($all_categories) ? (count($all_categories) >= 1 ? $all_categories[0] : 'Articles') : 'Articles')  ?></span></span></h1>
-		</div>
-		<!-- bouton decouvrir en bas -->
-		<!-- <button class="scroll-down-btn visible">
-			<i class="fa fa-arrow-down"></i>
-		</button> -->
+<?php
+    ohnous_sync_test_store_activation();
 
-		<!-- barre de recherche -->
-		<div class="div_search_bar" id="div_search_bar">
-			<div class="search_bar" id="search_bar">
-				<form action="/q" method="GET">
-					<input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="input_search_bar" id="input_search_bar_2" name="query" placeholder="Rechercher un article..." required oninput="rechercheArticles(this.value)">
-					<button type="submit" class="button_search_bar"><i class="fa fa-search"></i></button>
-				</form>
-				<!-- div des donnés de recherche -->
-				<div class="donnee_de_recherche null" id="donnee_de_recherche">
+    $visibleArticles = ohnous_get_visible_articles(null, 0, null, true);
+    $visibleArticles = array_values($visibleArticles);
 
-				</div>
-			</div>
-		</div>
-		<!-- script banniere -->
-		<script>
-			const words = [<?php for($i=0;$i<count($all_categories); $i++){if($i==0){echo '"'.$all_categories[$i].'"';}else{echo ',"'.$all_categories[$i].'"';}} ?>];
-			let index = 0;
-			const span = document.getElementById("changing-word");
-			const input_search_bar = document.getElementById("input_search_bar");
+    $categoryCards = [];
+    $all_categories = [];
 
-			setInterval(() => {
-				index = (index + 1) % words.length;
-				span.style.opacity = 0;
-				setTimeout(() => {
-				span.textContent = words[index];
-				span.style.opacity = 1;
-				//input_search_bar.setAttribute("placeholder","Rechercher des "+words[index]+"...");
-				}, 400);
-			}, 3000);
-		</script>
-	</div>
+    foreach($visibleArticles as $article)
+    {
+        $categoryLink = only_select("categorie_article", "article = '".(int)$article['id']."'", null, null);
+        if(!$categoryLink)
+        {
+            continue;
+        }
 
-	<!-- div categories -->
-	<div class="parent_div_section_categorie">
-		<!-- Swiper -->
-		<div class="swiper section_categorie">
-			<div class="swiper-wrapper">
-				<?php
-					/* afficher les categories */
-					$categories = select_bdd($bdd, "categorie_article", $where = null, $limit = null, $offset = 0, $order = null, $random = false);
-					$category_ids = array();
-					foreach ($categories as $category) {
-						$detail_category = only_select("categorie", $where = "id = '".$category['categorie']."'", $order = null, $limit = null);
-						$detail_article = select_bdd($bdd, "image_articles", $where = "article = '".$category['article']."'", $limit = null, $offset = 0, $order = null, $random = true);
-						$liquid_image = ohnous_prepare_liquid_image($detail_article[0]['img'], '(max-width: 768px) 35vw, 180px');
-						if(in_array($detail_category['id'], $category_ids)) {
-							continue; // Passer à l'itération suivante si l'ID de catégorie a déjà été traité
-						}
-						echo '
-							<!-- details -->
-							<a href="categorie/'.$detail_category['slug'].'" class="swiper-slide">
-								<div class="section_categorie_nom">
-									<p>'.$detail_category['nom'].'</p>
-								</div>
-								<div class="section_categorie_img" style="background: '.$detail_article[0]['background'].';">
-									<img 
-										class="blur-up js-liquid-image"
-										src="'.$liquid_image['placeholder'].'"
-										data-image-base="'.$liquid_image['base'].'"
-										data-image-fallback="'.$liquid_image['fallback'].'"
-										data-image-high="'.$liquid_image['high'].'"
-										data-image-srcset="'.$liquid_image['srcset'].'"
-										data-image-sizes="'.$liquid_image['sizes'].'"
-										loading="lazy"
-										alt="'.$detail_category['nom'].'"
-									/>
-								</div>
-							</a>';
-						$category_ids[] = $detail_category['id'];
-					}
-				?>
-			</div>
-		</div>
-		
-        <script>
-            var swiper = new Swiper('.section_categorie', {
-                slidesPerView: "auto",
-                spaceBetween: 10,
-                freeMode: true,
-                autoplay: {
-                    delay: 2500,
-                    disableOnInteraction: true,
-                }
-            });
-        </script>
-	</div>
+        $detail_category = only_select("categorie", "id = '".(int)$categoryLink['categorie']."'", null, null);
+        $detail_article_image = ohnous_get_article_primary_image((int)$article['id']);
 
-	<div class="container_affiche_produit">
-		<?php
-			$donnee = select_bdd($bdd, "articles", $where = null, $limit = 12, $offset = 0, $order = null, $random = true);
-			foreach($donnee as $data)
-			{
-				affiche_produit($data);
-			}
-			echo '<!-- HTML !-->
-				<div class="div_btn_voir_plus">
-					<a href="/articles" class="btn_voir_plus" role="button">Voir plus  <i class="fa-solid fa-arrow-right-long"></i></a>
-				</div>';
-		?>
-	</div>
+        if(!$detail_category || !$detail_article_image)
+        {
+            continue;
+        }
+
+        if(isset($categoryCards[(int)$detail_category['id']]))
+        {
+            continue;
+        }
+
+        $categoryCards[(int)$detail_category['id']] = [
+            'categorie' => $detail_category,
+            'image' => $detail_article_image,
+        ];
+        $all_categories[] = $detail_category['nom'];
+    }
+
+    if(empty($all_categories))
+    {
+        $all_categories[] = 'Articles';
+    }
+?>
+<script>
+    let home_page = true;
+</script>
+<div class="intro-hero">
+    <div class="blob-bg"></div>
+    <div class="intro-text">
+        <h1>Découvrez <span id="changing-word-container"><span id="changing-word"><?= htmlspecialchars($all_categories[0], ENT_QUOTES, 'UTF-8') ?></span></span></h1>
+    </div>
+
+    <div class="div_search_bar" id="div_search_bar">
+        <div class="search_bar" id="search_bar">
+            <form action="/q" method="GET">
+                <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="input_search_bar" id="input_search_bar_2" name="query" placeholder="Rechercher un article..." required oninput="rechercheArticles(this.value)" onfocus="rechercheArticles(this.value)">
+                <button type="submit" class="button_search_bar"><i class="fa fa-search"></i></button>
+            </form>
+            <div class="donnee_de_recherche null" id="donnee_de_recherche"></div>
+        </div>
+    </div>
+
+    <script>
+        const words = <?= json_encode(array_values($all_categories), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+        let index = 0;
+        const span = document.getElementById("changing-word");
+
+        setInterval(() => {
+            if(words.length === 0){
+                return;
+            }
+            index = (index + 1) % words.length;
+            span.style.opacity = 0;
+            setTimeout(() => {
+                span.textContent = words[index];
+                span.style.opacity = 1;
+            }, 400);
+        }, 3000);
+    </script>
+</div>
+
+<div class="parent_div_section_categorie">
+    <div class="swiper section_categorie">
+        <div class="swiper-wrapper">
+            <?php foreach($categoryCards as $card): ?>
+                <?php
+                    $detail_category = $card['categorie'];
+                    $detail_article = $card['image'];
+                    $liquid_image = ohnous_prepare_liquid_image($detail_article['img'], '(max-width: 768px) 35vw, 180px');
+                ?>
+                <a href="categorie/<?= htmlspecialchars($detail_category['slug'], ENT_QUOTES, 'UTF-8') ?>" class="swiper-slide">
+                    <div class="section_categorie_nom">
+                        <p><?= htmlspecialchars($detail_category['nom'], ENT_QUOTES, 'UTF-8') ?></p>
+                    </div>
+                    <div class="section_categorie_img" style="background: <?= htmlspecialchars((string)$detail_article['background'], ENT_QUOTES, 'UTF-8') ?>;">
+                        <img
+                            class="blur-up js-liquid-image"
+                            src="<?= htmlspecialchars($liquid_image['placeholder'], ENT_QUOTES, 'UTF-8') ?>"
+                            data-image-base="<?= htmlspecialchars($liquid_image['base'], ENT_QUOTES, 'UTF-8') ?>"
+                            data-image-fallback="<?= htmlspecialchars($liquid_image['fallback'], ENT_QUOTES, 'UTF-8') ?>"
+                            data-image-high="<?= htmlspecialchars($liquid_image['high'], ENT_QUOTES, 'UTF-8') ?>"
+                            data-image-srcset="<?= htmlspecialchars($liquid_image['srcset'], ENT_QUOTES, 'UTF-8') ?>"
+                            data-image-sizes="<?= htmlspecialchars($liquid_image['sizes'], ENT_QUOTES, 'UTF-8') ?>"
+                            loading="lazy"
+                            alt="<?= htmlspecialchars($detail_category['nom'], ENT_QUOTES, 'UTF-8') ?>"
+                        />
+                    </div>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    </div>
+
+    <script>
+        var swiper = new Swiper('.section_categorie', {
+            slidesPerView: "auto",
+            spaceBetween: 10,
+            freeMode: true,
+            autoplay: {
+                delay: 2500,
+                disableOnInteraction: true,
+            }
+        });
+    </script>
+</div>
+
+<div class="container_affiche_produit">
+    <?php
+        $homeArticles = array_slice($visibleArticles, 0, 12);
+        foreach($homeArticles as $data)
+        {
+            affiche_produit($data);
+        }
+        echo '
+            <div class="div_btn_voir_plus">
+                <a href="/articles" class="btn_voir_plus" role="button">Voir plus  <i class="fa-solid fa-arrow-right-long"></i></a>
+            </div>';
+    ?>
+</div>

@@ -97,6 +97,56 @@
             $myView = new View('message');
             $myView->render('Ohnous | MESSAGE OHNOUS !');
         }
+        public function showLikedArticles ()
+        {
+            $myView = new View('articles-aimes');
+            $myView->render('Ohnous | ARTICLES AIMÉS OHNOUS !');
+        }
+        public function showAdminStoreActivation ()
+        {
+            $myView = new View('admin-activation-boutique');
+            $myView->render('Ohnous | ADMIN ACTIVATION BOUTIQUE !');
+        }
+        public function showAdminLogin ()
+        {
+            $myView = new View('admin-login');
+            $myView->render('Ohnous | CONNEXION ADMIN');
+        }
+        public function showAdminDashboard ()
+        {
+            $myView = new View('admin-dashboard');
+            $myView->render('Ohnous | ESPACE ADMIN');
+        }
+        public function showAdminStores ()
+        {
+            $myView = new View('admin-boutiques');
+            $myView->render('Ohnous | GESTION DES BOUTIQUES');
+        }
+        public function showAdminStoreDetails ()
+        {
+            $myView = new View('admin-boutique-details');
+            $myView->render('Ohnous | DÉTAIL BOUTIQUE ADMIN');
+        }
+        public function showAdminArticles ()
+        {
+            $myView = new View('admin-articles');
+            $myView->render('Ohnous | GESTION DES ARTICLES');
+        }
+        public function showAdminEditArticle ()
+        {
+            $myView = new View('admin-edit-article');
+            $myView->render('Ohnous | MODIFICATION D’ARTICLE');
+        }
+        public function showAdminPassword ()
+        {
+            $myView = new View('admin-password');
+            $myView->render('Ohnous | RÉINITIALISATION ADMIN');
+        }
+        public function showAdminNewPassword ()
+        {
+            $myView = new View('admin-new-password');
+            $myView->render('Ohnous | NOUVEAU MOT DE PASSE ADMIN');
+        }
         public function showSigninUser ()
         {
             /* ramener la vers  nouveau mot de passe */

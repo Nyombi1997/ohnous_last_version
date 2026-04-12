@@ -133,14 +133,14 @@
                     if(isset($_SESSION['user_ohnous_987654321']))
                     {
                         echo '
-                        <a href="/editer-user" class="editer_boutique message">Editer</a>';
+                        <a href="/editer-user" class="editer_boutique message">Editer</a>
+                        <a href="/articles-aimes" class="editer_boutique message">Articles aimés</a>';
                     }
                 ?>
                 <a href="/message" class="editer_boutique message">Message <?php
                     if(isset($_SESSION['user_ohnous_987654321']))
                     {
-                        $messages = select_bdd($bdd, "messages", $where = "client_id = '".$user['id']."' AND lu = '0'", $limit = null, $offset = 0, $order = null, $random = false);
-                        $messages = gestion_9_plus(count($messages));
+                        $messages = gestion_9_plus(ohnous_get_unread_messages_count());
                         echo '
                         <span>'.$messages.'</span>';
                     }
@@ -152,4 +152,29 @@
 
         <br>
     </div>
+</div>
+
+<?php
+    $likedArticles = ohnous_get_liked_articles_for_current_account();
+?>
+<div class="container_affiche_produit liked-account-section" id="liked_account_section">
+    <div class="titre">Articles aimés</div>
+    <?php
+        if(!empty($likedArticles))
+        {
+            foreach(array_slice($likedArticles, 0, 8) as $likedArticle)
+            {
+                affiche_produit($likedArticle);
+            }
+        }
+        else
+        {
+            $suggestions = ohnous_get_article_suggestions([], 8);
+            echo '<div class="empty-liquid-state"><div class="empty-liquid-state__icon"><i class="fa-regular fa-heart"></i></div><p>Vous n’avez encore aimé aucun article. Voici quelques suggestions pour commencer.</p></div>';
+            foreach($suggestions as $suggestion)
+            {
+                affiche_produit($suggestion);
+            }
+        }
+    ?>
 </div>

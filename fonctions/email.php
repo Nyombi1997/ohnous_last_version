@@ -117,7 +117,7 @@ function welcome($email = "")
         </div>
         <div class="content">
             <h1 class="titre">Bienvenue sur <strong class="en-valeur">OhNous</strong></h1>
-            <p class="texte">Commencez votre nouvelle expÃ©rience avec OhNous</p>
+            <p class="texte">Commencez votre nouvelle expérience avec OhNous</p>
             <div class="div-lien">
                 <a href="https://ohnous.store" style="color:#ffffff; text-decoration:none; font-weight:bold;" target="_blank" class="lien">Visiter le site</a>
             </div>
@@ -130,8 +130,8 @@ function welcome($email = "")
 }
 
 
-/* email code de verification */
-function code_verification($email = "", $code = 000000)
+/* email code de vérification */
+function code_verification($email = "", $code = '000000')
 {
     $mail = ohnous_build_mailer();
     if ($mail === false) {
@@ -149,7 +149,7 @@ function code_verification($email = "", $code = 000000)
     $mail->setFrom('contact@ohnous.store', 'Ohnous');
     $mail->addAddress($email);
     $mail->isHTML(true);
-    $mail->Subject = 'Code de verification mot de passe';
+    $mail->Subject = 'Code de vérification du mot de passe';
     $mail->Body = '<!DOCTYPE html>
     <html lang="fr">
     <head>
@@ -233,14 +233,167 @@ function code_verification($email = "", $code = 000000)
             <img src="https://ohnous.store/asset/images/icons/logo-1.png" alt="" srcset="" class="image-banniere">
         </div>
         <div class="content">
-            <h1 class="titre">Code de vÃ©rification <strong class="en-valeur">OhNous</strong></h1>
-            <p class="texte">Voici votre code de vÃ©rification</p>
+            <h1 class="titre">Code de vérification <strong class="en-valeur">OhNous</strong></h1>
+            <p class="texte">Voici votre code de vérification</p>
             <div class="code_verification">
                 '.$code.'
             </div>
         </div>
     </body>
     </html>
+    ';
+
+    return $mail->send();
+}
+
+/* email demande d'activation boutique */
+function ohnous_send_store_activation_request_email(array $boutique, array $request)
+{
+    $mail = ohnous_build_mailer();
+    if ($mail === false) {
+        return false;
+    }
+
+    $adminUrl = 'https://ohnous.store/admin-activation-boutique?token='.urlencode($request['token']);
+
+    $mail->isSMTP();
+    $mail->Host = 'smtp.hostinger.com';
+    $mail->SMTPAuth = true;
+    $mail->Username = 'contact@ohnous.store';
+    $mail->Password = 'Ohnous@2026';
+    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+    $mail->Port = 465;
+
+    $mail->setFrom('contact@ohnous.store', 'Ohnous');
+    $mail->addAddress('contact@ohnous.store');
+    $mail->isHTML(true);
+    $mail->Subject = 'Demande d’activation boutique - '.$boutique['nom'];
+    $mail->Body = '
+        <html lang="fr">
+            <body style="font-family:Arial, Helvetica, sans-serif; background:#f5f7ff; padding:24px;">
+                <div style="max-width:680px; margin:0 auto; background:#ffffff; border-radius:24px; padding:32px; box-shadow:0 20px 60px rgba(46, 61, 104, 0.12);">
+                    <h1 style="margin-top:0;">Demande d’activation boutique</h1>
+                    <p>Une boutique demande l’activation de son espace.</p>
+                    <p><strong>Boutique :</strong> '.htmlspecialchars($boutique['nom'], ENT_QUOTES, 'UTF-8').'</p>
+                    <p><strong>Email :</strong> '.htmlspecialchars((string)$boutique['adresse_email'], ENT_QUOTES, 'UTF-8').'</p>
+                    <p><strong>Slug :</strong> '.htmlspecialchars((string)($boutique['slug'] ?? ''), ENT_QUOTES, 'UTF-8').'</p>
+                    <p><strong>Description :</strong><br>'.nl2br(htmlspecialchars((string)($boutique['description'] ?? ''), ENT_QUOTES, 'UTF-8')).'</p>
+                    <p><strong>Date de demande :</strong> '.date('d/m/Y H:i').'</p>
+                    <div style="padding-top:20px;">
+                        <a href="'.$adminUrl.'" style="display:inline-block; background:#6775d6; color:#ffffff; text-decoration:none; padding:14px 22px; border-radius:999px; font-weight:bold;">Ouvrir la page d’activation</a>
+                    </div>
+                </div>
+            </body>
+        </html>
+    ';
+
+    return $mail->send();
+}
+
+/* email notification message */
+function ohnous_send_message_notification_email($email = "", $senderName = "", $messageUrl = "", $messagePreview = "")
+{
+    $mail = ohnous_build_mailer();
+    if ($mail === false || trim($email) === '') {
+        return false;
+    }
+
+    $mail->isSMTP();
+    $mail->Host = 'smtp.hostinger.com';
+    $mail->SMTPAuth = true;
+    $mail->Username = 'contact@ohnous.store';
+    $mail->Password = 'Ohnous@2026';
+    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+    $mail->Port = 465;
+
+    $mail->setFrom('contact@ohnous.store', 'Ohnous');
+    $mail->addAddress($email);
+    $mail->isHTML(true);
+    $mail->Subject = 'Nouveau message sur OhNous';
+    $mail->Body = '
+        <html lang="fr">
+            <body style="font-family:Arial, Helvetica, sans-serif; background:#f5f7ff; padding:24px;">
+                <div style="max-width:680px; margin:0 auto; background:#ffffff; border-radius:24px; padding:32px; box-shadow:0 20px 60px rgba(46, 61, 104, 0.12);">
+                    <h1 style="margin-top:0;">Nouveau message</h1>
+                    <p><strong>'.htmlspecialchars($senderName, ENT_QUOTES, 'UTF-8').'</strong> vous a envoyé un message sur OhNous.</p>
+                    <blockquote style="margin:16px 0; padding:16px 18px; background:#f6f8ff; border-radius:18px; color:#44506d;">'.nl2br(htmlspecialchars(mb_strimwidth($messagePreview, 0, 220, '...'), ENT_QUOTES, 'UTF-8')).'</blockquote>
+                    <a href="'.htmlspecialchars($messageUrl, ENT_QUOTES, 'UTF-8').'" style="display:inline-block; background:#6775d6; color:#ffffff; text-decoration:none; padding:14px 22px; border-radius:999px; font-weight:bold;">Ouvrir la conversation</a>
+                </div>
+            </body>
+        </html>
+    ';
+
+    return $mail->send();
+}
+
+/* email de réinitialisation admin */
+function ohnous_send_admin_password_reset_email($resetUrl = "")
+{
+    $mail = ohnous_build_mailer();
+    if ($mail === false || trim($resetUrl) === '') {
+        return false;
+    }
+
+    $mail->isSMTP();
+    $mail->Host = 'smtp.hostinger.com';
+    $mail->SMTPAuth = true;
+    $mail->Username = 'contact@ohnous.store';
+    $mail->Password = 'Ohnous@2026';
+    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+    $mail->Port = 465;
+
+    $mail->setFrom('contact@ohnous.store', 'Ohnous');
+    $mail->addAddress('edosysteme@gmail.com');
+    $mail->isHTML(true);
+    $mail->Subject = 'Réinitialisation du mot de passe admin OhNous';
+    $mail->Body = '
+        <html lang="fr">
+            <body style="font-family:Arial, Helvetica, sans-serif; background:#f5f7ff; padding:24px;">
+                <div style="max-width:680px; margin:0 auto; background:#ffffff; border-radius:24px; padding:32px; box-shadow:0 20px 60px rgba(46, 61, 104, 0.12);">
+                    <h1 style="margin-top:0;">Réinitialisation admin</h1>
+                    <p>Une demande de réinitialisation du mot de passe admin OhNous vient d’être générée.</p>
+                    <p>Si c’est bien vous, utilisez le bouton ci-dessous pour définir un nouveau mot de passe.</p>
+                    <a href="'.htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8').'" style="display:inline-block; background:#6775d6; color:#ffffff; text-decoration:none; padding:14px 22px; border-radius:999px; font-weight:bold;">Définir un nouveau mot de passe</a>
+                </div>
+            </body>
+        </html>
+    ';
+
+    return $mail->send();
+}
+
+/* notification email envoyée à une boutique depuis l’admin */
+function ohnous_send_admin_store_contact_email($email = "", $storeName = "", $messagePreview = "", $conversationUrl = "")
+{
+    $mail = ohnous_build_mailer();
+    if ($mail === false || trim($email) === '') {
+        return false;
+    }
+
+    $mail->isSMTP();
+    $mail->Host = 'smtp.hostinger.com';
+    $mail->SMTPAuth = true;
+    $mail->Username = 'contact@ohnous.store';
+    $mail->Password = 'Ohnous@2026';
+    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+    $mail->Port = 465;
+
+    $mail->setFrom('contact@ohnous.store', 'Ohnous');
+    $mail->addAddress($email);
+    $mail->isHTML(true);
+    $mail->Subject = 'L’admin OhNous vous a contacté';
+    $mail->Body = '
+        <html lang="fr">
+            <body style="font-family:Arial, Helvetica, sans-serif; background:#f5f7ff; padding:24px;">
+                <div style="max-width:680px; margin:0 auto; background:#ffffff; border-radius:24px; padding:32px; box-shadow:0 20px 60px rgba(46, 61, 104, 0.12);">
+                    <h1 style="margin-top:0;">L’admin OhNous vous a contacté</h1>
+                    <p>Bonjour '.htmlspecialchars($storeName, ENT_QUOTES, 'UTF-8').',</p>
+                    <p>Un nouveau message vous attend de la part de l’administration OhNous.</p>
+                    <blockquote style="margin:16px 0; padding:16px 18px; background:#f6f8ff; border-radius:18px; color:#44506d;">'.nl2br(htmlspecialchars(mb_strimwidth($messagePreview, 0, 260, '...'), ENT_QUOTES, 'UTF-8')).'</blockquote>
+                    <a href="'.htmlspecialchars($conversationUrl, ENT_QUOTES, 'UTF-8').'" style="display:inline-block; background:#6775d6; color:#ffffff; text-decoration:none; padding:14px 22px; border-radius:999px; font-weight:bold;">Ouvrir la conversation</a>
+                </div>
+            </body>
+        </html>
     ';
 
     return $mail->send();

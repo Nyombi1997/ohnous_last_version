@@ -233,6 +233,14 @@ let donnee_de_recherche = document.querySelectorAll("#donnee_de_recherche");
 let input_search_bar_2 = document.getElementById("input_search_bar_2");
 function rechercheArticles(value)
 {
+    if((value || '').trim() === ''){
+        donnee_de_recherche.forEach(function (element){
+            element.innerHTML = "";
+            element.classList.add("null");
+        });
+        return;
+    }
+
     $.post("/fonctions/recherche.php",{q : value },function(data){
         const result = data;
         /* si on a une suggestion */

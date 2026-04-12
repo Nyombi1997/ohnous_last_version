@@ -6,13 +6,27 @@
     }
     else
     {
-        // Rediriger vers une page d'erreur ou afficher un message
         header("Location:/404");
         exit();
     }
+
+    $currentAccount = ohnous_get_current_account();
+    $ratingSummary = ohnous_get_article_rating_summary($article['id']);
+    $reviewSummaryHtml = ohnous_render_article_rating_summary($article['id'], 'detail');
+    $reviewListHtml = ohnous_render_article_reviews_html($article['id'], 20);
+    $likeSummary = ohnous_get_article_likes_summary($article['id']);
+    $pricing = ohnous_get_article_pricing($article);
 ?>
 <script>
     let home_page = true;
+    window.articleReviewsConfig = {
+        articleId: <?= (int)$article['id'] ?>,
+        isConnected: <?= $currentAccount['connected'] ? 'true' : 'false' ?>,
+        accountType: <?= json_encode($currentAccount['type']) ?>,
+        loginUrl: '/connexion',
+        signupUrl: '/choix-compte',
+        currentPath: <?= json_encode($_SERVER['REQUEST_URI'] ?? '/article/'.$article['slug']) ?>
+    };
 </script>
 <!-- content page -->
 <div class="content_page">
@@ -23,65 +37,64 @@
                 <?php
                     /* afficher les images de l'article */
                     $image_article = select_bdd($bdd, "image_articles", $where = "article = '".$article['id']."'", $limit = null, $offset = 0, $order = null, $random = false);
-                    $liquid_image = ohnous_prepare_liquid_image($image_article[0]['img']);
-                    $image_article_id = 'img_produit_'.$image_article[0]['id'];
-                    $image_article_style = $image_article[0]['styles'];
-                    $image_article_div_img_id = 'div_img_produit_'.$image_article[0]['id'];
-                    $image_article_background = $image_article[0]['background'];
-                    echo '
-                        <div class="div_img_affiche_produit" id="'.$image_article_div_img_id.'" style="background: '.$image_article_background.';">
-                            <img
-                                crossorigin="anonymous"
-                                src="'.$liquid_image['placeholder'].'"
-                                alt="'.$article['slug'].'" 
-                                class="img_affiche blur-up js-liquid-image"
-                                data-img ="'.$image_article[0]['img'].'"
-                                data-image-base="'.$liquid_image['base'].'"
-                                data-image-fallback="'.$liquid_image['fallback'].'"
-                                data-image-high="'.$liquid_image['high'].'"
-                                data-image-srcset="'.$liquid_image['srcset'].'"
-                                data-image-sizes="'.$liquid_image['sizes'].'"
-                                id="'.$image_article_id.'"
-                                style="'.$image_article_style.'"
-                                loading="lazy"
-                            >
-                        </div>';
+                    $mainImage = $image_article[0];
+                    $image_article_style = $mainImage['styles'];
+                    $image_article_background = $mainImage['background'];
+                    echo '<div class="swiper article-gallery-swiper js-article-gallery-swiper">';
+                    echo '<div class="swiper-wrapper">';
+                    foreach($image_article as $singleImage)
+                    {
+                        $liquid_image = ohnous_prepare_liquid_image($singleImage['img']);
+                        $image_article_id = 'img_produit_'.$singleImage['id'];
+                        $image_article_div_img_id = 'div_img_produit_'.$singleImage['id'];
+                        echo '
+                            <div class="swiper-slide">
+                                <div class="div_img_affiche_produit div_img_affiche_produit--detail" id="'.$image_article_div_img_id.'" style="background: '.$singleImage['background'].';">
+                                    <img
+                                        crossorigin="anonymous"
+                                        src="'.$liquid_image['placeholder'].'"
+                                        alt="'.$article['slug'].'"
+                                        class="img_affiche blur-up js-liquid-image"
+                                        data-img ="'.$singleImage['img'].'"
+                                        data-image-base="'.$liquid_image['base'].'"
+                                        data-image-fallback="'.$liquid_image['fallback'].'"
+                                        data-image-high="'.$liquid_image['high'].'"
+                                        data-image-srcset="'.$liquid_image['srcset'].'"
+                                        data-image-sizes="'.$liquid_image['sizes'].'"
+                                        id="'.$image_article_id.'"
+                                        style="'.$singleImage['styles'].'"
+                                        loading="lazy"
+                                    >
+                                </div>
+                            </div>';
+                    }
+                    echo '</div>';
+                    echo '<div class="article-gallery-counter"><span class="current">1</span>/<span class="total">'.count($image_article).'</span></div>';
+                    echo '</div>';
                 ?>
             </div>
             <!-- details -->
             <div class="div_detail_vu_article">
                 <div class="nom"><?= $article['nom'] ?></div>
-                <div class="avis">
-                    <?php 
-                        /* afficher les avis */
-                        $notes = select_bdd($bdd, "notes_article", $where = "article_id = '".$article['id']."'", $limit = null, $offset = 0, $order = null, $random = false);
-                        $total_notes = 0;
-                        if(count($notes) == 0)
-                        {
-                            echo '
-                                <i class="fa-regular fa-star"></i>
-                                <i class="fa-regular fa-star"></i>
-                                <i class="fa-regular fa-star"></i>
-                                <i class="fa-regular fa-star"></i>
-                                <i class="fa-regular fa-star"></i>
-                                <span>(0 avis)</span>';
-                                /* 
-                                <i class="fa-solid fa-star"></i>
-                                <i class="fa-solid fa-star"></i>
-                                <i class="fa-solid fa-star"></i>
-                                <i class="fa-solid fa-star"></i>
-                                <!-- <i class="fa-regular fa-star"></i> -->
-                                <i class="fa-solid fa-star-half"></i>
-                                <span>(24 avis)</span> */
-
-                        }
-                        else
-                        {
-
-                        }
-                    ?>
+                <div class="article-detail-top-actions">
+                    <?= ohnous_render_article_admin_edit_link($article['id'], 'detail') ?>
+                    <?= ohnous_render_like_button($article['id'], 'detail') ?>
+                    <div class="article-detail-top-actions__likes">
+                        <span data-like-total-label="<?= (int)$article['id'] ?>"><?= $likeSummary['count_formatted'] ?></span> j'aime
+                    </div>
                 </div>
-                <div class="prix"><?= $article['prix'] ?> USD</div>
+                <div class="avis">
+                    <div id="article-review-summary"><?= $reviewSummaryHtml ?></div>
+                </div>
+                <div class="prix <?= $pricing['promo_actif'] ? 'promo' : '' ?>">
+                    <?php if($pricing['promo_actif']): ?>
+                        <span class="old-price">$ <?= number_format($pricing['prix_initial'], 2, '.', ' ') ?></span>
+                        <span class="new-price">$ <?= number_format($pricing['prix_final'], 2, '.', ' ') ?></span>
+                        <span class="promo-inline-badge">En promotion</span>
+                    <?php else: ?>
+                        <?= number_format($pricing['prix_final'], 2, '.', ' ') ?> USD
+                    <?php endif; ?>
+                </div>
                 <div class="taille">
                     <?php
                         /* afficher les tailles */
@@ -100,24 +113,21 @@
                     ?>
                 </div>
                 <div class="action_panier">
-                        <?php
-                            /* si panier */
-                            if (session_status() === PHP_SESSION_NONE) {
-                                session_start();
-                            }
-                            $key = cartKey($article['id'], $tailles);
-                            $panier = '';
-                            $icone = 'icon-panier_plus';
-                            if (isset($_SESSION['cart-ohnous-123456789'][$key])) {
-                                $panier = 'active'; 
-                                $icone = 'icon-panier_moins';               
-                            }
-                            echo
-                            '
-                            <button class="panier '.$panier.'" id="btn_panier_'.$article['id'].'" onclick=\'ajouterAuPanier('.json_encode($image_article[0]['img']).','.(int)$article['id'].','.json_encode($article['nom']).','.json_encode($article['slug']).','.json_encode($tailles).','.(int)$article['prix'].','.json_encode($image_article_style).','.json_encode($image_article_background).')\'><span class="'.$icone.'"></span></button>';
-                        ?>
-                        <!-- acheter directement -->
-                        <button class="acheter_directement">Commander maintenant</button>
+                    <?php
+                        if (session_status() === PHP_SESSION_NONE) {
+                            session_start();
+                        }
+                        $key = cartKey($article['id'], $tailles);
+                        $panier = '';
+                        $icone = 'icon-panier_plus';
+                        if (isset($_SESSION['cart-ohnous-123456789'][$key])) {
+                            $panier = 'active';
+                            $icone = 'icon-panier_moins';
+                        }
+                        echo '
+                            <button class="panier '.$panier.'" id="btn_panier_'.$article['id'].'" onclick=\'ajouterAuPanier('.json_encode($mainImage['img']).','.(int)$article['id'].','.json_encode($article['nom']).','.json_encode($article['slug']).','.json_encode($tailles).','.json_encode((string)$pricing['prix_final']).','.json_encode($image_article_style).','.json_encode($image_article_background).')\'><span class="'.$icone.'"></span></button>';
+                    ?>
+                    <button class="acheter_directement">Commander maintenant</button>
                 </div>
                 <div class="plus_details">
                     <?php
@@ -131,10 +141,12 @@
                         {
                             $boutique = [
                                 'nom' => 'OhNous',
-                                'slug' => '/']
-                            ;
+                                'slug' => '/'
+                            ];
                         }
-                        echo '<div class="details"><strong>Boutique : </strong><a href="/boutique/'.$boutique['slug'].'">'.$boutique['nom'].'</a></div>';
+                        $storeLink = ohnous_is_store_active($boutique) ? '/boutique/'.$boutique['slug'] : '#';
+                        echo '<div class="details"><strong>Boutique : </strong><a href="'.$storeLink.'">'.$boutique['nom'].'</a></div>';
+
                         /* categorie */
                         $categorie = select_bdd($bdd, "categorie_article", $where = "article = '".$article['id']."'", $limit = null, $offset = 0, $order = null, $random = false);
                         if($categorie)
@@ -148,18 +160,19 @@
                             {
                                 $categorie = [
                                     'nom' => 'Aucune catégorie',
-                                    'slug' => '/']
-                                ;
+                                    'slug' => '/'
+                                ];
                             }
                         }
                         else
                         {
                             $categorie = [
                                 'nom' => 'Aucune catégorie',
-                                'slug' => '/']
-                            ;
+                                'slug' => '/'
+                            ];
                         }
                         echo '<div class="details"><strong>Catégorie : </strong><a href="/categorie/'.$categorie['slug'].'">'.$categorie['nom'].'</a></div>';
+
                         /* types */
                         $types = select_bdd($bdd, "types_article", $where = "article = '".$article['id']."'", $limit = null, $offset = 0, $order = null, $random = false);
                         if($types)
@@ -172,20 +185,20 @@
                             else
                             {
                                 $types = [
-                                    'nom' => 'Aucune type',
-                                    'slug' => '/']
-                                ;
+                                    'nom' => 'Aucun type',
+                                    'slug' => '/'
+                                ];
                             }
                         }
                         else
                         {
                             $types = [
-                                'nom' => 'Aucune type',
-                                'slug' => '/']
-                            ;
+                                'nom' => 'Aucun type',
+                                'slug' => '/'
+                            ];
                         }
                         echo '<div class="details"><strong>Type : </strong><a href="/type/'.$types['slug'].'">'.$types['nom'].'</a></div>';
-                    ?>                    
+                    ?>
                 </div>
             </div>
         </div>
@@ -218,25 +231,60 @@
         <!-- div_details -->
         <div class="div_details notes js_note_vu_article null">
             <div class="content">
-                <div class="rating-container">
-                    <h3>Notez cet article</h3>
-                    
-                    <div class="stars" id="star-rating">
-                        <span class="star" data-value="5">&#9733;</span>
-                        <span class="star" data-value="4">&#9733;</span>
-                        <span class="star" data-value="3">&#9733;</span>
-                        <span class="star" data-value="2">&#9733;</span>
-                        <span class="star" data-value="1">&#9733;</span>
+                <div class="rating-container liquid-review-box" id="article-review-app">
+                    <div class="liquid-review-box__intro">
+                        <div>
+                            <h3>Les avis sur cet article</h3>
+                        </div>
+                        <div class="liquid-review-box__highlight">
+                            <span><?= $ratingSummary['total'] > 0 ? $ratingSummary['moyenne_formatted'].'/5' : 'Nouveau' ?></span>
+                            <small><?= $ratingSummary['total_formatted'] ?> avis</small>
+                        </div>
                     </div>
 
-                    <p id="rating-value">Note : 0/5</p>
+                    <?php if(!$currentAccount['connected']): ?>
+                        <div class="review-login-callout" id="review-login-callout">
+                            <div class="review-login-callout__icon">
+                                <i class="fa-solid fa-user-lock"></i>
+                            </div>
+                            <div class="review-login-callout__content">
+                                <strong>Connectez-vous pour noter et commenter.</strong>
+                                <p>Votre connexion et votre inscription restent gérées par vos pages actuelles, sans changer votre logique existante.</p>
+                            </div>
+                            <button type="button" class="btn_ohnous review-login-callout__button" id="open-review-auth">
+                                Se connecter ou s’inscrire
+                            </button>
+                        </div>
+                    <?php endif; ?>
 
-                    <textarea id="comment-text" placeholder="Votre avis ici..."></textarea>
-                    <button id="submit-rating" class="btn_ohnous">Publier mon avis</button>
+                    <div class="review-editor <?= !$currentAccount['connected'] ? 'is-locked' : '' ?>">
+                        <div class="review-editor__head">
+                            <h4><?= $currentAccount['connected'] ? 'Partagez votre avis' : 'Connexion requise pour publier' ?></h4>
+                            <p id="rating-value">Note : 0/5</p>
+                        </div>
 
-                    <hr>
-                    <h4>Commentaires récents</h4>
-                    <div id="reviews-list"></div>
+                        <div class="stars" id="star-rating">
+                            <button type="button" class="star" data-value="5" aria-label="Noter 5 sur 5">&#9733;</button>
+                            <button type="button" class="star" data-value="4" aria-label="Noter 4 sur 5">&#9733;</button>
+                            <button type="button" class="star" data-value="3" aria-label="Noter 3 sur 5">&#9733;</button>
+                            <button type="button" class="star" data-value="2" aria-label="Noter 2 sur 5">&#9733;</button>
+                            <button type="button" class="star" data-value="1" aria-label="Noter 1 sur 5">&#9733;</button>
+                        </div>
+
+                        <textarea id="comment-text" placeholder="Dites ce que vous avez aimé, la qualité, la taille, la livraison, ou ce qui pourrait être amélioré."></textarea>
+                        <div class="review-editor__actions">
+                            <span class="review-editor__hint">Un seul avis par compte. Si vous republiez, votre avis sera mis à jour.</span>
+                            <button id="submit-rating" class="btn_ohnous">Publier mon avis</button>
+                        </div>
+                    </div>
+
+                    <div class="review-feed">
+                        <div class="review-feed__head">
+                            <h4>Commentaires récents</h4>
+                            <span id="review-feed-count"><?= $ratingSummary['total_formatted'] ?> avis</span>
+                        </div>
+                        <div id="reviews-list"><?= $reviewListHtml ?></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -247,7 +295,8 @@
 <div class="container_affiche_produit" id="afficher_article">
     <div class="titre">Article(s) similaire(s)</div>
     <?php
-        $article = getSimilarArticles($article['id'],8,null,false);
+        $article = ohnous_filter_visible_articles(getSimilarArticles($article['id'],12,null,false));
+        $article = array_slice($article, 0, 8);
         foreach($article as $donnee)
         {
             affiche_produit($donnee);
@@ -255,7 +304,5 @@
     ?>
 </div>
 
-
-
 <!-- script filtre produit -->
-<script src="/asset/js/article_article.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/article_article.js") ?>"></script> 
+<script src="/asset/js/article_article.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/article_article.js") ?>"></script>

@@ -104,14 +104,23 @@
                                 $categories = select_bdd($bdd, "categorie", $where = null, $limit = null, $offset = 0, $order = "nom", $random = false);
                                 $html_categorie = "";
                                 foreach ($categories as $category) {
-                                    $categories_nombre = select_bdd($bdd, "categorie_article", $where = "categorie = '".$category['id']."'", $limit = null, $offset = 0, $order = null, $random = false);
-                                    if(count($categories_nombre) == 0)
+                                    $categories_nombre = 0;
+                                    $category_articles = select_bdd($bdd, "categorie_article", $where = "categorie = '".$category['id']."'", $limit = null, $offset = 0, $order = null, $random = false);
+                                    foreach($category_articles as $categoryArticle)
+                                    {
+                                        $detailArticle = only_select("articles", "id = '".(int)$categoryArticle['article']."'", null, null);
+                                        if($detailArticle && ohnous_is_article_visible($detailArticle))
+                                        {
+                                            $categories_nombre++;
+                                        }
+                                    }
+                                    if($categories_nombre == 0)
                                     {
                                         continue;
                                     }
                                     echo '
                                     <div class="detail_liste_filtre_produit js_detail_liste_filtre_produit js_detail_liste_filtre_produit_'.$category['id'].'" onclick=\'filtre_categorie('.(int)$category['id'].','.json_encode($category['nom']).','.json_encode($category['slug']).')\'>
-                                        <div class="nom">'.$category['nom'].'</div> <div class="nombre">'.count($categories_nombre).'</div>
+                                        <div class="nom">'.$category['nom'].'</div> <div class="nombre">'.$categories_nombre.'</div>
                                     </div>';
                                 }
                             ?>
@@ -134,6 +143,15 @@
                     </div>
                 </div>
             </div>
+            <div class="div_liste_filtre_produit" id="div_filtre_promotions">
+                <div class="titre_liste_filtre_produit"><p>Promotion</p></div>
+                <div class="liste_filtre_produit">
+                    <div class="div_detail_liste_filtre_produit js_promo_filter" onclick="filtre_promotion()">
+                        <div class="nom">Articles en promotion</div>
+                        <div class="nombre"><i class="fa-solid fa-percent"></i></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <!-- afficher les articles -->
@@ -143,7 +161,8 @@
             if(isset($_GET['query']))
             {
                 $query =  found($_GET['query'], $limit = null, 0, $order = null, $random = false);
-                $donnee = getArticlesFromSearch($query, $limit = 12, 0, $order = null, $random = false);
+                $donnee = ohnous_filter_visible_articles(getArticlesFromSearch($query, $limit = 24, 0, $order = null, $random = false));
+                $donnee = array_slice($donnee, 0, 12);
                 foreach($donnee as $data)
                 {
                     affiche_produit($data);
@@ -151,7 +170,7 @@
             }
             else
             {
-                $donnee = select_bdd($bdd, "articles", $where = null, $limit = 12, $offset = 0, $order = null, $random = true);
+                $donnee = ohnous_get_visible_articles(12, 0, null, true);
                 foreach($donnee as $data)
                 {
                     affiche_produit($data);

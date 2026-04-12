@@ -2,74 +2,140 @@
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
-    /* SI ON EST CONNECTER */
-    if(isset($_SESSION['store_ohnous_987654321']))
+
+    $currentAccount = ohnous_get_current_account();
+    if(!$currentAccount['connected'])
     {
-        $boutique = select_bdd($bdd, "boutiques", $where = 'unique_id = "'.$_SESSION['store_ohnous_987654321'].'"', $limit = null, $offset = 0, $order = null, $random = false);
-        if(count($boutique)!=0)
+        header("Location:/connexion");
+        exit();
+    }
+
+    $conversations = ohnous_get_conversations_for_current_account();
+    $selectedClientId = (int)($_GET['client'] ?? 0);
+    $selectedBoutiqueId = (int)($_GET['boutique'] ?? 0);
+
+    if($selectedClientId <= 0 || $selectedBoutiqueId <= 0)
+    {
+        if(!empty($conversations))
         {
-            $boutique = $boutique[0];
-            $backgrounds = "";
-            if($boutique['backgrounds']!='')
-            {
-                $backgrounds = 'style="background : '.$boutique['backgrounds'].';"';
-            }
-            $profile = '<img src="'.ASSET.'images/profile/default.jpg" alt="" srcset="">';
-            if($boutique['profile']!='')
-            {
-                $profile = '
-                            <img 
-                                class="blur-up"
-                                src="'.$boutique['profile'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-50,blur-10" 
-                                srcset="
-                                    '.$boutique['profile'].'?updatedAt=1765131265242/image.webp?tr=w-400,q-80 400w,
-                                    '.$boutique['profile'].'?updatedAt=1765131265242/image.webp?tr=w-800,q-80 800w,
-                                    '.$boutique['profile'].'?updatedAt=1765131265242/image.webp?tr=w-1200,q-80 1200w"
-                                sizes="(max-width:768px) 90vw, 600px"
-                                loading="lazy"
-                                class="blur-up"
-                            />';
-            }
+            $selectedClientId = (int)$conversations[0]['client_id'];
+            $selectedBoutiqueId = (int)$conversations[0]['boutique_id'];
         }
-        else
+        elseif($currentAccount['type'] === 'utilisateur' && (int)($_GET['boutique'] ?? 0) > 0)
         {
-            // Rediriger vers une page d'erreur ou afficher un message
-            header("Location:/404");
-            exit();
+            $selectedClientId = (int)$currentAccount['id'];
+            $selectedBoutiqueId = (int)$_GET['boutique'];
         }
     }
-    else
+
+    $selectedMessages = [];
+    $selectedConversationTitle = 'Choisissez une conversation';
+    if($selectedClientId > 0 && $selectedBoutiqueId > 0)
     {
-        // Rediriger vers une page d'erreur ou afficher un message
-        header("Location:/404");
-        exit();
+        ohnous_mark_conversation_as_read($selectedClientId, $selectedBoutiqueId);
+        $selectedMessages = ohnous_get_messages_for_conversation($selectedClientId, $selectedBoutiqueId);
+
+        foreach($conversations as $conversation)
+        {
+            if((int)$conversation['client_id'] === $selectedClientId && (int)$conversation['boutique_id'] === $selectedBoutiqueId)
+            {
+                $selectedConversationTitle = $conversation['other_name'];
+                break;
+            }
+        }
+
+        if($selectedConversationTitle === 'Choisissez une conversation')
+        {
+            $fallbackStore = only_select("boutiques", "id = ".$selectedBoutiqueId, null, null);
+            $fallbackUser = only_select("utilisateur", "id = ".$selectedClientId, null, null);
+            $selectedConversationTitle = $currentAccount['type'] === 'boutique'
+                ? ($fallbackUser['nom'] ?? 'Client OhNous')
+                : ($fallbackStore['nom'] ?? 'Boutique OhNous');
+        }
     }
 ?>
 <script>
     let home_page = true;
+    window.ohnousMessagesConfig = {
+        currentAccountType: <?= json_encode($currentAccount['type']) ?>,
+        currentAccountId: <?= (int)$currentAccount['id'] ?>,
+        selectedClientId: <?= (int)$selectedClientId ?>,
+        selectedBoutiqueId: <?= (int)$selectedBoutiqueId ?>,
+        refreshEveryMs: 4000
+    };
 </script>
-	<!-- intro -->
-	<div class="intro-hero plus">
-		<div class="blob-bg">
-            <span id="new_boutique"></span>
-        </div>
-        <!-- container login page -->
-        <div class="container_login_page">
-            <div class="div_login_page">
-                <div class="div_detail_login_page">
-                    <div class="div_icone_login_page">
-                        <div class="icone_login_page">
-                            <i class="fa-solid fa-comments"></i>
-                        </div>
-                    </div>
-                    <div class="titre_login_page">
-                        Message(s)
-                    </div>
+<div class="messages-page">
+    <section class="messages-shell liquid-panel">
+        <aside class="messages-sidebar">
+            <div class="messages-sidebar__head">
+                <div>
+                    <h1>Messages</h1>
+                    <p>Retrouvez vos conversations en cours.</p>
                 </div>
-                <div class="div_choix_chat">
-                    <a href="" class="choix_chat"><i class="fa-solid fa-user"></i> <p>Beni <span>2</span></p></a>
-                    <a href="" class="choix_chat"><i class="fa-solid fa-store"></i> <p>Beni <span>2</span></p></a>
+                <span class="messages-sidebar__badge"><?= gestion_9_plus(ohnous_get_unread_messages_count($currentAccount)) ?></span>
+            </div>
+
+            <div class="messages-conversation-list" id="messages_conversation_list">
+                <?php
+                    if(empty($conversations))
+                    {
+                        echo '<div class="empty-liquid-state compact"><div class="empty-liquid-state__icon"><i class="fa-regular fa-comments"></i></div><p>Aucune conversation pour le moment.</p></div>';
+                    }
+                    else
+                    {
+                        foreach($conversations as $conversation)
+                        {
+                            $activeClass = ((int)$conversation['client_id'] === $selectedClientId && (int)$conversation['boutique_id'] === $selectedBoutiqueId) ? 'is-active' : '';
+                            $avatar = '<img src="'.htmlspecialchars(ohnous_get_profile_picture($conversation['other_profile'], $conversation['other_type']), ENT_QUOTES, 'UTF-8').'" alt="'.htmlspecialchars($conversation['other_name'], ENT_QUOTES, 'UTF-8').'">';
+
+                            echo '
+                                <a href="/message?client='.(int)$conversation['client_id'].'&boutique='.(int)$conversation['boutique_id'].'" class="messages-conversation-card '.$activeClass.'" data-conversation-card>
+                                    <div class="messages-conversation-card__avatar">'.$avatar.'</div>
+                                    <div class="messages-conversation-card__content">
+                                        <strong>'.htmlspecialchars($conversation['other_name'], ENT_QUOTES, 'UTF-8').'</strong>
+                                        <p>'.htmlspecialchars(mb_strimwidth((string)$conversation['last_message'], 0, 90, '...'), ENT_QUOTES, 'UTF-8').'</p>
+                                    </div>
+                                    <div class="messages-conversation-card__meta">
+                                        <span>'.($conversation['last_message_date'] !== '' ? ohnous_format_review_date($conversation['last_message_date']) : '').'</span>
+                                        '.($conversation['unread_count'] > 0 ? '<em>'.gestion_9_plus($conversation['unread_count']).'</em>' : '').'
+                                    </div>
+                                </a>';
+                        }
+                    }
+                ?>
+            </div>
+        </aside>
+
+        <section class="messages-chat-panel">
+            <div class="messages-chat-panel__head">
+                <div>
+                    <h2 id="messages_conversation_title"><?= htmlspecialchars($selectedConversationTitle, ENT_QUOTES, 'UTF-8') ?></h2>
+                    <p>Les nouveaux messages apparaissent automatiquement.</p>
                 </div>
             </div>
-        </div>
-	</div>
+
+            <div class="messages-thread" id="messages_thread" data-client-id="<?= (int)$selectedClientId ?>" data-boutique-id="<?= (int)$selectedBoutiqueId ?>">
+                <?php
+                    if($selectedClientId <= 0 || $selectedBoutiqueId <= 0)
+                    {
+                        echo '<div class="empty-liquid-state compact"><div class="empty-liquid-state__icon"><i class="fa-regular fa-comment-dots"></i></div><p>Choisissez une conversation pour commencer.</p></div>';
+                    }
+                    else
+                    {
+                        foreach($selectedMessages as $message)
+                        {
+                            echo ohnous_render_message_bubble($message, $currentAccount);
+                        }
+                    }
+                ?>
+            </div>
+
+            <form class="messages-composer" id="messages_composer">
+                <textarea id="message_text" placeholder="Écrivez votre message ici..." <?= ($selectedClientId <= 0 || $selectedBoutiqueId <= 0) ? 'disabled' : '' ?>></textarea>
+                <button type="submit" class="btn_ohnous" <?= ($selectedClientId <= 0 || $selectedBoutiqueId <= 0) ? 'disabled' : '' ?>>Envoyer</button>
+            </form>
+        </section>
+    </section>
+</div>
+
+<script src="/asset/js/messages.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/messages.js") ?>" defer></script>

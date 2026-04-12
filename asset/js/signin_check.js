@@ -8,6 +8,17 @@ choix_form_ohnous = document.getElementById("choix_form_ohnous");
 let emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 let
 btn = form.querySelector('button[type="submit"]');
+
+function getAuthRedirect(fallbackPath = '/boutique')
+{
+    const redirect = localStorage.getItem('ohnous_after_auth_redirect');
+    if(redirect && redirect.trim() !== '')
+    {
+        localStorage.removeItem('ohnous_after_auth_redirect');
+        return redirect;
+    }
+    return fallbackPath;
+}
 /* si on soumet le formulaire */
 form.addEventListener("submit",function(e){
     e.preventDefault();
@@ -182,7 +193,7 @@ form.addEventListener("submit",function(e){
                 }
                 else
                 {
-                    window.location = '/boutique';
+                    window.location = getAuthRedirect('/boutique');
                 }
             }
         )        

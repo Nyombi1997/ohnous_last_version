@@ -167,6 +167,34 @@
     {
         cursor: initial;
     }
+    .liquid-review-box__intro,
+    .review-login-callout,
+    .review-editor__head,
+    .review-editor__actions,
+    .review-feed__head,
+    .review-card__top
+    {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .review-login-callout__button,
+    .review-editor__actions .btn_ohnous,
+    .swal-review-auth__actions .btn_ohnous
+    {
+        width: 100%;
+    }
+    .review-card__rating
+    {
+        align-items: flex-start;
+    }
+    .ohnous-rating-summary.detail
+    {
+        padding: 14px;
+    }
+    .liquid-review-box__highlight
+    {
+        width: 100%;
+    }
     /* login */
     .div_login_page
     {
@@ -199,5 +227,109 @@
 
     .null{
         display: none;
+    }
+}
+@media screen and (max-width: 980px) {
+    .messages-shell,
+    .upload-product-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .messages-shell {
+        min-height: auto;
+    }
+
+    .messages-thread {
+        max-height: 50vh;
+    }
+
+    .upload-product-panel__head,
+    .liked-hero,
+    .activation-panel {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media screen and (max-width: 640px) {
+    .content_page--liked,
+    .messages-page {
+        padding: 16px 10px 28px;
+    }
+
+    .liquid-panel,
+    .messages-shell {
+        width: calc(100% - 8px);
+        padding: 18px;
+        border-radius: 26px;
+    }
+
+    .messages-sidebar,
+    .messages-chat-panel,
+    .messages-conversation-card,
+    .empty-liquid-state,
+    .message-bubble {
+        border-radius: 22px;
+    }
+
+    .messages-conversation-card {
+        grid-template-columns: 48px minmax(0, 1fr) auto;
+        padding: 12px;
+    }
+
+    .messages-conversation-card__avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 16px;
+    }
+
+    .messages-composer {
+        grid-template-columns: 1fr;
+    }
+
+    .div_img_affiche_produit--detail {
+        min-height: 340px;
+    }
+}
+@media (max-width: 980px){
+    .admin-stat-grid,
+    .admin-shortcuts,
+    .admin-list-grid,
+    .admin-store-layout,
+    .admin-mini-grid,
+    .admin-form-grid{
+        grid-template-columns: 1fr;
+    }
+
+    .admin-article-table__head{
+        display: none;
+    }
+
+    .admin-article-table__row{
+        grid-template-columns: 1fr;
+        padding: 18px 0;
+    }
+}
+
+@media (max-width: 768px){
+    .admin-page-shell{
+        padding: 18px 12px 40px;
+    }
+
+    .admin-hero,
+    .admin-page-head,
+    .admin-search-bar{
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .admin-store-card__actions,
+    .admin-store-overview__actions,
+    .admin-edit-form__actions{
+        flex-direction: column;
+    }
+
+    .promo-inline-badge{
+        margin-left: 0;
     }
 }

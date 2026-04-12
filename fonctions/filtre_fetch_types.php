@@ -35,6 +35,7 @@
             FROM types t
             INNER JOIN types_article at ON at.types = t.id
             INNER JOIN articles a ON a.id = at.article
+            INNER JOIN boutiques bo ON bo.id = a.boutique AND bo.activer = 1
             INNER JOIN categorie_article ac ON ac.article = a.id
             WHERE ac.categorie = :category_id
             AND at.types = :types_id
@@ -58,6 +59,7 @@
             FROM tailles tal
             INNER JOIN taille_articles ta ON ta.taille = tal.id
             INNER JOIN articles a ON a.id = ta.article
+            INNER JOIN boutiques bo ON bo.id = a.boutique AND bo.activer = 1
             INNER JOIN categorie_article ac ON ac.article = a.id
             INNER JOIN types_article at ON at.article = a.id
             WHERE ac.categorie = :category_id
@@ -86,6 +88,7 @@
             FROM types t
             INNER JOIN types_article at ON at.types = t.id
             INNER JOIN articles a ON a.id = at.article
+            INNER JOIN boutiques bo ON bo.id = a.boutique AND bo.activer = 1
             INNER JOIN categorie_article ac ON ac.article = a.id
             WHERE ac.categorie = :category_id
             AND at.types = :types_id
@@ -108,6 +111,7 @@
             FROM tailles ta
             INNER JOIN taille_articles atl ON atl.taille = ta.id
             INNER JOIN articles a ON a.id = atl.article
+            INNER JOIN boutiques bo ON bo.id = a.boutique AND bo.activer = 1
             INNER JOIN categorie_article ac ON ac.article = a.id
             INNER JOIN types_article at ON at.article = a.id
             WHERE ac.categorie = :category_id
@@ -134,6 +138,7 @@
             FROM types t
             INNER JOIN types_article at ON at.types = t.id
             INNER JOIN articles a ON a.id = at.article
+            INNER JOIN boutiques bo ON bo.id = a.boutique AND bo.activer = 1
             INNER JOIN categorie_article ac ON ac.article = a.id
             WHERE ac.categorie = :category_id
             GROUP BY t.id

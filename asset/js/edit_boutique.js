@@ -317,3 +317,137 @@ form_description.addEventListener("submit",function(e){
         }
     )
 })
+
+/* liens sociaux et WhatsApp */
+let form_socials = document.getElementById("form_socials");
+if(form_socials){
+    const socialsErrors = document.getElementById("store_socials_errors");
+    const validSocials = document.getElementById("valid_socials");
+    const socialFields = {
+        facebook: document.getElementById("facebook"),
+        instagram: document.getElementById("instagram"),
+        twitter: document.getElementById("twitter"),
+        trends: document.getElementById("trends"),
+        tiktok: document.getElementById("tiktok"),
+        telephone_whatsapp: document.getElementById("telephone_whatsapp")
+    };
+
+    const socialPatterns = {
+        facebook: /^$|^(https?:\/\/)?(www\.)?(facebook\.com|fb\.com)\/[A-Za-z0-9._\-/?=&%]+$/i,
+        instagram: /^$|^(https?:\/\/)?(www\.)?instagram\.com\/[A-Za-z0-9._\-/?=&%]+$/i,
+        twitter: /^$|^(https?:\/\/)?(www\.)?(x\.com|twitter\.com)\/[A-Za-z0-9._\-/?=&%]+$/i,
+        trends: /^$|^(https?:\/\/)?(www\.)?threads\.net\/@[A-Za-z0-9._\-/?=&%]+$/i,
+        tiktok: /^$|^(https?:\/\/)?(www\.)?(tiktok\.com|vm\.tiktok\.com)\/[A-Za-z0-9._\-/?=&%]+$/i,
+        telephone_whatsapp: /^$|^\+?[0-9\s]{8,20}$/
+    };
+
+    function normalizeUrl(value){
+        const trimmed = value.trim();
+        if(trimmed === '' || /^https?:\/\//i.test(trimmed)){
+            return trimmed;
+        }
+        return 'https://' + trimmed;
+    }
+
+    function renderSocialErrors(errors){
+        socialsErrors.innerHTML = '';
+        if(errors.length === 0){
+            socialsErrors.classList.remove('is-visible');
+            return;
+        }
+
+        socialsErrors.classList.add('is-visible');
+        socialsErrors.innerHTML = errors.map(function(error){
+            return `<p>${error}</p>`;
+        }).join('');
+    }
+
+    function validateSocials(){
+        const errors = [];
+
+        Object.keys(socialFields).forEach(function(key){
+            const field = socialFields[key];
+            if(!field){
+                return;
+            }
+
+            let value = field.value.trim();
+            if(key !== 'telephone_whatsapp'){
+                value = normalizeUrl(value);
+                field.value = value;
+            }
+
+            if(!socialPatterns[key].test(value)){
+                const labels = {
+                    facebook: "Le lien Facebook n'est pas valide.",
+                    instagram: "Le lien Instagram n'est pas valide.",
+                    twitter: "Le lien X / Twitter n'est pas valide.",
+                    trends: "Le lien Threads n'est pas valide.",
+                    tiktok: "Le lien TikTok n'est pas valide.",
+                    telephone_whatsapp: "Le numéro WhatsApp n'est pas valide."
+                };
+                errors.push(labels[key]);
+                field.classList.add('is-invalid');
+            }else{
+                field.classList.remove('is-invalid');
+            }
+        });
+
+        renderSocialErrors(errors);
+        return errors;
+    }
+
+    Object.keys(socialFields).forEach(function(key){
+        if(socialFields[key]){
+            socialFields[key].addEventListener('input', validateSocials);
+        }
+    });
+
+    form_socials.addEventListener("submit", function(e){
+        e.preventDefault();
+
+        const errors = validateSocials();
+        if(errors.length > 0){
+            Swal.fire({
+                icon: "error",
+                title: "Corrigez les liens",
+                text: "Certaines informations de contact ne sont pas valides.",
+                confirmButtonText: "OK",
+                confirmButtonColor: "#6775d6"
+            });
+            return;
+        }
+
+        validSocials.setAttribute("disabled", "");
+        const tempBtn = validSocials.innerHTML;
+        validSocials.innerHTML = `<i class="fa-solid fa-circle-notch rotate"></i>`;
+
+        $.post("fonctions/save_store_socials.php", {
+            facebook: socialFields.facebook.value.trim(),
+            instagram: socialFields.instagram.value.trim(),
+            twitter: socialFields.twitter.value.trim(),
+            trends: socialFields.trends.value.trim(),
+            tiktok: socialFields.tiktok.value.trim(),
+            telephone_whatsapp: socialFields.telephone_whatsapp.value.trim()
+        }, function(data){
+            if(data.result === "error"){
+                Swal.fire({
+                    icon: "error",
+                    title: data.msg,
+                    confirmButtonText: "OK",
+                    confirmButtonColor: "#6775d6"
+                });
+            }else{
+                Swal.fire({
+                    icon: "success",
+                    title: "Les liens ont été enregistrés",
+                    timer: 1400,
+                    showConfirmButton: false
+                });
+            }
+        }, "json").always(function(){
+            validSocials.removeAttribute("disabled");
+            validSocials.innerHTML = tempBtn;
+        });
+    });
+}

@@ -5,12 +5,22 @@
         /* si une donnée est envoyé */
         if($donnee)
         {
+            if(!ohnous_is_article_visible($donnee))
+            {
+                return '';
+            }
+
             $img = select_bdd($bdd, "image_articles", $where = "article = '".$donnee['id']."'", $limit = null, $offset = 0, $order = null, $random = false);
+            if(empty($img))
+            {
+                return '';
+            }
             $liquid_image = ohnous_prepare_liquid_image($img[0]['img']);
             $imgId = 'img_produit_'.$img[0]['id'];
             $divImgId = 'div_img_produit_'.$img[0]['id'];
             $imgBackground = $img[0]['background'];
             $imgStyles = $img[0]['styles'];
+            $pricing = ohnous_get_article_pricing($donnee);
             /* badge */
             $difference_date = difference_date($donnee['date_ajout'], date("Y-m-d H:i:s"));
             $badge = '';
@@ -19,6 +29,11 @@
                 $badge = '
                     <!-- info -->
                     <span class="info_affiche_produit new">Nouveau</span>';
+            }
+            if($pricing['promo_actif'])
+            {
+                $badge .= '
+                    <span class="info_affiche_produit promo">Promotion -'.$pricing['reduction'].'%</span>';
             }
             /* tailles */
             $tailles = fetch_tailles($donnee['id']);
@@ -73,23 +88,28 @@
                                 >
                             </a>
                             '.$badge.'
+                            '.ohnous_render_article_admin_edit_link($donnee['id'], 'card').'
                             <!-- like -->
-                            <button type="button" class="like_affiche_produit">
-                                <i class="fa-regular fa-heart"></i>
-                            </button>
+                            '.ohnous_render_like_button($donnee['id'], 'card').'
                         </div>
                         <!-- details -->
                         <div class="div_details_affiche_produit">
                             <div class="nom">'.$donnee['nom'].'</div>
+                            '.ohnous_render_article_rating_summary($donnee['id'], 'card').'
                             <!-- panier prix tailles -->
                             <div class="details_affiche_produit">
                                 <a href="/boutique/'.$boutique_slug.'" class="boutique"><i class="fa-solid fa-store"></i> '.$boutique_nom.'</a>
                                 <div class="prix_taille">
                                     <div class="taille">'.$tailles.'</div>
-                                    <div class="prix">$ '.$donnee['prix'].'</div>
+                                    <div class="prix '.($pricing['promo_actif'] ? 'promo' : '').'">
+                                        '.($pricing['promo_actif']
+                                            ? '<span class="old-price">$ '.number_format($pricing['prix_initial'], 2, '.', ' ').'</span><span class="new-price">$ '.number_format($pricing['prix_final'], 2, '.', ' ').'</span>'
+                                            : '$ '.number_format($pricing['prix_final'], 2, '.', ' ')
+                                        ).'
+                                    </div>
                                 </div>
                                 <div class="boutton_panier_affiche_produit">
-                                    <button type="button" class="'.$panier.'" id="btn_panier_'.$donnee['id'].'" onclick=\'ajouterAuPanier('.json_encode($img[0]['img']).','.(int)$donnee['id'].','.json_encode($donnee['nom']).','.json_encode($donnee['slug']).','.json_encode($tailles).','.(int)$donnee['prix'].','.json_encode($imgStyles).','.json_encode($imgBackground).')\'><span class="'.$icone.'"></span></button>
+                                    <button type="button" class="'.$panier.'" id="btn_panier_'.$donnee['id'].'" onclick=\'ajouterAuPanier('.json_encode($img[0]['img']).','.(int)$donnee['id'].','.json_encode($donnee['nom']).','.json_encode($donnee['slug']).','.json_encode($tailles).','.json_encode((string)$pricing['prix_final']).','.json_encode($imgStyles).','.json_encode($imgBackground).')\'><span class="'.$icone.'"></span></button>
                                 </div>
                             </div>
                         </div>

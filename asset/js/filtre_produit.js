@@ -25,6 +25,7 @@ let boutique_en_cours = 0;
 let boutique_en_cours_filtre = 0;
 let boutique_en_cours_nom = "";
 let boutique_en_cours_slug = "";
+let promotion_en_cours = 0;
 let recherche_en_cours = "";
 let page = 1;
 let offset = 0;
@@ -133,6 +134,7 @@ function gestionAffichageArticle()
             types : types_en_cours,
             taille : taille_en_cours,
             boutique : boutique_en_cours,
+            promotion : promotion_en_cours,
             recherche : recherche_en_cours,
             page : page,
             offset : offset,
@@ -193,6 +195,20 @@ function gestionAffichageArticle()
     }
 }
 /* filtrer les catégories */
+function filtre_promotion()
+{
+    let promoFilter = document.querySelector(".js_promo_filter");
+    promotion_en_cours = promotion_en_cours === 1 ? 0 : 1;
+    page = 1;
+    offset = 0;
+
+    if(promoFilter)
+    {
+        promoFilter.classList.toggle("active", promotion_en_cours === 1);
+    }
+
+    gestionAffichageArticle();
+}
 function filtre_categorie(id = "", nom = "", slug = "", event = null, recherche = null, autofiltre = null)
 {
     /* si on est à la page d'accueuil */
@@ -836,6 +852,11 @@ function setUrlAndTitle() {
         {
             title_page = "Recherche "+recherche_en_cours+" | OhNous";
             title = '<i class="fa-solid fa-magnifying-glass"></i> '+recherche_en_cours+"";
+        }
+        if(promotion_en_cours === 1)
+        {
+            title_page = "Promotions | OhNous";
+            title = "Promotions";
         }
         changingWord.innerHTML = title;
         document.title = title_page;

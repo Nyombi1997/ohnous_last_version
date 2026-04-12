@@ -22,6 +22,7 @@
         FROM categorie ca
         INNER JOIN categorie_article ac ON ac.categorie = ca.id
         INNER JOIN articles a ON a.id = ac.article
+        INNER JOIN boutiques bo_cat ON bo_cat.id = a.boutique AND bo_cat.activer = 1
         INNER JOIN taille_articles ta ON ta.article = a.id
         WHERE ta.taille = :taille_id
         GROUP BY ca.id
@@ -59,6 +60,7 @@
         FROM types t
         INNER JOIN types_article ty ON ty.types = t.id
         INNER JOIN articles a ON a.id = ty.article
+        INNER JOIN boutiques bo_type ON bo_type.id = a.boutique AND bo_type.activer = 1
         INNER JOIN taille_articles ta ON ta.article = a.id
         WHERE ta.taille = :taille_id
         GROUP BY t.id

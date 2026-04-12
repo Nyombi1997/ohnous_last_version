@@ -34,6 +34,9 @@
                             <button type="submit" class="btn_ohnous">Se connecter</button>
                         </div>
                         <div class="form_ohnous word">
+                            <!-- <a href="/admin-login" class="link">Accéder à l’espace admin</a> -->
+                        </div>
+                        <div class="form_ohnous word">
                             <a href="/choix-compte" class="link">Vous n'avez pas encore de compte ohnous ?</a>
                         </div>
                     </form>

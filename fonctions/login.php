@@ -3,6 +3,10 @@
     include_once "../model/select.php";
     header('Content-Type: application/json; charset=utf-8');
 
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
     $email = html_entity_decode(filter_var($_POST['email'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     // Hachage du mot de passe
     $mdp = password_hash(

@@ -5,6 +5,17 @@ form = document.getElementById("form");
 let
 btn = form.querySelector("button[type='submit']");
 let emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function getAuthRedirect(fallbackPath = '/accueil')
+{
+    const redirect = localStorage.getItem('ohnous_after_auth_redirect');
+    if(redirect && redirect.trim() !== '')
+    {
+        localStorage.removeItem('ohnous_after_auth_redirect');
+        return redirect;
+    }
+    return fallbackPath;
+}
 /* si on soumet le formulaire */
 form.addEventListener("submit",function(e){
     e.preventDefault();
@@ -86,7 +97,7 @@ form.addEventListener("submit",function(e){
             }
             else
             {
-                window.location = '/'+data.msg;
+                window.location = getAuthRedirect('/'+data.msg);
             }
         }
     )

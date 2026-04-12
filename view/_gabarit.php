@@ -2,6 +2,11 @@
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
+    /* $insert_data = [
+        "email" => "admin@admin.com",
+        "mdp" => password_hash("%ohnousServicesAdmin", PASSWORD_DEFAULT)
+    ];
+    insert_bdd($bdd, "admins", $insert_data); */
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -28,6 +33,7 @@
     <link rel="stylesheet" href="<?= ASSET ?>css/sweetalert2.min.css?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/css/sweetalert2.min.css") ?>">
     <script src="<?= ASSET ?>js/sweetalert2.all.min.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/sweetalert2.all.min.js") ?>"></script>
     <script src="<?= ASSET ?>js/image_loader.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/image_loader.js") ?>" defer></script>
+    <script src="<?= ASSET ?>js/account_interactions.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/account_interactions.js") ?>" defer></script>
     <!-- script panier -->
 	<script src="/asset/js/main_panier_produit.js?<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/asset/js/main_panier_produit.js') ?>" defer></script>
     <!-- script search bar -->
@@ -37,6 +43,7 @@
     <!-- fournir la route -->
     <script>
         const root_site = '<?=  $_SERVER['DOCUMENT_ROOT']  ?>';
+        window.ohnousSession = <?= json_encode(ohnous_get_current_account(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     </script>
 </head>
 <body>
@@ -131,68 +138,16 @@
     <header class=" <?php if(isset($GLOBALS['categorie'])){ echo 'sans_categorie';}else if(isset($GLOBALS['others'])){ echo 'sans_categorie';}  ?>">
         <!-- logo -->
         <div class="logo">
-            <a href="/accueil"><img src="<?php echo ASSET; ?>images/icons/logo-2.png" loading="lazy" alt="Logo OhNous"></a>
+                <a href="/accueil"><img src="<?php echo ASSET; ?>images/icons/logo-2.png" loading="lazy" alt="Logo OhNous"></a>
             <!-- menu avec panier -->
             <div class="menu_banniere_droit">
-                    <?php
-                        if(isset($_SESSION['store_ohnous_987654321']))
-                        {
-                            $verif_boutique = select_bdd($bdd, "boutiques", $where = "unique_id = '".$_SESSION['store_ohnous_987654321']."'", $limit = null, $offset = 0, $order = null, $random = false);
-                            if(count($verif_boutique)==0)
-                            {
-                                echo '
-                                    <a href="/connexion-1" class="menu_banniere_link">
-                                        <i class="fa fa-user"></i>
-                                    </a>';
-                            }
-                            elseif($verif_boutique[0]['profile'] == "")
-                            {
-                                echo '
-                                    <a href="/boutique" class="menu_banniere_link">
-                                        <i class="fa-solid fa-store"></i>
-                                    </a>';
-                            }
-                            else
-                            {
-                                echo '
-                                    <a href="/boutique" class="menu_banniere_link">
-                                        <img src="'.$verif_boutique[0]['profile'].'" alt="" class="">
-                                    </a>';
-                            }
-                        }
-                        elseif(isset($_SESSION['user_ohnous_987654321']))
-                        {
-                            $verif_user = select_bdd($bdd, "utilisateur", $where = "unique_id = '".$_SESSION['user_ohnous_987654321']."'", $limit = null, $offset = 0, $order = null, $random = false);
-                            if(count($verif_user)==0)
-                            {
-                                echo '
-                                    <a href="/connexion-2" class="menu_banniere_link">
-                                        <i class="fa fa-user"></i>
-                                    </a>';
-                            }
-                            elseif($verif_user[0]['profile'] == "")
-                            {
-                                echo '
-                                    <a href="/compte" class="menu_banniere_link">
-                                        <i class="fa-regular fa-user"></i>
-                                    </a>';
-                            }
-                            else
-                            {
-                                echo '
-                                    <a href="/compte" class="menu_banniere_link">
-                                        <img src="'.$verif_user[0]['profile'].'" alt="" class="">
-                                    </a>';
-                            }
-                        }
-                        else
-                        {
-                            echo '
-                                <a href="/connexion" class="menu_banniere_link">
-                                    <i class="fa fa-user"></i>
-                                </a>';
-                        }
-                    ?>
+                <?php
+                    $headerAccount = ohnous_get_current_account();
+                    echo '
+                        <a href="'.$headerAccount['link'].'" class="menu_banniere_link" id="menu_account_link" data-account-type="'.htmlspecialchars((string)$headerAccount['type'], ENT_QUOTES, 'UTF-8').'">
+                            '.$headerAccount['icon_html'].'
+                        </a>';
+                ?>
                 <a href="#" class="menu_banniere_link" id="afficher_panier"><i class="fa fa-shopping-bag"></i><span id="nombre_total_panier"><?= $nombre_article ?></span></a>
             </div>
         </div>
@@ -209,6 +164,10 @@
                             $category_ids = array();
                             foreach ($categories as $category) {
                                 $detail_category = only_select("categorie", $where = "id = '".$category['categorie']."'", $order = null, $limit = null);
+                                $category_article = only_select("articles", "id = '".(int)$category['article']."'", null, null);
+                                if(!$detail_category || !$category_article || !ohnous_is_article_visible($category_article)) {
+                                    continue;
+                                }
                                 if(in_array($detail_category['id'], $category_ids)) {
                                     continue; // Passer à l'itération suivante si l'ID de catégorie a déjà été traité
                                 }
@@ -260,7 +219,7 @@
 	<div class="div_search_bar all <?php if(isset($GLOBALS['categorie'])){ echo 'sans_categorie';}else if(isset($GLOBALS['others'])){ echo 'sans_categorie';}  ?>" id="div_search_bar_all">
 		<div class="search_bar">
 			<form action="/q" method="GET">
-				<input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="input_search_bar" id="input_search_bar_2" name="query" placeholder="Rechercher un article..." required oninput="rechercheArticles(this.value)" value=<?php if(isset($_GET['query'])){ echo json_encode($_GET['query']); } ?>>
+				<input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="input_search_bar" id="input_search_bar_2" name="query" placeholder="Rechercher un article..." required oninput="rechercheArticles(this.value)" onfocus="rechercheArticles(this.value)" value=<?php if(isset($_GET['query'])){ echo json_encode($_GET['query']); } ?>>
 				<button type="submit" class="button_search_bar"><i class="fa fa-search"></i></button>
 			</form>
             <!-- div des donnés de recherche -->
@@ -458,6 +417,22 @@
         'id INT AUTO_INCREMENT PRIMARY KEY',
         'email TEXT NULL',
         'mdp TEXT NULL',
+        'date_ajout DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP'
+    ]);
+    createTable('article_likes', [
+        'id INT AUTO_INCREMENT PRIMARY KEY',
+        'article_id INT NOT NULL',
+        'account_id INT NOT NULL',
+        'account_type VARCHAR(30) NOT NULL',
+        'date_ajout DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP'
+    ]);
+    createTable('boutique_activation_requests', [
+        'id INT AUTO_INCREMENT PRIMARY KEY',
+        'boutique_id INT NOT NULL',
+        'token TEXT NULL',
+        'statut VARCHAR(30) NOT NULL DEFAULT "en_attente"',
+        'duree_jours INT NOT NULL DEFAULT 0',
+        'date_traitement DATETIME NULL',
         'date_ajout DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP'
     ]);
     createTable('utilisateur', [
@@ -943,6 +918,60 @@
         ");
     }
 
+    /* ajouter date_activation_debut dans boutiques */
+    $table = "boutiques";
+    $column = "date_activation_debut";
+
+    $stmt = $bdd->prepare($sql);
+    $stmt->execute([
+        ':table'  => $table,
+        ':column' => $column
+    ]);
+
+    $exists = $stmt->fetchColumn();
+    if ($exists == 0) {
+        $bdd->exec("
+            ALTER TABLE boutiques
+            ADD date_activation_debut DATE NULL AFTER activer
+        ");
+    }
+
+    /* ajouter date_activation_fin dans boutiques */
+    $table = "boutiques";
+    $column = "date_activation_fin";
+
+    $stmt = $bdd->prepare($sql);
+    $stmt->execute([
+        ':table'  => $table,
+        ':column' => $column
+    ]);
+
+    $exists = $stmt->fetchColumn();
+    if ($exists == 0) {
+        $bdd->exec("
+            ALTER TABLE boutiques
+            ADD date_activation_fin DATE NULL AFTER date_activation_debut
+        ");
+    }
+
+    /* ajouter telephone_whatsapp dans boutiques */
+    $table = "boutiques";
+    $column = "telephone_whatsapp";
+
+    $stmt = $bdd->prepare($sql);
+    $stmt->execute([
+        ':table'  => $table,
+        ':column' => $column
+    ]);
+
+    $exists = $stmt->fetchColumn();
+    if ($exists == 0) {
+        $bdd->exec("
+            ALTER TABLE boutiques
+            ADD telephone_whatsapp TEXT NULL AFTER whatsapp
+        ");
+    }
+
     /* ajouter fileId dans utilisateur */
     $table = "utilisateur";
     $column = "fileId";
@@ -966,6 +995,60 @@
         $bdd->exec("
             ALTER TABLE utilisateur
             ADD fileId TEXT NULL AFTER profile
+        ");
+    }
+
+    /* ajouter commentaire dans notes_article */
+    $table = "notes_article";
+    $column = "commentaire";
+
+    $sql = "
+        SELECT COUNT(*)
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = :table
+        AND COLUMN_NAME = :column
+    ";
+
+    $stmt = $bdd->prepare($sql);
+    $stmt->execute([
+        ':table'  => $table,
+        ':column' => $column
+    ]);
+
+    $exists = $stmt->fetchColumn();
+
+    if ($exists == 0) {
+        $bdd->exec("
+            ALTER TABLE notes_article
+            ADD commentaire TEXT NULL AFTER note
+        ");
+    }
+
+    /* ajouter client_type dans notes_article */
+    $table = "notes_article";
+    $column = "client_type";
+
+    $sql = "
+        SELECT COUNT(*)
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = :table
+        AND COLUMN_NAME = :column
+    ";
+
+    $stmt = $bdd->prepare($sql);
+    $stmt->execute([
+        ':table'  => $table,
+        ':column' => $column
+    ]);
+
+    $exists = $stmt->fetchColumn();
+
+    if ($exists == 0) {
+        $bdd->exec("
+            ALTER TABLE notes_article
+            ADD client_type VARCHAR(30) NULL AFTER client_id
         ");
     }
 ?>

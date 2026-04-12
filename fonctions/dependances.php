@@ -23,10 +23,11 @@ if (!function_exists('ohnous_vendor_path')) {
 if (!function_exists('ohnous_load_phpmailer')) {
     function ohnous_load_phpmailer()
     {
+        // On évite un autoload prématuré tant que Composer n'est pas branché.
         if (
-            class_exists('PHPMailer\\PHPMailer\\PHPMailer') &&
-            class_exists('PHPMailer\\PHPMailer\\Exception') &&
-            class_exists('PHPMailer\\PHPMailer\\SMTP')
+            class_exists('PHPMailer\\PHPMailer\\PHPMailer', false) &&
+            class_exists('PHPMailer\\PHPMailer\\Exception', false) &&
+            class_exists('PHPMailer\\PHPMailer\\SMTP', false)
         ) {
             return true;
         }
@@ -36,6 +37,7 @@ if (!function_exists('ohnous_load_phpmailer')) {
             require_once $autoloadPath;
         }
 
+        // Fallback manuel si l'autoload Composer n'est pas disponible.
         $phpMailerFiles = [
             'phpmailer/phpmailer/src/Exception.php',
             'phpmailer/phpmailer/src/PHPMailer.php',
@@ -67,7 +69,7 @@ if (!function_exists('ohnous_missing_phpmailer_message')) {
 if (!function_exists('ohnous_load_imagekit')) {
     function ohnous_load_imagekit()
     {
-        if (class_exists('ImageKit\\ImageKit')) {
+        if (class_exists('ImageKit\\ImageKit', false)) {
             return true;
         }
 
@@ -77,7 +79,7 @@ if (!function_exists('ohnous_load_imagekit')) {
         }
 
         $legacyAutoload = __DIR__ . DIRECTORY_SEPARATOR . 'autoload_imagekit.php';
-        if (!class_exists('ImageKit\\ImageKit') && file_exists($legacyAutoload)) {
+        if (!class_exists('ImageKit\\ImageKit', false) && file_exists($legacyAutoload)) {
             require_once $legacyAutoload;
         }
 

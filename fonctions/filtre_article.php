@@ -7,6 +7,7 @@
     $types = html_entity_decode(filter_var($_POST['types'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $taille = html_entity_decode(filter_var($_POST['taille'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $boutique = html_entity_decode(filter_var($_POST['boutique'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+    $promotion = html_entity_decode(filter_var($_POST['promotion'] ?? 0, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $recherche = html_entity_decode(filter_var($_POST['recherche'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $offset = $_POST['offset'];
     header('Content-Type: application/json; charset=utf-8');
@@ -18,6 +19,12 @@
     {
         $query =  found($recherche, $limit = null, 0, $order = null, $random = false);
         $donnees = getArticlesFromSearch($query, $limit = 12, $offset, $order = null, $random = false);
+        if((int)$promotion === 1)
+        {
+            $donnees = array_values(array_filter($donnees, function($article){
+                return ohnous_is_article_on_promo($article);
+            }));
+        }
         foreach($donnees as $data)
         {
             $donnee .= affiche_produit($data, true);
@@ -30,10 +37,11 @@
             'category' => $categorie,
             'type' => $types,
             'taille' => $taille,
-            'boutique' => $boutique
+            'boutique' => $boutique,
+            'promotion' => $promotion
         ];
         /* si y'a au moins une demande */
-        if($categorie!=0 || $types!=0 || $taille!=0 || $boutique!=0)
+        if($categorie!=0 || $types!=0 || $taille!=0 || $boutique!=0 || $promotion!=0)
         {
             $msg = select_articles_filtre($bdd, $filters, $limit = 12, $offset, $order = null, $random = false);
             foreach($msg as $msg_)

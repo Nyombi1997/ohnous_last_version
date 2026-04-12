@@ -3,13 +3,14 @@ Ne modifie pas model/bdd.php
 utilise correctement les sessions que tu trouveras dans fonctions/
 Utilise mon design css dans asset/css comme design de base, IMPORTANT : mon design est un design moderne LIQUID
 en cas de js met les dans asset/js
+en cas de besoin de voir les informations de login ou signin et la logique c'est dans /viewlogin & view/signin-....
 mon routeur est dans classes/Routeur.php
 mes méthodes sont dans controller/Home.php
 pour la création des fonctions c'est dans fonctions/
 pour les views c'est dans view/
 J'utilise ImageKit
 pour charger les images je les envoies à image kit, inspire toi de comment je fais sur view/upload_image.php mais si tu dois le faire fait le de manière plus organiser
-Utilise comment je communique avec sql et ne suppose aucune table ou colonne, si tu pense qu'il faut ajouter une table ou colonne, supprimer une table ou une colonne, ou faire tout autre modification, fait le moi savoir dans le fichier readme
+Utilise comment je communique avec sql et ne suppose aucune table ou colonne, si tu pense qu'il faut ajouter une table ou colonne, supprimer une table ou une colonne, ou faire tout autre modification, fait le moi savoir dans le fichier readme à la fin du fichier s'il existe déjà
 Utilise le sweatalert si besoin, c'est installer dans mon projet
 Utilise jQuery pour les envoies des requêtes
 Commente les parties importante pour m'aider à troubleshooter
@@ -18,10 +19,20 @@ Tout le design toi être fait en responsive design
 Je suis en modèle MVC
 dans le readme si tu veux que je fasse des actions dans ma base sql écrit moi du code que je peux directement coller dans phpMyAdmin
 Utilise mon design pour que les nouveaux design semblent pas venir d'ailleurs
-
+J'utilise le design liquid ou vitre pour un aspect un moderne n'utilise pas trop le design dégrader.
 IMPORTANT:
 Tous les fichiers texte du projet, y compris README.md, commentaires, fichiers PHP, JS, CSS, JSON et Markdown, doivent être enregistrés en UTF-8.
 N’utilise jamais d’encodage Latin1 ou ISO-8859-1.
 Tous les accents français doivent rester corrects, par exemple : nécessaire, déjà, édition, paramètres.
 Après chaque modification de fichier texte, vérifie qu’aucun texte corrompu du type "nÃ©cessaire", "dÃ©jÃ ", "paramÃ¨tres" n’est présent.
 Si tu détectes du texte corrompu, corrige-le immédiatement.
+
+J'ai joins ma structure sql au besoin.
+
+
+
+
+
+Petite précision que celui qui veut laisser un commentaire ou un avis doit se connecter ou s'inscrire via un pop up moderne avant de le faire
+Respect la façon dont j'ai fais les vérifications avant la connexion pour que le compte soit connecter sans comportement étranger du système
+Change automatiquement l'icone de connexion et le lien en fonction de la connexion faite

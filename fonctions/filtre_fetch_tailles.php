@@ -28,6 +28,7 @@
                 FROM tailles ta
                 INNER JOIN taille_articles atl ON atl.taille = ta.id
                 INNER JOIN articles a ON a.id = atl.article
+                INNER JOIN boutiques bo ON bo.id = a.boutique AND bo.activer = 1
                 INNER JOIN categorie_article ac ON ac.article = a.id
                 INNER JOIN types_article at ON at.article = a.id
                 WHERE ac.categorie = :category_id
@@ -53,6 +54,7 @@
                 FROM tailles ta
                 INNER JOIN taille_articles atl ON atl.taille = ta.id
                 INNER JOIN articles a ON a.id = atl.article
+                INNER JOIN boutiques bo ON bo.id = a.boutique AND bo.activer = 1
                 INNER JOIN types_article at ON at.article = a.id
                 WHERE at.types = :type_id
                 GROUP BY ta.id
@@ -104,6 +106,7 @@
             FROM tailles ta
             INNER JOIN taille_articles atl ON atl.taille = ta.id
             INNER JOIN articles a ON a.id = atl.article
+            INNER JOIN boutiques bo ON bo.id = a.boutique AND bo.activer = 1
             INNER JOIN types_article at ON at.article = a.id
             WHERE at.types = :type_id
             GROUP BY ta.id

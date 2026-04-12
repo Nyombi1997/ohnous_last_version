@@ -132,6 +132,38 @@
                                 <button type="submit" class="btn_ohnous" id="valid_description">Modifier</button>
                             </div>
                         </form>
+                        <?php if(ohnous_is_store_active($boutique)): ?>
+                            <form action="" method="post" id="form_socials" class="form_edit_boutique">
+                                <div class="form_ohnous">
+                                    <i class="fa-brands fa-facebook"></i>
+                                    <input type="text" id="facebook" autocomplete="off" placeholder="Lien Facebook" value="<?= htmlspecialchars((string)($boutique['facebook'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                </div>
+                                <div class="form_ohnous">
+                                    <i class="fa-brands fa-instagram"></i>
+                                    <input type="text" id="instagram" autocomplete="off" placeholder="Lien Instagram" value="<?= htmlspecialchars((string)($boutique['instagram'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                </div>
+                                <div class="form_ohnous">
+                                    <i class="fa-brands fa-x-twitter"></i>
+                                    <input type="text" id="twitter" autocomplete="off" placeholder="Lien X / Twitter" value="<?= htmlspecialchars((string)($boutique['twitter'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                </div>
+                                <div class="form_ohnous">
+                                    <i class="fa-brands fa-threads"></i>
+                                    <input type="text" id="trends" autocomplete="off" placeholder="Lien Threads" value="<?= htmlspecialchars((string)($boutique['trends'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                </div>
+                                <div class="form_ohnous">
+                                    <i class="fa-brands fa-tiktok"></i>
+                                    <input type="text" id="tiktok" autocomplete="off" placeholder="Lien TikTok" value="<?= htmlspecialchars((string)($boutique['tiktok'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                </div>
+                                <div class="form_ohnous">
+                                    <i class="fa-brands fa-whatsapp"></i>
+                                    <input type="text" id="telephone_whatsapp" autocomplete="off" placeholder="Numéro WhatsApp avec indicatif" value="<?= htmlspecialchars((string)($boutique['telephone_whatsapp'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                </div>
+                                <div class="store-socials-errors" id="store_socials_errors"></div>
+                                <div class="form_ohnous submit">
+                                    <button type="submit" class="btn_ohnous" id="valid_socials">Enregistrer les liens</button>
+                                </div>
+                            </form>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

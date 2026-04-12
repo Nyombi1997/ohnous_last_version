@@ -1,6 +1,7 @@
 <?php
     include_once "../model/bdd.php";
     include_once "../model/select.php";
+    include_once "fonctions.php";
     header('Content-Type: application/json; charset=utf-8');
     
     /* afficher les categories */
@@ -13,8 +14,17 @@
         $categorie_id = filter_input(INPUT_POST, 'categorie', FILTER_VALIDATE_INT);
     }
     foreach ($categories as $category) {
-        $categories_nombre = select_bdd($bdd, "categorie_article", $where = "categorie = '".$category['id']."'", $limit = null, $offset = 0, $order = null, $random = false);
-        if(count($categories_nombre) == 0)
+        $categories_nombre = 0;
+        $categoryArticles = select_bdd($bdd, "categorie_article", $where = "categorie = '".$category['id']."'", $limit = null, $offset = 0, $order = null, $random = false);
+        foreach($categoryArticles as $categoryArticle)
+        {
+            $detailArticle = only_select("articles", "id = '".(int)$categoryArticle['article']."'", null, null);
+            if($detailArticle && ohnous_is_article_visible($detailArticle))
+            {
+                $categories_nombre++;
+            }
+        }
+        if($categories_nombre == 0)
         {
             continue;
         }
@@ -25,7 +35,7 @@
         }
         $html_categorie .= '
         <div class="detail_liste_filtre_produit '.$active.' js_detail_liste_filtre_produit js_detail_liste_filtre_produit_'.$category['id'].'" onclick=\'filtre_categorie('.(int)$category['id'].','.json_encode($category['nom']).','.json_encode($category['slug']).')\'>
-            <div class="nom">'.$category['nom'].'</div> <div class="nombre">'.count($categories_nombre).'</div>
+            <div class="nom">'.$category['nom'].'</div> <div class="nombre">'.$categories_nombre.'</div>
         </div>';
     }
 
