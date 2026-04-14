@@ -13,7 +13,7 @@
         <div>
             <span class="admin-hero__eyebrow">Administration OhNous</span>
             <h1>Espace admin</h1>
-            <p>Activez les boutiques, gérez les articles et gardez la main sur les promotions depuis un seul espace.</p>
+            <p>Activez les boutiques, gérez les articles, la livraison et les comptes admins depuis un seul espace.</p>
         </div>
         <div class="admin-hero__logo">
             <img src="/asset/images/icons/logo-2.png" alt="Logo OhNous">
@@ -53,6 +53,20 @@
             <div>
                 <strong>Gérer les articles</strong>
                 <p>Retrouver rapidement un article et l’éditer.</p>
+            </div>
+        </a>
+        <a href="/admin-zones-livraison" class="liquid-panel admin-shortcut-card">
+            <i class="fa-solid fa-truck-fast"></i>
+            <div>
+                <strong>Gérer la livraison</strong>
+                <p>Créer des zones de livraison et piloter leur tarification.</p>
+            </div>
+        </a>
+        <a href="/admin-admins" class="liquid-panel admin-shortcut-card">
+            <i class="fa-solid fa-user-shield"></i>
+            <div>
+                <strong>Gérer les admins</strong>
+                <p>Créer d’autres admins et leur envoyer un accès direct par email.</p>
             </div>
         </a>
     </section>

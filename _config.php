@@ -19,6 +19,8 @@
             define('VIEW', ROOT . 'view/');
             define('CLASSES', ROOT . 'classes/');
             define('MODEL', ROOT . 'model/');
+            define('SERVICE', ROOT . 'service/');
+            define('CONFIG', ROOT . 'config/');
             define('FONCTION', ROOT . 'fonctions/');
             define('VENDOR', ROOT . 'vendor/');
             define('PAGE', ROOT . 'page/');
@@ -60,6 +62,8 @@
 
             if(file_exists(MODEL.$class.'.php')) {
                 include_once MODEL.$class.'.php';
+            } elseif(file_exists(SERVICE.$class.'.php')) {
+                include_once SERVICE.$class.'.php';
             } elseif(file_exists(CONTROLLER.$class.'.php')) {
                 include_once CONTROLLER.$class.'.php';
             } elseif(file_exists(CLASSES.$class.'.php')) {

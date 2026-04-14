@@ -1,6 +1,7 @@
 <?php
     include_once "../model/bdd.php";
     include_once "../model/select.php";
+    include_once "fonctions.php";
     header('Content-Type: application/json; charset=utf-8');
     /* si il n'y a pas encore de session */
     if (session_status() === PHP_SESSION_NONE) {
@@ -14,22 +15,18 @@
     $style = html_entity_decode(filter_var($_POST['style'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $background = html_entity_decode(filter_var($_POST['background'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $slug = html_entity_decode(filter_var($_POST['slug'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-    /* id pour le panier */
-    function cartKey($id, $size) {
-        return $id . '_' . $size; 
-    }
     /* ajouter au panier */
     function addToCart($id, $name, $price, $size, $image, $style = "", $background = "", $slug = "") {
         $key = cartKey($id, $size);
 
-        if (!isset($_SESSION['cart-ohnous-123456789'])) {
-            $_SESSION['cart-ohnous-123456789'] = [];
+        if (!isset($_SESSION[ohnous_get_cart_session_key()])) {
+            $_SESSION[ohnous_get_cart_session_key()] = [];
         }
 
-        if (isset($_SESSION['cart-ohnous-123456789'][$key])) {
-            $_SESSION['cart-ohnous-123456789'][$key]['qty']++;
+        if (isset($_SESSION[ohnous_get_cart_session_key()][$key])) {
+            $_SESSION[ohnous_get_cart_session_key()][$key]['qty']++;
         } else {
-            $_SESSION['cart-ohnous-123456789'][$key] = [
+            $_SESSION[ohnous_get_cart_session_key()][$key] = [
                 'id'    => $id,
                 'name'  => $name,
                 'price' => $price,
@@ -46,8 +43,8 @@
     function removeFromCart($id, $size) {
         $key = cartKey($id, $size);
 
-        if (isset($_SESSION['cart-ohnous-123456789'][$key])) {
-            unset($_SESSION['cart-ohnous-123456789'][$key]);
+        if (isset($_SESSION[ohnous_get_cart_session_key()][$key])) {
+            unset($_SESSION[ohnous_get_cart_session_key()][$key]);
         }
     }
     /* envoyer les donner pour le panier */

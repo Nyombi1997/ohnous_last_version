@@ -1,3 +1,4 @@
+<<<<<<< ours
 /* variable pour recherche */
 if(donnee_de_recherche==undefined)
 {
@@ -240,6 +241,277 @@ function filtre_categorie(id = "", nom = "", slug = "", event = null, recherche 
             /* retirer l'indice sur le choix de la categories filtre et retirer le nom */
             categoreiFiltre.classList.remove("active");
 
+=======
+var page_pour_filtre = true;
+var categorie_en_cours = 0;
+var categorie_en_cours_nom = "";
+var categorie_en_cours_slug = "";
+var types_en_cours = 0;
+var types_en_cours_nom = "";
+var types_en_cours_slug = "";
+var taille_en_cours = 0;
+var taille_en_cours_filtre = 0;
+var taille_en_cours_nom = "";
+var taille_en_cours_slug = "";
+var boutique_en_cours = 0;
+var boutique_en_cours_nom = "";
+var boutique_en_cours_slug = "";
+var promotion_en_cours = 0;
+var recherche_en_cours = "";
+var order_en_cours = "date_desc";
+
+(function ($) {
+    var PAGE_SIZE = 12;
+    var currentPageIndex = 0;
+    var loading = false;
+    var hasMore = true;
+
+    var detailsFiltreCategories = document.getElementById("details_filtre_categories");
+    var divFiltreCategories = document.getElementById("div_filtre_categories");
+    var detailsFiltreTailles = document.getElementById("details_filtre_tailles");
+    var divFiltreTailles = document.getElementById("div_filtre_tailles");
+    var detailsFiltreTypes = document.getElementById("details_filtre_types");
+    var divFiltreTypes = document.getElementById("div_filtre_types");
+    var changingWord = document.getElementById("changing-word");
+    var afficherArticle = document.getElementById("afficher_article");
+    var resultsContainer = document.getElementById("articles_results");
+    var loaderState = document.getElementById("articles_loading_state");
+    var sortSelect = document.getElementById("article_sort_order");
+    var inputSearchBar2 = document.getElementById("input_search_bar_2");
+    var donneeDeRecherche = document.querySelectorAll("#donnee_de_recherche");
+
+    function isArticlePage() {
+        return typeof home_page === "undefined" && afficherArticle && resultsContainer;
+    }
+
+    function normalizeFilterId(id) {
+        var parsed = parseInt(id, 10);
+        return isNaN(parsed) ? 0 : parsed;
+    }
+
+    function resetPagination() {
+        currentPageIndex = 0;
+        loading = false;
+        hasMore = true;
+    }
+
+    function showNoArticlesState() {
+        if (!resultsContainer) {
+            return;
+        }
+
+        resultsContainer.innerHTML = `
+            <div class="div_btn_voir_plus">
+                <a class="btn_voir_plus error" role="button">Aucun article disponible <i class="fa-solid fa-triangle-exclamation"></i></a>
+            </div>
+            <div class="div_btn_voir_plus" id="div_btn_voir_plus">
+                <a href="/articles" class="btn_voir_plus" role="button">Découvrez plus d'articles <i class="fa-solid fa-arrow-right-long"></i></a>
+            </div>
+        `;
+    }
+
+    function setLoadingState(active) {
+        if (!loaderState) {
+            return;
+        }
+
+        loaderState.classList.toggle("is-visible", !!active);
+    }
+
+    function appendMoreButtonIfNeeded() {
+        if (!resultsContainer || document.getElementById("div_btn_voir_plus")) {
+            return;
+        }
+
+        resultsContainer.insertAdjacentHTML("beforeend", `
+            <div class="div_btn_voir_plus" id="div_btn_voir_plus">
+                <a href="/articles" class="btn_voir_plus" role="button">Découvrez plus d'articles <i class="fa-solid fa-arrow-right-long"></i></a>
+            </div>
+        `);
+    }
+
+    function requestArticles(reset) {
+        if (reset) {
+            resetPagination();
+        }
+
+        if (!isArticlePage() || loading || !hasMore) {
+            return;
+        }
+
+        loading = true;
+        setLoadingState(true);
+
+        $.post("/fonctions/filtre_article.php", {
+            categorie: categorie_en_cours,
+            types: types_en_cours,
+            taille: taille_en_cours,
+            boutique: boutique_en_cours,
+            promotion: promotion_en_cours,
+            recherche: recherche_en_cours,
+            order: order_en_cours,
+            offset: currentPageIndex * PAGE_SIZE
+        }, function (data) {
+            if (reset) {
+                resultsContainer.innerHTML = "";
+            }
+
+            if (!data || data.result !== "ok") {
+                if (reset) {
+                    showNoArticlesState();
+                }
+                loading = false;
+                setLoadingState(false);
+                return;
+            }
+
+            if (data.msg) {
+                resultsContainer.insertAdjacentHTML(reset ? "afterbegin" : "beforeend", data.msg);
+                currentPageIndex += 1;
+                hasMore = parseInt(data.nombre || "0", 10) >= PAGE_SIZE;
+
+                if (typeof window.initLiquidImages === "function") {
+                    window.initLiquidImages(resultsContainer);
+                }
+            } else if (reset) {
+                showNoArticlesState();
+                hasMore = false;
+            } else {
+                hasMore = false;
+                appendMoreButtonIfNeeded();
+            }
+
+            setUrlAndTitle();
+            loading = false;
+            setLoadingState(false);
+        }, "json").fail(function () {
+            if (reset) {
+                showNoArticlesState();
+            }
+            loading = false;
+            setLoadingState(false);
+        });
+    }
+
+    function fetchOnScroll() {
+        if (!isArticlePage() || loading || !hasMore) {
+            return;
+        }
+
+        var scrollBottom = window.scrollY + window.innerHeight;
+        var docHeight = document.documentElement.scrollHeight;
+        if (scrollBottom > docHeight - 500) {
+            requestArticles(false);
+        }
+    }
+
+    window.prevalueRecherche = function (query) {
+        recherche_en_cours = query || "";
+        if (isArticlePage()) {
+            requestArticles(true);
+        }
+    };
+
+    window.prevalueTypes = function (id, nom, slug) {
+        types_en_cours = normalizeFilterId(id);
+        types_en_cours_nom = nom || "";
+        types_en_cours_slug = slug || "";
+    };
+
+    window.prevalueTailles = function (id, nom, slug) {
+        taille_en_cours = normalizeFilterId(id);
+        taille_en_cours_filtre = normalizeFilterId(id);
+        taille_en_cours_nom = nom || "";
+        taille_en_cours_slug = slug || "";
+    };
+
+    function clearSearchDropdown() {
+        donneeDeRecherche.forEach(function (element) {
+            element.innerHTML = "";
+            element.classList.add("null");
+        });
+    }
+
+    function refreshCategories(params, callback) {
+        $.post("/fonctions/filtre_fetch_all_categories.php", params || { found: "ok" }, function (data) {
+            if (data.result === "ok" && divFiltreCategories && detailsFiltreCategories) {
+                divFiltreCategories.classList.remove("null");
+                detailsFiltreCategories.innerHTML = data.msg;
+            }
+            if (typeof callback === "function") {
+                callback(data);
+            }
+        }, "json");
+    }
+
+    function fetchTypesViaCategorie(id) {
+        $.post("/fonctions/filtre_fetch_types.php", { id: id, types: types_en_cours, taille: taille_en_cours }, function (data) {
+            if (divFiltreTypes && detailsFiltreTypes) {
+                if (data.result === "ok" && data.msg !== "") {
+                    divFiltreTypes.classList.remove("null");
+                    detailsFiltreTypes.innerHTML = data.msg;
+                } else {
+                    divFiltreTypes.classList.add("null");
+                    detailsFiltreTypes.innerHTML = "";
+                }
+            }
+        }, "json");
+    }
+
+    function fetchTaillesViaTypes(id) {
+        $.post("/fonctions/filtre_fetch_tailles.php", { id: id, categorie: categorie_en_cours, taille: taille_en_cours_filtre }, function (data) {
+            if (divFiltreTailles && detailsFiltreTailles) {
+                if (data.result === "ok" && data.msg !== "") {
+                    divFiltreTailles.classList.remove("null");
+                    detailsFiltreTailles.innerHTML = data.msg;
+                } else {
+                    divFiltreTailles.classList.add("null");
+                    detailsFiltreTailles.innerHTML = "";
+                }
+            }
+        }, "json");
+    }
+
+    window.gestionAffichageArticle = function () {
+        requestArticles(true);
+    };
+
+    if (sortSelect) {
+        sortSelect.addEventListener("change", function () {
+            order_en_cours = this.value || "date_desc";
+            requestArticles(true);
+        });
+    }
+
+    window.filtre_promotion = function () {
+        var promoFilter = document.querySelector(".js_promo_filter");
+        promotion_en_cours = promotion_en_cours === 1 ? 0 : 1;
+        if (promoFilter) {
+            promoFilter.classList.toggle("active", promotion_en_cours === 1);
+        }
+        setUrlAndTitle();
+        requestArticles(true);
+    };
+
+    window.filtre_categorie = function (id, nom, slug, event, recherche, autofiltre) {
+        id = normalizeFilterId(id);
+
+        if (typeof home_page !== "undefined") {
+            window.location.href = "/categorie/" + slug;
+            return;
+        }
+
+        if (event) {
+            event.preventDefault();
+            clearSearchDropdown();
+        }
+
+        if (inputSearchBar2) {
+            inputSearchBar2.value = event ? (nom || "") : "";
+        }
+
+        if (categorie_en_cours === id && !autofiltre && !recherche) {
+>>>>>>> theirs
             categorie_en_cours = 0;
             categorie_en_cours_nom = "";
             categorie_en_cours_slug = "";
@@ -251,6 +523,7 @@ function filtre_categorie(id = "", nom = "", slug = "", event = null, recherche 
             taille_en_cours_nom = "";
             taille_en_cours_slug = "";
             recherche_en_cours = "";
+<<<<<<< ours
             page = 1;
             offset = 0;
             /* vider les tailles */
@@ -625,11 +898,99 @@ function filtre_tailles(id = "", nom = "", slug = "", event = null, recherche = 
             /* retirer l'indice sur le choix de la taille filtre et placer le nom */
             taillesFiltre.classList.remove("active");
 
+=======
+
+            if (divFiltreTypes && detailsFiltreTypes) {
+                divFiltreTypes.classList.add("null");
+                detailsFiltreTypes.innerHTML = "";
+            }
+            if (divFiltreTailles && detailsFiltreTailles) {
+                divFiltreTailles.classList.add("null");
+                detailsFiltreTailles.innerHTML = "";
+            }
+
+            document.querySelectorAll(".js_detail_liste_filtre_produit").forEach(function (element) {
+                element.classList.remove("active");
+            });
+
+            setUrlAndTitle();
+            refreshCategories({ found: "ok" }, function () {
+                requestArticles(true);
+            });
+            return;
+        }
+
+        categorie_en_cours = id || 0;
+        categorie_en_cours_nom = nom || "";
+        categorie_en_cours_slug = slug || "";
+        if (!autofiltre) {
+            recherche_en_cours = "";
+        }
+
+        document.querySelectorAll(".js_detail_liste_filtre_produit").forEach(function (element) {
+            element.classList.remove("active");
+        });
+
+        var selectedCategory = document.querySelector(".js_detail_liste_filtre_produit_" + id);
+        if (selectedCategory) {
+            selectedCategory.classList.add("active");
+        }
+
+        setUrlAndTitle();
+
+        $.post("/fonctions/filtre_fetch_types.php", { id: id, types: types_en_cours, taille: taille_en_cours }, function (data) {
+            if (divFiltreTypes && detailsFiltreTypes) {
+                if (data.result === "ok" && data.msg !== "") {
+                    divFiltreTypes.classList.remove("null");
+                    detailsFiltreTypes.innerHTML = data.msg;
+                } else {
+                    divFiltreTypes.classList.add("null");
+                    detailsFiltreTypes.innerHTML = "";
+                }
+            }
+
+            if (divFiltreTailles && detailsFiltreTailles) {
+                if (data.result === "ok" && data.msg2 !== "") {
+                    divFiltreTailles.classList.remove("null");
+                    detailsFiltreTailles.innerHTML = data.msg2;
+                } else {
+                    divFiltreTailles.classList.add("null");
+                    detailsFiltreTailles.innerHTML = "";
+                }
+            }
+
+            requestArticles(true);
+        }, "json");
+    };
+
+    window.filtre_types = function (id, nom, slug, event, recherche, autofiltre) {
+        id = normalizeFilterId(id);
+
+        if (typeof home_page !== "undefined") {
+            window.location.href = "/type/" + slug;
+            return;
+        }
+
+        if (event) {
+            event.preventDefault();
+            clearSearchDropdown();
+        }
+
+        if (inputSearchBar2) {
+            inputSearchBar2.value = event ? (nom || "") : "";
+        }
+
+        if (types_en_cours === id && !autofiltre && !recherche) {
+            types_en_cours = 0;
+            types_en_cours_nom = "";
+            types_en_cours_slug = "";
+>>>>>>> theirs
             taille_en_cours = 0;
             taille_en_cours_filtre = 0;
             taille_en_cours_nom = "";
             taille_en_cours_slug = "";
             recherche_en_cours = "";
+<<<<<<< ours
             page = 1;
             offset = 0;
             if(types_en_cours==0 && categorie_en_cours==0)
@@ -862,3 +1223,164 @@ function setUrlAndTitle() {
         document.title = title_page;
     }
 }
+=======
+
+            if (divFiltreTailles && detailsFiltreTailles) {
+                divFiltreTailles.classList.add("null");
+                detailsFiltreTailles.innerHTML = "";
+            }
+
+            if (categorie_en_cours !== 0) {
+                fetchTypesViaCategorie(categorie_en_cours);
+            } else {
+                refreshCategories({ found: "ok" });
+            }
+
+            document.querySelectorAll(".js_detail_liste_filtre_produit_types").forEach(function (element) {
+                element.classList.remove("active");
+            });
+
+            setUrlAndTitle();
+            requestArticles(true);
+            return;
+        }
+
+        types_en_cours = id || 0;
+        types_en_cours_nom = nom || "";
+        types_en_cours_slug = slug || "";
+        if (!autofiltre) {
+            recherche_en_cours = "";
+        }
+
+        document.querySelectorAll(".js_detail_liste_filtre_produit_types").forEach(function (element) {
+            element.classList.remove("active");
+        });
+
+        var selectedType = document.querySelector(".js_detail_liste_filtre_produit_types" + id);
+        if (selectedType) {
+            selectedType.classList.add("active");
+        }
+
+        setUrlAndTitle();
+        fetchTaillesViaTypes(id);
+        requestArticles(true);
+    };
+
+    window.filtre_tailles = function (id, nom, slug, event, recherche) {
+        id = normalizeFilterId(id);
+
+        if (typeof home_page !== "undefined") {
+            window.location.href = "/taille/" + slug;
+            return;
+        }
+
+        if (event) {
+            event.preventDefault();
+            clearSearchDropdown();
+        }
+
+        if (inputSearchBar2) {
+            inputSearchBar2.value = event ? (nom || "") : "";
+        }
+
+        if (taille_en_cours === id && !recherche) {
+            taille_en_cours = 0;
+            taille_en_cours_filtre = 0;
+            taille_en_cours_nom = "";
+            taille_en_cours_slug = "";
+            recherche_en_cours = "";
+
+            if (types_en_cours !== 0) {
+                fetchTaillesViaTypes(types_en_cours);
+            }
+
+            document.querySelectorAll(".js_detail_liste_filtre_produit_tailles").forEach(function (element) {
+                element.classList.remove("active");
+            });
+
+            setUrlAndTitle();
+            requestArticles(true);
+            return;
+        }
+
+        taille_en_cours = id || 0;
+        taille_en_cours_filtre = id || 0;
+        taille_en_cours_nom = nom || "";
+        taille_en_cours_slug = slug || "";
+        recherche_en_cours = "";
+
+        document.querySelectorAll(".js_detail_liste_filtre_produit_tailles").forEach(function (element) {
+            element.classList.remove("active");
+        });
+
+        var selectedSize = document.querySelector(".js_detail_liste_filtre_produit_tailles_" + id);
+        if (selectedSize) {
+            selectedSize.classList.add("active");
+        }
+
+        setUrlAndTitle();
+        requestArticles(true);
+    };
+
+    function setUrlAndTitle() {
+        if (!isArticlePage()) {
+            return;
+        }
+
+        var slug = "articles";
+        if (categorie_en_cours_slug !== "") {
+            slug = "categorie/" + categorie_en_cours_slug;
+        }
+        if (types_en_cours_slug !== "") {
+            slug = slug !== "articles" ? slug + "/type/" + types_en_cours_slug : "type/" + types_en_cours_slug;
+        }
+        if (taille_en_cours_slug !== "") {
+            slug = slug !== "articles" ? slug + "/taille/" + taille_en_cours_slug : "taille/" + taille_en_cours_slug;
+        }
+
+        if (recherche_en_cours === "") {
+            var nextUrl = "/" + slug;
+            if (window.location.pathname !== nextUrl) {
+                history.replaceState({ slug: slug }, "", nextUrl);
+            }
+        }
+
+        var titlePage = "OhNous";
+        var title = "Articles";
+
+        if (categorie_en_cours_nom !== "") {
+            titlePage = categorie_en_cours_nom + " | OhNous";
+            title = categorie_en_cours_nom;
+        }
+        if (types_en_cours_nom !== "") {
+            titlePage = (categorie_en_cours_nom ? categorie_en_cours_nom + " | " : "") + types_en_cours_nom + " | OhNous";
+            title = (categorie_en_cours_nom ? categorie_en_cours_nom + " | " : "") + types_en_cours_nom;
+        }
+        if (taille_en_cours_nom !== "") {
+            titlePage = (title !== "Articles" ? title + " | " : "") + taille_en_cours_nom + " | OhNous";
+            title = (title !== "Articles" ? title + " | " : "") + taille_en_cours_nom;
+        }
+        if (recherche_en_cours !== "") {
+            titlePage = "Recherche " + recherche_en_cours + " | OhNous";
+            title = '<i class="fa-solid fa-magnifying-glass"></i> ' + recherche_en_cours;
+        }
+        if (promotion_en_cours === 1) {
+            titlePage = "Promotions | OhNous";
+            title = "Promotions";
+        }
+
+        if (changingWord) {
+            changingWord.innerHTML = title;
+        }
+        document.title = titlePage;
+    }
+    window.setUrlAndTitle = setUrlAndTitle;
+
+    if (isArticlePage()) {
+        window.addEventListener("scroll", fetchOnScroll);
+        window.addEventListener("load", function () {
+            fetchOnScroll();
+        });
+    }
+})(jQuery);
+>>>>>>> theirs

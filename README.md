@@ -1,108 +1,217 @@
-# Espace admin, promotions et gestion boutiques
+# Checkout, FreshPay, filtres, formulaires et multi-admin
 
 ## Ce qui a été intégré
 
-- Ajout d’un vrai espace admin avec connexion dédiée sur `/admin-login`.
-- Session admin intégrée à la logique existante sans modifier `model/bdd.php`.
-- Changement automatique de l’icône de compte quand l’admin est connecté.
-  Icône choisie : `fa-user-shield`.
-- Tableau de bord admin sur `/admin`.
-- Page boutiques admin sur `/admin-boutiques` avec recherche.
-- Fiche boutique admin sur `/admin-boutique?id=...` avec :
-  activation ou désactivation du compte,
-  envoi d’un message à la boutique,
-  historique des messages admin,
-  logo OhNous comme avatar admin dans la conversation,
-  liste dédiée des articles de cette boutique.
-- Page articles admin sur `/admin-articles` avec barre de recherche.
-- Page d’édition d’article sur `/admin-editer-article?id=...`.
-- Icône de modification visible sur les articles publics quand le compte admin est connecté.
-- Support des promotions sur les articles :
-  badge promotion,
-  prix barré + prix remisé,
-  filtre “Articles en promotion”,
-  prise en compte dans la recherche.
-- Déconnexion admin prise en charge avec la page `/deconnexion`.
-- Réinitialisation du mot de passe admin :
-  page `/admin-mot-de-passe`,
-  envoi d’un email de réinitialisation à `edosysteme@gmail.com`,
-  envoi automatique aussi après une erreur de mot de passe admin.
-- Les conversations du site utilisent maintenant une vraie image de profil par défaut au lieu d’une simple icône.
+- Loader visuel pendant le chargement des articles dans l’espace shop.
+- Nouveau tri catalogue `Plus chers aux moins chers`, avec prise en charge côté front et côté backend.
+- Refonte des inputs checkout et admin livraison avec un rendu plus moderne et un texte minimum de `16px`.
+- Textarea du checkout non redimensionnable manuellement, avec hauteur automatique selon le texte.
+- Checkout enrichi avec choix de méthode de paiement, Mobile Money opérationnel côté architecture, Visa préparé proprement.
+- Création d’un module FreshPay structuré avec configuration séparée, services, modèles, contrôleurs et page de retour.
+- Vérification de statut FreshPay via route dédiée.
+- Callback FreshPay avec vérification HMAC et architecture prête pour le déchiffrement documenté.
+- Nouvelle page admin dédiée pour créer d’autres admins.
+- Génération automatique de mots de passe admins.
+- Envoi d’un email d’invitation admin avec lien d’accès direct à usage unique.
+- Avatar admin par défaut basculé vers `/asset/images/icons/favicon-1.png`.
 
-## Fichiers principaux touchés
+## Architecture ajoutée
 
-- `classes/Routeur.php`
-- `controller/Home.php`
-- `fonctions/fonctions.php`
-- `fonctions/email.php`
-- `fonctions/filtre_article.php`
-- `fonctions/admin_login.php`
-- `fonctions/admin_password_request.php`
-- `fonctions/admin_password_reset.php`
-- `fonctions/admin_store_actions.php`
-- `fonctions/admin_article_actions.php`
-- `model/select.php`
-- `view/login.php`
-- `view/logout.php`
-- `view/message.php`
-- `view/articles.php`
-- `view/article-details.php`
-- `view/composants/fonction_produit.php`
-- `view/admin-login.php`
-- `view/admin-dashboard.php`
-- `view/admin-boutiques.php`
-- `view/admin-boutique-details.php`
-- `view/admin-articles.php`
-- `view/admin-edit-article.php`
-- `view/admin-password.php`
-- `view/admin-new-password.php`
-- `asset/js/filtre_produit.js`
-- `asset/js/messages.js`
-- `asset/js/admin_login.js`
-- `asset/js/admin_boutiques.js`
-- `asset/js/admin_edit_article.js`
-- `asset/js/admin_password.js`
-- `asset/js/admin_new_password.js`
-- `asset/css/style.css`
-- `asset/css/responsive.css`
+- `config/payment.php`
+- `controller/CheckoutController.php`
+- `controller/PaymentController.php`
+- `controller/AdminController.php`
+- `service/FreshPayService.php`
+- `service/OrderAmountService.php`
+- `model/PaymentTransaction.php`
+- `model/AdminAccessToken.php`
+- `view/admin-admins.php`
+- `view/payment-return.php`
+- `asset/js/admin_accounts.js`
+- `fonctions/admin_accounts.php`
+
+## Routes ajoutées
+
+- `/checkout`
+- `/admin-admins`
+- `/admin-acces`
+- `/paiement-demarrer`
+- `/paiement-callback-freshpay`
+- `/paiement-verifier`
+- `/paiement-retour`
+
+## Configuration FreshPay
+
+Le projet lit la configuration dans `config/payment.php`, lui-même alimenté par des variables d’environnement.
+
+Variables à définir :
+
+```env
+FRESHPAY_MODE=test
+FRESHPAY_SECRET_KEY4=4357975872d4498e
+FRESHPAY_HMAC_KEY4=2f76bc4319f04357
+FRESHPAY_MERCHANT_ID=
+FRESHPAY_MERCHANT_SECRET=
+
+FRESHPAY_TEST_INITIATE_URL=
+FRESHPAY_TEST_STATUS_URL=
+FRESHPAY_PROD_INITIATE_URL=
+FRESHPAY_PROD_STATUS_URL=
+
+FRESHPAY_METHOD_MOBILE_MONEY=mobile_money
+FRESHPAY_METHOD_VISA=visa
+
+FRESHPAY_HTTP_TIMEOUT=20
+FRESHPAY_HTTP_CONNECT_TIMEOUT=10
+FRESHPAY_REQUEST_FORMAT=form
+
+FRESHPAY_CALLBACK_SIGNATURE_FIELD=signature
+FRESHPAY_CALLBACK_ENCRYPTED_FIELD=data
+FRESHPAY_CALLBACK_STATUS_FIELD=Status
+FRESHPAY_CALLBACK_TRANS_STATUS_FIELD=Trans_Status
+FRESHPAY_CALLBACK_DESCRIPTION_FIELD=Trans_Status_Description
+FRESHPAY_CALLBACK_TRANSACTION_ID_FIELD=TransactionId
+FRESHPAY_CALLBACK_FINANCIAL_INSTITUTION_ID_FIELD=FinancialInstitutionId
+FRESHPAY_CALLBACK_DECRYPT_MODE=plain_json
+
+FRESHPAY_ENABLE_VISA=0
+FRESHPAY_VISA_SHARED_ENDPOINT=1
+```
+
+## Important sur FreshPay
+
+- Le total envoyé est bien calculé ainsi : `sous_total + frais_livraison`.
+- La devise envoyée est `USD`.
+- Le flux est asynchrone :
+  - initiation du paiement
+  - enregistrement local
+  - attente callback
+  - vérification possible manuelle
+- Le statut métier principal exploité est `Trans_Status`.
+- La signature callback est vérifiée en `HMAC SHA256`.
+
+## Point à compléter pour FreshPay
+
+Je n’ai pas figé dans le code des URL FreshPay inventées ni un schéma de déchiffrement hasardeux.
+
+À compléter dans la configuration selon ta doc FreshPay finale :
+
+- les URL exactes `test` et `production`
+- le format exact de requête si FreshPay exige du JSON au lieu du `form-urlencoded`
+- le mode exact de déchiffrement callback si `data` n’est pas déjà un JSON exploitable
+- les paramètres finaux Visa si le flux diffère du Mobile Money
+
+Le code est déjà structuré pour recevoir ces précisions sans refonte.
+
+## Visa
+
+La structure Visa est prête, mais elle reste désactivée tant que les paramètres FreshPay Visa ne sont pas confirmés.
+
+À finaliser pour l’activer réellement :
+
+- la valeur exacte du champ `method`
+- l’éventuel endpoint dédié Visa
+- les paramètres additionnels éventuels imposés par FreshPay
+- le comportement exact de retour/callback Visa
+
+## Comment tester Mobile Money
+
+1. Configure les variables FreshPay.
+2. Assure-toi que les tables SQL ci-dessous sont bien créées.
+3. Configure au moins une zone de livraison dans `/admin-zones-livraison`.
+4. Va sur `/checkout`.
+5. Sélectionne `Mobile Money`.
+6. Remplis le numéro, l’opérateur, la zone, l’adresse et l’email.
+7. Clique sur `Payer maintenant`.
+8. La page de retour `/paiement-retour` permettra aussi une vérification manuelle via `/paiement-verifier`.
+
+## Callback FreshPay
+
+URL prévue :
+
+```text
+https://ohnous.store/paiement-callback-freshpay
+```
+
+Le callback :
+
+- valide la signature HMAC
+- tente d’extraire la donnée utile
+- met à jour `status`, `trans_status`, `description`
+- synchronise le statut de la commande
+
+## Vérification manuelle
+
+Exemple :
+
+```text
+https://ohnous.store/paiement-verifier?reference=FP-XXXX
+```
 
 ## SQL à coller dans phpMyAdmin
 
-Important :
-- Ces requêtes complètent la base pour les promotions et les nouveaux flux admin.
-- Elles sont écrites pour être collées directement dans phpMyAdmin.
-
 ```sql
-ALTER TABLE `articles`
-  ADD COLUMN `promo_actif` INT NOT NULL DEFAULT 0 AFTER `reserve`,
-  ADD COLUMN `promo_prix` DOUBLE NULL AFTER `promo_actif`;
+ALTER TABLE `admins`
+  ADD COLUMN `nom` VARCHAR(190) NULL AFTER `email`,
+  ADD COLUMN `profile` TEXT NULL AFTER `nom`,
+  ADD COLUMN `created_by` INT NOT NULL DEFAULT 0 AFTER `profile`;
 
-CREATE TABLE IF NOT EXISTS `admin_password_resets` (
+UPDATE `admins`
+SET `profile` = '/asset/images/icons/favicon-1.png'
+WHERE `profile` IS NULL OR TRIM(`profile`) = '';
+
+CREATE TABLE IF NOT EXISTS `admin_access_tokens` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `admin_id` INT NOT NULL,
   `token` VARCHAR(190) NOT NULL,
+  `redirect_path` VARCHAR(255) NULL,
   `expire_at` DATETIME NOT NULL,
   `used_at` DATETIME NULL,
   `date_ajout` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `idx_admin_access_admin_id` (`admin_id`),
+  UNIQUE KEY `uniq_admin_access_token` (`token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE IF NOT EXISTS `admin_boutique_messages` (
+CREATE TABLE IF NOT EXISTS `payment_transactions` (
   `id` INT NOT NULL AUTO_INCREMENT,
-  `boutique_id` INT NOT NULL,
-  `from_type` VARCHAR(30) NOT NULL,
-  `message` TEXT NOT NULL,
-  `date_ajout` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
+  `order_id` INT NOT NULL,
+  `provider` VARCHAR(50) NOT NULL,
+  `payment_method` VARCHAR(50) NOT NULL,
+  `reference` VARCHAR(120) NOT NULL,
+  `freshpay_transaction_id` VARCHAR(190) NULL,
+  `financial_institution_id` VARCHAR(190) NULL,
+  `customer_number` VARCHAR(80) NULL,
+  `amount` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  `currency` VARCHAR(10) NOT NULL DEFAULT 'USD',
+  `request_payload` LONGTEXT NULL,
+  `response_payload` LONGTEXT NULL,
+  `callback_payload` LONGTEXT NULL,
+  `status` VARCHAR(50) NOT NULL DEFAULT 'initiated',
+  `trans_status` VARCHAR(50) NOT NULL DEFAULT 'pending',
+  `trans_status_description` TEXT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_payment_reference` (`reference`),
+  KEY `idx_payment_order_id` (`order_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 ```
 
-## Remarques
+## Vérifications avant production
+
+- renseigner toutes les variables FreshPay
+- valider les endpoints test et production
+- confirmer le mode exact de déchiffrement callback
+- tester un callback réel FreshPay
+- tester la vérification manuelle
+- activer Visa uniquement après validation documentaire complète
+- vérifier que les emails admins partent bien depuis ton SMTP
+
+## Notes projet
 
 - `model/bdd.php` n’a pas été modifié.
-- La session admin utilisée est `admin_ohnous_987654321`.
-- Les promotions fonctionnent sans casser l’affichage actuel, mais la base doit avoir `promo_actif` et `promo_prix` pour que la fonctionnalité soit complète.
-- La conversation admin vers boutique est séparée des conversations client/boutique actuelles pour ne pas casser votre logique existante.
-- Les boutiques sans adresse email sont maintenant traitées comme des boutiques test et restent actives automatiquement.
-- Les images d’articles ne sont pas rééditées depuis la page admin dans cette version.
-  Cette remarque n’est plus valable après cette mise à jour : l’édition admin recharge maintenant les images existantes et permet de les remplacer dans une interface inspirée de `view/upload_image.php`.
+- Le projet reste branché sur ton routeur MVC existant.
+- Les requêtes AJAX front continuent d’utiliser `jQuery`.
+- Les nouveaux textes ont été réécrits en UTF-8 côté fichiers modifiés.
+- Si ta base existante ne contient pas encore `payment_transactions` et `admin_access_tokens`, colle simplement le SQL ci-dessus dans phpMyAdmin.

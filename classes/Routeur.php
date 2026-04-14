@@ -41,6 +41,14 @@
                             "admin-nouveau-mot-de-passe" => ["controller" => 'Home', "method" => 'showAdminNewPassword'],
                             "message" => ["controller" => 'Home', "method" => 'showMessage'],
                             "compte" => ["controller" => 'Home', "method" => 'showUserAccount'],
+                            "checkout" => ["controller" => 'CheckoutController', "method" => 'showCheckout'],
+                            "admin-zones-livraison" => ["controller" => 'Home', "method" => 'showAdminDeliveryZones'],
+                            "admin-admins" => ["controller" => 'AdminController', "method" => 'showAdminAccounts'],
+                            "admin-acces" => ["controller" => 'AdminController', "method" => 'consumeAccessToken'],
+                            "paiement-demarrer" => ["controller" => 'PaymentController', "method" => 'startPayment'],
+                            "paiement-callback-freshpay" => ["controller" => 'PaymentController', "method" => 'handleFreshPayCallback'],
+                            "paiement-verifier" => ["controller" => 'PaymentController', "method" => 'verifyPaymentStatus'],
+                            "paiement-retour" => ["controller" => 'PaymentController', "method" => 'showReturnPage'],
 
                             "q" => ["controller" => 'Home', "method" => 'showSearch'],
                         ];
@@ -72,6 +80,8 @@
                     }
                 }
                 include MODEL . 'bdd.php';
+                include_once MODEL . 'select.php';
+                include_once FONCTION . 'fonctions.php';
 
                 $titre_page = [];
                 $found_filtre = false;

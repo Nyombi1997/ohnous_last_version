@@ -17,7 +17,10 @@ function ohnous_build_mailer()
     }
 
     try {
-        return new PHPMailer(true);
+        $mailer = new PHPMailer(true);
+        $mailer->CharSet = 'UTF-8';
+        $mailer->Encoding = 'base64';
+        return $mailer;
     } catch (Exception $e) {
         error_log('Impossible d\'initialiser PHPMailer : ' . $e->getMessage());
         return false;
@@ -391,6 +394,52 @@ function ohnous_send_admin_store_contact_email($email = "", $storeName = "", $me
                     <p>Un nouveau message vous attend de la part de l’administration OhNous.</p>
                     <blockquote style="margin:16px 0; padding:16px 18px; background:#f6f8ff; border-radius:18px; color:#44506d;">'.nl2br(htmlspecialchars(mb_strimwidth($messagePreview, 0, 260, '...'), ENT_QUOTES, 'UTF-8')).'</blockquote>
                     <a href="'.htmlspecialchars($conversationUrl, ENT_QUOTES, 'UTF-8').'" style="display:inline-block; background:#6775d6; color:#ffffff; text-decoration:none; padding:14px 22px; border-radius:999px; font-weight:bold;">Ouvrir la conversation</a>
+                </div>
+            </body>
+        </html>
+    ';
+
+    return $mail->send();
+}
+
+/* email d'invitation admin avec lien d'accès direct */
+function ohnous_send_admin_invitation_email($email = "", $adminName = "", $magicUrl = "", $temporaryPassword = "", $inviterName = "OhNous")
+{
+    $mail = ohnous_build_mailer();
+    if ($mail === false || trim($email) === '' || trim($magicUrl) === '') {
+        return false;
+    }
+
+    $mail->isSMTP();
+    $mail->Host = 'smtp.hostinger.com';
+    $mail->SMTPAuth = true;
+    $mail->Username = 'contact@ohnous.store';
+    $mail->Password = 'Ohnous@2026';
+    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+    $mail->Port = 465;
+
+    $mail->setFrom('contact@ohnous.store', 'Ohnous');
+    $mail->addAddress($email);
+    $mail->isHTML(true);
+    $mail->Subject = 'Votre accès admin OhNous';
+    $mail->Body = '
+        <html lang="fr">
+            <body style="font-family:Arial, Helvetica, sans-serif; background:#f5f7ff; padding:24px;">
+                <div style="max-width:680px; margin:0 auto; background:#ffffff; border-radius:24px; padding:32px; box-shadow:0 20px 60px rgba(46, 61, 104, 0.12);">
+                    <div style="text-align:center; margin-bottom:20px;">
+                        <img src="https://ohnous.store/asset/images/icons/favicon-1.png" alt="OhNous" style="width:72px; height:72px; border-radius:18px;">
+                    </div>
+                    <h1 style="margin-top:0;">Bienvenue dans l\'espace admin OhNous</h1>
+                    <p>Bonjour '.htmlspecialchars($adminName !== '' ? $adminName : 'Admin OhNous', ENT_QUOTES, 'UTF-8').',</p>
+                    <p><strong>'.htmlspecialchars($inviterName, ENT_QUOTES, 'UTF-8').'</strong> vient de créer votre accès administrateur.</p>
+                    '.($temporaryPassword !== ''
+                        ? '<p>Mot de passe temporaire : <strong style="letter-spacing:1px;">'.htmlspecialchars($temporaryPassword, ENT_QUOTES, 'UTF-8').'</strong></p>'
+                        : '<p>Votre compte est prêt. Utilisez le lien ci-dessous pour accéder directement à votre espace.</p>'
+                    ).'
+                    <div style="padding:24px 0 12px;">
+                        <a href="'.htmlspecialchars($magicUrl, ENT_QUOTES, 'UTF-8').'" style="display:inline-block; background:#6775d6; color:#ffffff; text-decoration:none; padding:14px 22px; border-radius:999px; font-weight:bold;">Accéder directement à mon compte admin</a>
+                    </div>
+                    <p style="color:#6f7392; font-size:14px;">Ce lien est à usage unique et expire automatiquement pour garder votre compte sécurisé.</p>
                 </div>
             </body>
         </html>

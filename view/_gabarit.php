@@ -2,11 +2,6 @@
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
-    /* $insert_data = [
-        "email" => "admin@admin.com",
-        "mdp" => password_hash("%ohnousServicesAdmin", PASSWORD_DEFAULT)
-    ];
-    insert_bdd($bdd, "admins", $insert_data); */
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -62,54 +57,42 @@
                     <?php
                         $nombre_article = 0;
                         $total = 0;
-                        if(isset($_SESSION['cart-ohnous-123456789']))
+                        $cartItems = ohnous_get_cart_items();
+                        if(!empty($cartItems))
                         {
-                            //session_destroy();
-                            function displayCart() {
-                                if (empty($_SESSION['cart-ohnous-123456789'])) {
-                                    echo '<h2 class="titre_panier">Votre panier est vide</h2>';
-                                    return;
-                                }
+                            foreach ($cartItems as $itemKey => $item) {
+                                $itemDomId = 'detail_panier_'.md5((string)$itemKey);
+                                $liquid_image = ohnous_prepare_liquid_image($item['image'], '(max-width: 768px) 35vw, 180px');
 
-                                $total = 0;
-
-                                foreach ($_SESSION['cart-ohnous-123456789'] as $item) {
-                                    $subtotal = $item['price'] * $item['qty'];
-                                    $total += $subtotal;
-                                    $liquid_image = ohnous_prepare_liquid_image($item['image'], '(max-width: 768px) 35vw, 180px');
-
-                                    echo '
-                                        <!-- images -->
-                                        <div class="detail_panier" id="detail_panier_'.$item['id'].'">
-                                            <div class="div_img_detail_panier" style="background: '.$item['background'].'">
-                                                <img
-                                                    class="blur-up js-liquid-image"
-                                                    src="'.$liquid_image['placeholder'].'"
-                                                    data-image-base="'.$liquid_image['base'].'"
-                                                    data-image-fallback="'.$liquid_image['fallback'].'"
-                                                    data-image-high="'.$liquid_image['high'].'"
-                                                    data-image-srcset="'.$liquid_image['srcset'].'"
-                                                    data-image-sizes="'.$liquid_image['sizes'].'"
-                                                    loading="lazy"
-                                                    style="'.$item['style'].'"
-                                                    alt="article/'.$item['slug'].'"
-                                                />
-                                                <div class="div_supp_produit_panier" onclick="ajouterAuPanier(\''.$item['image'].'\',\''.$item['id'].'\',\''.$item['name'].'\',\''.$item['slug'].'\',\''.$item['size'].'\',\''.$item['price'].'\',\''.$item['style'].'\',\''.$item['background'].'\')">
-                                                    <i class="fa fa-trash"></i>
-                                                </div>
+                                echo '
+                                    <div class="detail_panier" id="'.$itemDomId.'" data-cart-key="'.htmlspecialchars((string)$itemKey, ENT_QUOTES, 'UTF-8').'">
+                                        <div class="div_img_detail_panier" style="background: '.$item['background'].'">
+                                            <img
+                                                class="blur-up js-liquid-image"
+                                                src="'.$liquid_image['placeholder'].'"
+                                                data-image-base="'.$liquid_image['base'].'"
+                                                data-image-fallback="'.$liquid_image['fallback'].'"
+                                                data-image-high="'.$liquid_image['high'].'"
+                                                data-image-srcset="'.$liquid_image['srcset'].'"
+                                                data-image-sizes="'.$liquid_image['sizes'].'"
+                                                loading="lazy"
+                                                style="'.$item['style'].'"
+                                                alt="article/'.$item['slug'].'"
+                                            />
+                                            <div class="div_supp_produit_panier" onclick="ajouterAuPanier('.ohnous_js_html_arg($item['image']).','.ohnous_js_html_arg((string)$item['id']).','.ohnous_js_html_arg($item['name']).','.ohnous_js_html_arg($item['slug']).','.ohnous_js_html_arg($item['size']).','.ohnous_js_html_arg((string)$item['price']).','.ohnous_js_html_arg($item['style']).','.ohnous_js_html_arg($item['background']).')">
+                                                <i class="fa fa-trash"></i>
                                             </div>
-                                            <!-- details -->
-                                            <div class="infos_detail_panier">
-                                                <p class="titre_produit_detail_panier">'.$item['name'].'</p>
-                                                <p class="prix_produit_detail_panier">$ <span class="prix-panier">'.$item['price'].'</span></p>
-                                                <p class="taille_produit_detail_panier">'.$item['size'].'</p>
-                                            </div>
-                                        </div>';
-                                }
-                                return $total;
+                                        </div>
+                                        <div class="infos_detail_panier">
+                                            <p class="titre_produit_detail_panier">'.$item['name'].'</p>
+                                            <p class="prix_produit_detail_panier">$ <span class="prix-panier">'.number_format(((float)$item['price']) * max(1, (int)$item['qty']), 2, '.', ' ').'</span></p>
+                                            <p class="taille_produit_detail_panier">'.($item['size'] !== '' ? $item['size'] : 'Taille non précisée').'</p>
+                                            <p class="taille_produit_detail_panier">Quantité : '.max(1, (int)$item['qty']).'</p>
+                                        </div>
+                                    </div>';
                             }
-                            $nombre_article = count($_SESSION['cart-ohnous-123456789']);
-                            $total = displayCart();
+                            $nombre_article = count($cartItems);
+                            $total = ohnous_get_items_total($cartItems);
                         }
                         else
                         {
@@ -127,7 +110,7 @@
                     </div>
                     <div class="div_total_panier">
                         <div class="total_panier btn_ohnous">
-                            <a href="">Valider</a>
+                            <a href="/checkout?mode=cart">Checkout</a>
                         </div>
                     </div>
                 </div>

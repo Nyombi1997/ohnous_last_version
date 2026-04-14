@@ -1,7 +1,7 @@
 <?php
-    include_once "../model/bdd.php";
-    include_once "../model/select.php";
-    include_once "fonctions.php";
+    include_once __DIR__ . "/../model/bdd.php";
+    include_once __DIR__ . "/../model/select.php";
+    include_once __DIR__ . "/fonctions.php";
     header('Content-Type: application/json; charset=utf-8');
     
     /* afficher les categories */
@@ -34,7 +34,7 @@
             $active = "active";
         }
         $html_categorie .= '
-        <div class="detail_liste_filtre_produit '.$active.' js_detail_liste_filtre_produit js_detail_liste_filtre_produit_'.$category['id'].'" onclick=\'filtre_categorie('.(int)$category['id'].','.json_encode($category['nom']).','.json_encode($category['slug']).')\'>
+        <div class="detail_liste_filtre_produit '.$active.' js_detail_liste_filtre_produit js_detail_liste_filtre_produit_'.$category['id'].'" onclick="filtre_categorie('.(int)$category['id'].','.ohnous_js_html_arg($category['nom']).','.ohnous_js_html_arg($category['slug']).')">
             <div class="nom">'.$category['nom'].'</div> <div class="nombre">'.$categories_nombre.'</div>
         </div>';
     }

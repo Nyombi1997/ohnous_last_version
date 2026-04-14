@@ -287,6 +287,7 @@
     {
         $sql = "SELECT DISTINCT a.* FROM articles a INNER JOIN boutiques bo ON bo.id = a.boutique AND bo.activer = 1";
         $joins = [];
+        $where = ["1 = 1"];
         $params = [];
 
         // FILTRE CATÉGORIE
@@ -333,7 +334,7 @@
         if (!empty($filters['promotion']) && (int)$filters['promotion'] === 1 && function_exists('ohnous_column_exists')) {
             if(ohnous_column_exists('articles', 'promo_actif'))
             {
-                $sql .= " AND a.promo_actif = 1";
+                $where[] = "a.promo_actif = 1";
             }
         }
 
@@ -342,10 +343,20 @@
             $sql .= " " . implode(" ", $joins);
         }
 
+        if ($where) {
+            $sql .= " WHERE " . implode(" AND ", $where);
+        }
+
         if ($random) {
             $sql .= " ORDER BY RAND()";
         } elseif ($order !== null) {
-            $sql .= " ORDER BY " . $order;
+            $allowedOrders = [
+                'date_desc' => "a.date_ajout DESC, a.id DESC",
+                'prix_asc' => "(CASE WHEN COALESCE(a.promo_actif, 0) = 1 AND a.promo_prix IS NOT NULL THEN a.promo_prix ELSE a.prix END) ASC, a.id DESC",
+                'prix_desc' => "(CASE WHEN COALESCE(a.promo_actif, 0) = 1 AND a.promo_prix IS NOT NULL THEN a.promo_prix ELSE a.prix END) DESC, a.id DESC",
+                'plus_chers' => "(CASE WHEN COALESCE(a.promo_actif, 0) = 1 AND a.promo_prix IS NOT NULL THEN a.promo_prix ELSE a.prix END) DESC, a.id DESC"
+            ];
+            $sql .= " ORDER BY " . ($allowedOrders[$order] ?? "a.id DESC");
         } else {
             $sql .= " ORDER BY a.id DESC";
         }
@@ -438,18 +449,31 @@
 
         $sql = "
             (
-                SELECT id, nom COLLATE utf8mb4_general_ci AS label, prix, description COLLATE utf8mb4_general_ci AS description, slug COLLATE utf8mb4_general_ci AS slug, 'articles' AS source,
+                /* Préfixer les colonnes de articles évite les ambiguïtés avec la jointure boutiques. */
+                SELECT
+                    articles.id,
+                    articles.nom COLLATE utf8mb4_general_ci AS label,
+                    articles.prix,
+                    articles.description COLLATE utf8mb4_general_ci AS description,
+                    articles.slug COLLATE utf8mb4_general_ci AS slug,
+                    'articles' AS source,
                     (
-                        (CASE WHEN nom LIKE :start THEN 5
-                            WHEN nom LIKE :middle THEN 3
-                            WHEN nom LIKE :any THEN 1 ELSE 0 END)
+                        (CASE WHEN articles.nom LIKE :start THEN 5
+                            WHEN articles.nom LIKE :middle THEN 3
+                            WHEN articles.nom LIKE :any THEN 1 ELSE 0 END)
                         +
-                        (CASE WHEN prix LIKE :any THEN 1 ELSE 0 END)
+                        (CASE WHEN articles.prix LIKE :any THEN 1 ELSE 0 END)
                         ".$promoScoreSql."
                     ) AS score
                 FROM articles
                 INNER JOIN boutiques bo_articles ON bo_articles.id = articles.boutique AND bo_articles.activer = 1
-                WHERE (nom LIKE :any OR prix LIKE :any OR (:q_numeric IS NOT NULL AND prix <= :q_numeric)".$promoWhereSql.") OR description LIKE :any
+                WHERE (
+                    articles.nom LIKE :any
+                    OR articles.prix LIKE :any
+                    OR (:q_numeric IS NOT NULL AND articles.prix <= :q_numeric)
+                    ".$promoWhereSql."
+                )
+                OR articles.description LIKE :any
             )
             UNION
             (

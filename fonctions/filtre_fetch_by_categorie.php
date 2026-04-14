@@ -1,7 +1,7 @@
 <?php
-    include_once "../model/bdd.php";
-    include_once "../model/select.php";
-    include_once "fonctions.php";
+    include_once __DIR__ . "/../model/bdd.php";
+    include_once __DIR__ . "/../model/select.php";
+    include_once __DIR__ . "/fonctions.php";
     header('Content-Type: application/json; charset=utf-8');
 
     $categorie_id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
@@ -45,7 +45,7 @@
                 <div class="detail_liste_filtre_produit 
                             js_detail_liste_filtre_produit_types 
                             js_detail_liste_filtre_produit_types'.$type['id'].'"
-                    onclick=\'filtre_types('.(int)$type['id'].','.json_encode($type['nom']).','.json_encode($type['slug']).')\'>
+                    onclick="filtre_types('.(int)$type['id'].','.ohnous_js_html_arg($type['nom']).','.ohnous_js_html_arg($type['slug']).')">
                     <div class="nom">'.$type['nom'].'</div>
                     <div class="nombre">'.$type['total'].'</div>
                 </div>';
@@ -77,7 +77,7 @@
             continue;
         }
         $html_categorie .= '
-        <div class="detail_liste_filtre_produit '.$active.' js_detail_liste_filtre_produit js_detail_liste_filtre_produit_'.$category['id'].'" onclick=\'filtre_categorie('.(int)$category['id'].','.json_encode($category['nom']).','.json_encode($category['slug']).')\'>
+        <div class="detail_liste_filtre_produit '.$active.' js_detail_liste_filtre_produit js_detail_liste_filtre_produit_'.$category['id'].'" onclick="filtre_categorie('.(int)$category['id'].','.ohnous_js_html_arg($category['nom']).','.ohnous_js_html_arg($category['slug']).')">
             <div class="nom">'.$category['nom'].'</div> <div class="nombre">'.$categories_nombre.'</div>
         </div>';
     }
@@ -85,7 +85,7 @@
     {
         $categories[0] = select_bdd($bdd, "categorie", $where = "id = '$categorie_id'", $limit = null, $offset = 0, $order = "nom", $random = false);
         $html_categorie = '
-        <div class="detail_liste_filtre_produit active js_detail_liste_filtre_produit js_detail_liste_filtre_produit_'.$categories[0]['id'].'" onclick=\'filtre_categorie('.(int)$categories['id'].','.json_encode($categories['nom']).','.json_encode($categories['slug']).')\'>
+        <div class="detail_liste_filtre_produit active js_detail_liste_filtre_produit js_detail_liste_filtre_produit_'.$categories[0]['id'].'" onclick="filtre_categorie('.(int)$categories['id'].','.ohnous_js_html_arg($categories['nom']).','.ohnous_js_html_arg($categories['slug']).')">
             <div class="nom">'.$categories[0]['nom'].'</div> <div class="nombre">'.count($categories).'</div>
         </div>';
     }

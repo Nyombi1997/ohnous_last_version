@@ -332,4 +332,67 @@
     .promo-inline-badge{
         margin-left: 0;
     }
+
+    .search-result-card,
+    .checkout-order-item{
+        grid-template-columns: 62px 1fr;
+    }
+
+    .search-result-price,
+    .checkout-order-item__price{
+        grid-column: 2;
+    }
+
+    .checkout-main{
+        padding: 20px;
+        border-radius: 24px;
+    }
+
+    .checkout-main__head,
+    .checkout-form__grid,
+    .delivery-admin-grid,
+    .delivery-zone-card{
+        grid-template-columns: 1fr;
+        flex-direction: column;
+    }
+
+    .checkout-main__head,
+    .delivery-zone-card{
+        align-items: stretch;
+    }
+
+    .delivery-zone-card__actions,
+    .delivery-zone-form__actions{
+        width: 100%;
+    }
+
+    .delivery-zone-card__actions .btn_ohnous,
+    .delivery-zone-form__actions .btn_ohnous{
+        width: 100%;
+        text-align: center;
+    }
+
+    .checkout-form__row,
+    .admin-account-grid{
+        grid-template-columns: 1fr;
+    }
+
+    .articles-toolbar{
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .articles-results-grid{
+        width: 100%;
+    }
+
+    .articles-toolbar__actions{
+        min-width: 100%;
+    }
+
+    .admin-account-card,
+    .payment-return-card__actions{
+        flex-direction: column;
+        align-items: stretch;
+    }
 }

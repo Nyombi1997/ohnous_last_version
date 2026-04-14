@@ -114,6 +114,128 @@
     function cartKey($id, $size) {
         return $id . '_' . $size; 
     }
+    /* cles de session communes du panier et du checkout */
+    function ohnous_get_cart_session_key()
+    {
+        return 'cart-ohnous-123456789';
+    }
+    function ohnous_get_direct_checkout_session_key()
+    {
+        return 'checkout-direct-ohnous-123456789';
+    }
+    function ohnous_boot_checkout_session()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+    }
+    /* retrouver les lignes du panier depuis la session existante */
+    function ohnous_get_cart_items()
+    {
+        ohnous_boot_checkout_session();
+        $items = $_SESSION[ohnous_get_cart_session_key()] ?? [];
+        return is_array($items) ? $items : [];
+    }
+    /* totaliser un lot d'articles checkout/panier */
+    function ohnous_get_items_total(array $items)
+    {
+        $total = 0.0;
+
+        foreach($items as $item)
+        {
+            $price = isset($item['price']) ? (float)$item['price'] : 0;
+            $qty = isset($item['qty']) ? max(1, (int)$item['qty']) : 1;
+            $total += ($price * $qty);
+        }
+
+        return $total;
+    }
+    function ohnous_clear_direct_checkout()
+    {
+        ohnous_boot_checkout_session();
+        unset($_SESSION[ohnous_get_direct_checkout_session_key()]);
+    }
+    /* preparer un checkout direct avec un seul article */
+    function ohnous_set_direct_checkout_item(array $item)
+    {
+        ohnous_boot_checkout_session();
+
+        $_SESSION[ohnous_get_direct_checkout_session_key()] = [
+            'generated_at' => date('Y-m-d H:i:s'),
+            'items' => [
+                cartKey($item['id'] ?? 0, $item['size'] ?? '') => [
+                    'id' => (int)($item['id'] ?? 0),
+                    'name' => (string)($item['name'] ?? ''),
+                    'price' => (float)($item['price'] ?? 0),
+                    'size' => (string)($item['size'] ?? ''),
+                    'qty' => max(1, (int)($item['qty'] ?? 1)),
+                    'image' => (string)($item['image'] ?? ''),
+                    'style' => (string)($item['style'] ?? ''),
+                    'background' => (string)($item['background'] ?? ''),
+                    'slug' => (string)($item['slug'] ?? '')
+                ]
+            ]
+        ];
+    }
+    function ohnous_get_direct_checkout_items()
+    {
+        ohnous_boot_checkout_session();
+        $payload = $_SESSION[ohnous_get_direct_checkout_session_key()] ?? [];
+        $items = $payload['items'] ?? [];
+        return is_array($items) ? $items : [];
+    }
+    /* resoudre le contexte du checkout : panier complet ou commande directe */
+    function ohnous_get_checkout_context($mode = 'cart')
+    {
+        $mode = $mode === 'direct' ? 'direct' : 'cart';
+        $items = $mode === 'direct' ? ohnous_get_direct_checkout_items() : ohnous_get_cart_items();
+
+        return [
+            'mode' => $mode,
+            'items' => $items,
+            'count' => count($items),
+            'subtotal' => ohnous_get_items_total($items),
+        ];
+    }
+    /* rendre une ligne HTML de panier/checkout */
+    function ohnous_render_checkout_item_html(array $item, $compact = false)
+    {
+        $name = htmlspecialchars((string)($item['name'] ?? 'Article OhNous'), ENT_QUOTES, 'UTF-8');
+        $slug = htmlspecialchars((string)($item['slug'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $size = trim((string)($item['size'] ?? ''));
+        $style = htmlspecialchars((string)($item['style'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $background = htmlspecialchars((string)($item['background'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $price = isset($item['price']) ? (float)$item['price'] : 0;
+        $qty = isset($item['qty']) ? max(1, (int)$item['qty']) : 1;
+        $liquidImage = ohnous_prepare_liquid_image((string)($item['image'] ?? ''), '(max-width: 768px) 35vw, 180px');
+        $wrapperClass = $compact ? 'checkout-order-item compact' : 'checkout-order-item';
+        $subtotal = number_format($price * $qty, 2, '.', ' ');
+
+        return '
+            <article class="'.$wrapperClass.'">
+                <div class="checkout-order-item__media" style="background: '.$background.';">
+                    <img
+                        class="blur-up js-liquid-image"
+                        src="'.htmlspecialchars($liquidImage['placeholder'], ENT_QUOTES, 'UTF-8').'"
+                        data-image-base="'.htmlspecialchars($liquidImage['base'], ENT_QUOTES, 'UTF-8').'"
+                        data-image-fallback="'.htmlspecialchars($liquidImage['fallback'], ENT_QUOTES, 'UTF-8').'"
+                        data-image-high="'.htmlspecialchars($liquidImage['high'], ENT_QUOTES, 'UTF-8').'"
+                        data-image-srcset="'.htmlspecialchars($liquidImage['srcset'], ENT_QUOTES, 'UTF-8').'"
+                        data-image-sizes="'.htmlspecialchars($liquidImage['sizes'], ENT_QUOTES, 'UTF-8').'"
+                        loading="lazy"
+                        style="'.$style.'"
+                        alt="'.$slug.'"
+                    >
+                </div>
+                <div class="checkout-order-item__content">
+                    <strong>'.$name.'</strong>
+                    <span>'.($size !== '' ? 'Taille : '.htmlspecialchars($size, ENT_QUOTES, 'UTF-8') : 'Taille non pr&eacute;cis&eacute;e').'</span>
+                    <span>Quantit&eacute; : '.$qty.'</span>
+                </div>
+                <div class="checkout-order-item__price">$ '.$subtotal.'</div>
+            </article>
+        ';
+    }
     /* gestion nombre */
     function formatNumberShort($number) {
         if ($number >= 1000000000) {
@@ -197,22 +319,19 @@
                 $admin = only_select("admins", "id = ".$adminId, null, null);
                 if($admin)
                 {
-                    $iconHtml = '<i class="fa-solid fa-user-shield"></i>';
-                    if(!empty($admin['profile']))
-                    {
-                        $iconHtml = '<img src="'.htmlspecialchars($admin['profile'], ENT_QUOTES, 'UTF-8').'" alt="Admin OhNous">';
-                    }
+                    $adminProfile = ohnous_get_profile_picture($admin['profile'] ?? '', 'admin');
+                    $iconHtml = '<img src="'.htmlspecialchars($adminProfile, ENT_QUOTES, 'UTF-8').'" alt="Admin OhNous">';
 
                     return [
                         'connected' => true,
                         'type' => 'admin',
                         'id' => (int)$admin['id'],
                         'unique_id' => (string)$admin['id'],
-                        'nom' => 'Admin OhNous',
+                        'nom' => !empty($admin['nom']) ? $admin['nom'] : 'Admin OhNous',
                         'email' => $admin['email'] ?? '',
                         'link' => '/admin',
                         'icon_html' => $iconHtml,
-                        'profile' => $admin['profile'] ?? '',
+                        'profile' => $adminProfile,
                     ];
                 }
             }
@@ -766,6 +885,84 @@
         return $suggestions;
     }
 
+    /* lecture de la configuration de livraison */
+    function ohnous_get_delivery_settings()
+    {
+        global $bdd;
+
+        $settings = [
+            'use_global_price' => 0,
+            'global_price' => 0.0
+        ];
+
+        if(!ohnous_table_exists('delivery_settings'))
+        {
+            return $settings;
+        }
+
+        $rows = select_bdd($bdd, 'delivery_settings', null, null, 0, null, false);
+        foreach($rows as $row)
+        {
+            $key = (string)($row['setting_key'] ?? '');
+            $value = $row['setting_value'] ?? '';
+
+            if($key === 'use_global_price')
+            {
+                $settings['use_global_price'] = (int)$value === 1 ? 1 : 0;
+            }
+            elseif($key === 'global_price')
+            {
+                $settings['global_price'] = (float)$value;
+            }
+        }
+
+        return $settings;
+    }
+
+    /* zones de livraison gerees par l'admin */
+    function ohnous_get_delivery_zones($onlyActive = true)
+    {
+        global $bdd;
+
+        if(!ohnous_table_exists('delivery_zones'))
+        {
+            return [];
+        }
+
+        $where = $onlyActive ? 'actif = 1' : null;
+        return select_bdd($bdd, 'delivery_zones', $where, null, 0, 'nom ASC, id DESC', false);
+    }
+
+    function ohnous_get_delivery_zone_by_id($zoneId)
+    {
+        $zoneId = (int)$zoneId;
+        if($zoneId <= 0 || !ohnous_table_exists('delivery_zones'))
+        {
+            return null;
+        }
+
+        $zone = only_select('delivery_zones', 'id = '.$zoneId, null, null);
+        return $zone ?: null;
+    }
+
+    /* calculer les frais de livraison selon le mode admin */
+    function ohnous_get_delivery_price_for_zone($zoneId)
+    {
+        $settings = ohnous_get_delivery_settings();
+        if((int)$settings['use_global_price'] === 1)
+        {
+            return (float)$settings['global_price'];
+        }
+
+        $zone = ohnous_get_delivery_zone_by_id($zoneId);
+        if(!$zone)
+        {
+            return null;
+        }
+
+        return (float)($zone['prix'] ?? 0);
+    }
+
     /* l'identité d'un compte pour les favoris et messages */
     function ohnous_get_account_actor()
     {
@@ -1178,7 +1375,7 @@
 
         if($type === 'admin')
         {
-            return '/asset/images/icons/logo-2.png';
+            return '/asset/images/icons/favicon-1.png';
         }
 
         return '/asset/images/profile/default.jpg';
@@ -1273,6 +1470,8 @@
             'dashboard' => ['label' => 'Tableau de bord', 'link' => '/admin', 'icon' => 'fa-chart-line'],
             'boutiques' => ['label' => 'Boutiques', 'link' => '/admin-boutiques', 'icon' => 'fa-store'],
             'articles' => ['label' => 'Articles', 'link' => '/admin-articles', 'icon' => 'fa-tags'],
+            'livraison' => ['label' => 'Livraison', 'link' => '/admin-zones-livraison', 'icon' => 'fa-truck-fast'],
+            'admins' => ['label' => 'Admins', 'link' => '/admin-admins', 'icon' => 'fa-user-shield'],
         ];
 
         $html = '<nav class="admin-liquid-nav">';
@@ -1422,7 +1621,7 @@
         $isAdmin = $fromType === 'admin';
         $class = $isAdmin ? 'is-mine' : 'is-theirs';
         $name = $isAdmin ? 'Admin OhNous' : 'Boutique';
-        $avatar = ohnous_get_profile_picture($isAdmin ? '/asset/images/icons/logo-2.png' : ($message['profile'] ?? ''), $isAdmin ? 'admin' : 'boutique');
+        $avatar = ohnous_get_profile_picture($isAdmin ? '/asset/images/icons/favicon-1.png' : ($message['profile'] ?? ''), $isAdmin ? 'admin' : 'boutique');
 
         return '
             <article class="message-bubble admin-thread '.$class.'">
@@ -1436,5 +1635,52 @@
                 </div>
             </article>
         ';
+    }
+
+    /* liste admin des comptes admins */
+    function ohnous_admin_fetch_admins()
+    {
+        global $bdd;
+
+        if(!ohnous_table_exists('admins'))
+        {
+            return [];
+        }
+
+        $stmt = $bdd->query("SELECT * FROM admins ORDER BY id DESC");
+        $rows = $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
+
+        foreach($rows as &$row)
+        {
+            $row['profile_resolved'] = ohnous_get_profile_picture($row['profile'] ?? '', 'admin');
+            $row['display_name'] = !empty($row['nom']) ? $row['nom'] : 'Admin OhNous';
+        }
+
+        return $rows;
+    }
+
+    /* générer un mot de passe lisible pour les comptes admins */
+    function ohnous_generate_readable_password($length = 14)
+    {
+        $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$';
+        $password = '';
+        $max = strlen($alphabet) - 1;
+
+        for($i = 0; $i < $length; $i++)
+        {
+            $password .= $alphabet[random_int(0, $max)];
+        }
+
+        return $password;
+    }
+
+    /* encoder une valeur JSON pour l'injecter en sécurité dans un attribut HTML */
+    function ohnous_js_html_arg($value)
+    {
+        return htmlspecialchars(
+            json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            ENT_QUOTES,
+            'UTF-8'
+        );
     }
 ?>

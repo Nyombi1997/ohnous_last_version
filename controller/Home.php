@@ -159,6 +159,16 @@
             $myView = new View('user');
             $myView->render('Ohnous | INSCRIPTION UTILISATEUR OHNOUS !');
         }
+        public function showCheckout ()
+        {
+            $myView = new View('checkout');
+            $myView->render('Ohnous | CHECKOUT');
+        }
+        public function showAdminDeliveryZones ()
+        {
+            $myView = new View('admin-delivery-zones');
+            $myView->render('Ohnous | ZONES DE LIVRAISON');
+        }
         public function showEditUser ()
         {
             /* ramener la vers  nouveau mot de passe */

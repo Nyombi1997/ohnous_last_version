@@ -114,20 +114,22 @@
                 </div>
                 <div class="action_panier">
                     <?php
-                        if (session_status() === PHP_SESSION_NONE) {
-                            session_start();
-                        }
                         $key = cartKey($article['id'], $tailles);
                         $panier = '';
                         $icone = 'icon-panier_plus';
-                        if (isset($_SESSION['cart-ohnous-123456789'][$key])) {
+                        $cartItems = ohnous_get_cart_items();
+                        if (isset($cartItems[$key])) {
                             $panier = 'active';
                             $icone = 'icon-panier_moins';
                         }
                         echo '
-                            <button class="panier '.$panier.'" id="btn_panier_'.$article['id'].'" onclick=\'ajouterAuPanier('.json_encode($mainImage['img']).','.(int)$article['id'].','.json_encode($article['nom']).','.json_encode($article['slug']).','.json_encode($tailles).','.json_encode((string)$pricing['prix_final']).','.json_encode($image_article_style).','.json_encode($image_article_background).')\'><span class="'.$icone.'"></span></button>';
+                            <button class="panier '.$panier.'" id="btn_panier_'.$article['id'].'" onclick="ajouterAuPanier('.ohnous_js_html_arg($mainImage['img']).','.(int)$article['id'].','.ohnous_js_html_arg($article['nom']).','.ohnous_js_html_arg($article['slug']).','.ohnous_js_html_arg($tailles).','.ohnous_js_html_arg((string)$pricing['prix_final']).','.ohnous_js_html_arg($image_article_style).','.ohnous_js_html_arg($image_article_background).')"><span class="'.$icone.'"></span></button>';
                     ?>
-                    <button class="acheter_directement">Commander maintenant</button>
+                    <button
+                        type="button"
+                        class="acheter_directement"
+                        onclick="commanderDirectement(<?= ohnous_js_html_arg($mainImage['img']) ?>, <?= (int)$article['id'] ?>, <?= ohnous_js_html_arg($article['nom']) ?>, <?= ohnous_js_html_arg($article['slug']) ?>, <?= ohnous_js_html_arg($tailles) ?>, <?= ohnous_js_html_arg((string)$pricing['prix_final']) ?>, <?= ohnous_js_html_arg($image_article_style) ?>, <?= ohnous_js_html_arg($image_article_background) ?>)"
+                    >Commander maintenant</button>
                 </div>
                 <div class="plus_details">
                     <?php

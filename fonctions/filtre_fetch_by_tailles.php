@@ -1,6 +1,6 @@
 <?php
-    include_once "../model/bdd.php";
-    include_once "../model/select.php";
+    include_once __DIR__ . "/../model/bdd.php";
+    include_once __DIR__ . "/../model/select.php";
     header('Content-Type: application/json; charset=utf-8');
 
     $taille_id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
@@ -44,7 +44,7 @@
                 <div class="detail_liste_filtre_produit 
                             js_detail_liste_filtre_produit 
                             js_detail_liste_filtre_produit_'.$categorie['id'].'"
-                    onclick=\'filtre_categorie('.(int)$categorie['id'].','.json_encode($categorie['nom']).','.json_encode($categorie['slug']).')\'>
+                    onclick="filtre_categorie('.(int)$categorie['id'].','.ohnous_js_html_arg($categorie['nom']).','.ohnous_js_html_arg($categorie['slug']).')">
                     <div class="nom">'.$categorie['nom'].'</div>
                     <div class="nombre">'.$categorie['total'].'</div>
                 </div>';
@@ -82,7 +82,7 @@
                 <div class="detail_liste_filtre_produit 
                             js_detail_liste_filtre_produit_types 
                             js_detail_liste_filtre_produit_types'.$type['id'].'"
-                    onclick=\'filtre_types('.(int)$type['id'].','.json_encode($type['nom']).','.json_encode($type['slug']).')\'>
+                    onclick="filtre_types('.(int)$type['id'].','.ohnous_js_html_arg($type['nom']).','.ohnous_js_html_arg($type['slug']).')">
                     <div class="nom">'.$type['nom'].'</div>
                     <div class="nombre">'.$type['total'].'</div>
                 </div>';
@@ -96,7 +96,7 @@
                         active
                         js_detail_liste_filtre_produit_tailles 
                         js_detail_liste_filtre_produit_tailles_'.$taille['id'].'"
-                onclick=\'filtre_tailles('.(int)$taille['id'].','.json_encode($taille['nom']).','.json_encode($taille['slug']).')\'>
+                onclick="filtre_tailles('.(int)$taille['id'].','.ohnous_js_html_arg($taille['nom']).','.ohnous_js_html_arg($taille['slug']).')">
                 <div class="nom">'.$taille['nom'].'</div>
                 <div class="nombre">'.$tailles.'</div>
             </div>';

@@ -109,7 +109,7 @@
                                     </div>
                                 </div>
                                 <div class="boutton_panier_affiche_produit">
-                                    <button type="button" class="'.$panier.'" id="btn_panier_'.$donnee['id'].'" onclick=\'ajouterAuPanier('.json_encode($img[0]['img']).','.(int)$donnee['id'].','.json_encode($donnee['nom']).','.json_encode($donnee['slug']).','.json_encode($tailles).','.json_encode((string)$pricing['prix_final']).','.json_encode($imgStyles).','.json_encode($imgBackground).')\'><span class="'.$icone.'"></span></button>
+                                    <button type="button" class="'.$panier.'" id="btn_panier_'.$donnee['id'].'" onclick="ajouterAuPanier('.ohnous_js_html_arg($img[0]['img']).','.(int)$donnee['id'].','.ohnous_js_html_arg($donnee['nom']).','.ohnous_js_html_arg($donnee['slug']).','.ohnous_js_html_arg($tailles).','.ohnous_js_html_arg((string)$pricing['prix_final']).','.ohnous_js_html_arg($imgStyles).','.ohnous_js_html_arg($imgBackground).')"><span class="'.$icone.'"></span></button>
                                 </div>
                             </div>
                         </div>

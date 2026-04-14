@@ -1,5 +1,5 @@
 <?php
-    include_once "../model/bdd.php";
+    include_once __DIR__ . "/../model/bdd.php";
     header('Content-Type: application/json; charset=utf-8');
 
     $category_id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
@@ -174,7 +174,7 @@
                         '.$active.'
                         js_detail_liste_filtre_produit_types 
                         js_detail_liste_filtre_produit_types'.$type['id'].'"
-                onclick=\'filtre_types('.(int)$type['id'].','.json_encode($type['nom']).','.json_encode($type['slug']).')\'>
+                onclick="filtre_types('.(int)$type['id'].','.ohnous_js_html_arg($type['nom']).','.ohnous_js_html_arg($type['slug']).')">
                 <div class="nom">'.$type['nom'].'</div>
                 <div class="nombre">'.$type['total'].'</div>
             </div>';
@@ -197,7 +197,7 @@
                             '.$active.'
                             js_detail_liste_filtre_produit_tailles 
                             js_detail_liste_filtre_produit_tailles_'.$taille['id'].'"
-                    onclick=\'filtre_tailles('.(int)$taille['id'].','.json_encode($taille['nom']).','.json_encode($taille['slug']).')\'>
+                    onclick="filtre_tailles('.(int)$taille['id'].','.ohnous_js_html_arg($taille['nom']).','.ohnous_js_html_arg($taille['slug']).')">
                     <div class="nom">'.$taille['nom'].'</div>
                     <div class="nombre">'.$taille['total'].'</div>
                 </div>';
