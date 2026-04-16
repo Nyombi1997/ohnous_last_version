@@ -51,7 +51,7 @@
 
     <div class="div_search_bar" id="div_search_bar">
         <div class="search_bar" id="search_bar">
-            <form action="/q" method="GET">
+            <form action="/shop" method="GET" onsubmit="return handleShopSearchSubmit(event)">
                 <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="input_search_bar" id="input_search_bar_2" name="query" placeholder="Rechercher un article..." required oninput="rechercheArticles(this.value)" onfocus="rechercheArticles(this.value)">
                 <button type="submit" class="button_search_bar"><i class="fa fa-search"></i></button>
             </form>
@@ -87,7 +87,7 @@
                     $detail_article = $card['image'];
                     $liquid_image = ohnous_prepare_liquid_image($detail_article['img'], '(max-width: 768px) 35vw, 180px');
                 ?>
-                <a href="categorie/<?= htmlspecialchars($detail_category['slug'], ENT_QUOTES, 'UTF-8') ?>" class="swiper-slide">
+                <a href="/shop?categorie=<?= rawurlencode((string)$detail_category['slug']) ?>" class="swiper-slide">
                     <div class="section_categorie_nom">
                         <p><?= htmlspecialchars($detail_category['nom'], ENT_QUOTES, 'UTF-8') ?></p>
                     </div>
@@ -131,7 +131,7 @@
         }
         echo '
             <div class="div_btn_voir_plus">
-                <a href="/articles" class="btn_voir_plus" role="button">Voir plus  <i class="fa-solid fa-arrow-right-long"></i></a>
+                <a href="/shop" class="btn_voir_plus" role="button">Voir plus <i class="fa-solid fa-arrow-right-long"></i></a>
             </div>';
     ?>
 </div>

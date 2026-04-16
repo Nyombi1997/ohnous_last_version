@@ -155,7 +155,7 @@
                                     continue; // Passer à l'itération suivante si l'ID de catégorie a déjà été traité
                                 }
                                 echo '
-                                    <a href="categorie/'.$detail_category['slug'].'" class="swiper-slide">'.$detail_category['nom'].'</a>';
+                                    <a href="/shop?categorie='.rawurlencode((string)$detail_category['slug']).'" class="swiper-slide">'.$detail_category['nom'].'</a>';
                                 $category_ids[] = $detail_category['id'];
                                 $all_categories[] = $detail_category['nom'];
                             }
@@ -201,7 +201,7 @@
 	<!-- barre de recherche -->
 	<div class="div_search_bar all <?php if(isset($GLOBALS['categorie'])){ echo 'sans_categorie';}else if(isset($GLOBALS['others'])){ echo 'sans_categorie';}  ?>" id="div_search_bar_all">
 		<div class="search_bar">
-			<form action="/q" method="GET">
+			<form action="/shop" method="GET" onsubmit="return handleShopSearchSubmit(event)">
 				<input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="input_search_bar" id="input_search_bar_2" name="query" placeholder="Rechercher un article..." required oninput="rechercheArticles(this.value)" onfocus="rechercheArticles(this.value)" value=<?php if(isset($_GET['query'])){ echo json_encode($_GET['query']); } ?>>
 				<button type="submit" class="button_search_bar"><i class="fa fa-search"></i></button>
 			</form>

@@ -1,14 +1,13 @@
 <?php
-    include_once "../model/bdd.php";
-    include_once "../model/select.php";
-    include_once "fonctions.php";
+    include_once __DIR__ . "/../model/bdd.php";
+    include_once __DIR__ . "/../model/select.php";
+    include_once __DIR__ . "/fonctions.php";
+
     header('Content-Type: application/json; charset=utf-8');
 
-    // Récupérer le terme recherché
-    $q = $_POST['q'] ?? '';
+    $q = trim((string)($_POST['q'] ?? ''));
+    $results = found($q, 12, 0, null, false);
 
-    $results = found($q);
-    /* trouver le mot le plus proche */
     function findClosestWord($input, $phrases) {
         $bestWord = null;
         $bestDistance = -1;
@@ -17,7 +16,6 @@
             $words = explode(' ', $phrase);
 
             foreach ($words as $word) {
-
                 $lev = levenshtein($input, $word);
 
                 if ($lev === 0) {
@@ -32,42 +30,35 @@
         }
 
         $maxDistance = getTolerance($input);
-
         return ($bestDistance <= $maxDistance) ? $bestWord : null;
     }
-    /* gestion du niveau de tolerance */
+
     function getTolerance($word) {
-        if (is_numeric($word)) return 0;        // prix, tailles
-        if (strlen($word) <= 2) return 0;       // trop ambigu
-        if (strlen($word) <= 3) return 0;       // trop court
-        if (strlen($word) <= 4) return 2;
+        if (is_numeric($word)) return 0;
+        if (strlen($word) <= 3) return 0;
         if (strlen($word) <= 7) return 2;
         if (strlen($word) <= 10) return 3;
         return 4;
     }
-    /* normalisation, du mot */
+
     function normalize($string) {
         $string = strtolower($string);
         $string = iconv('UTF-8', 'ASCII//TRANSLIT', $string);
         return preg_replace('/[^a-z0-9 ]/', '', $string);
     }
-    /* correction de phrases */
+
     function correctSentence($input, $phrases) {
         $inputWords = explode(' ', normalize($input));
         $corrected = [];
         $hasCorrection = false;
 
         foreach ($inputWords as $word) {
-
-            // mots trop courts → on ignore
             if (strlen($word) <= 2) {
                 $corrected[] = $word;
                 continue;
             }
 
             $suggestion = findClosestWord($word, $phrases);
-
-            // si correction valable ET différente
             if ($suggestion !== null && $suggestion !== $word) {
                 $corrected[] = $suggestion;
                 $hasCorrection = true;
@@ -76,7 +67,6 @@
             }
         }
 
-        // AUCUNE vraie correction → aucune suggestion
         if (!$hasCorrection) {
             return false;
         }
@@ -84,82 +74,105 @@
         return implode(' ', $corrected);
     }
 
+    $suggestion = false;
 
-
-    /* si on aucun resultat */
-    if(count($results) == 0 && $q != "")
+    if($q !== '')
     {
-        /* rechercher les articles se rapprochant de la recherche */
-        $stmt = $bdd->query("SELECT nom FROM articles");
-        $words = $stmt->fetchAll(PDO::FETCH_COLUMN);
-        $suggestion = correctSentence($q, $words);
-        if($suggestion)
+        $sources = [
+            "SELECT nom FROM articles",
+            "SELECT nom FROM boutiques",
+            "SELECT nom FROM categorie",
+            "SELECT nom FROM types",
+            "SELECT nom FROM tailles",
+        ];
+
+        foreach($sources as $sql)
         {
-            $results = [
-                "suggestion" => $suggestion
-            ];
-        }
-        else
-        {
-            /* rechercher les boutiques se rapprochant de la recherche */
-            $stmt = $bdd->query("SELECT nom FROM boutiques");
-            $words = $stmt->fetchAll(PDO::FETCH_COLUMN);
-            $suggestion = correctSentence($q, $words);
-            if($suggestion)
+            $stmt = $bdd->query($sql);
+            $words = $stmt ? $stmt->fetchAll(PDO::FETCH_COLUMN) : [];
+            $candidate = correctSentence($q, $words);
+            if($candidate)
             {
-                $results = [
-                    "suggestion" => $suggestion
-                ];
-            }
-            else
-            {
-                /* rechercher les categories se rapprochant de la recherche */
-                $stmt = $bdd->query("SELECT nom FROM categorie");
-                $words = $stmt->fetchAll(PDO::FETCH_COLUMN);
-                $suggestion = correctSentence($q, $words);
-                if($suggestion)
-                {
-                    $results = [
-                        "suggestion" => $suggestion
-                    ];
-                }
-                else
-                {
-                    /* rechercher les types se rapprochant de la recherche */
-                    $stmt = $bdd->query("SELECT nom FROM types");
-                    $words = $stmt->fetchAll(PDO::FETCH_COLUMN);
-                    $suggestion = correctSentence($q, $words);
-                    if($suggestion)
-                    {
-                        $results = [
-                            "suggestion" => $suggestion
-                        ];
-                    }
-                    else
-                    {
-                        /* rechercher les tailles se rapprochant de la recherche */
-                        $stmt = $bdd->query("SELECT nom FROM tailles");
-                        $words = $stmt->fetchAll(PDO::FETCH_COLUMN);
-                        $suggestion = correctSentence($q, $words);
-                        if($suggestion)
-                        {
-                            $results = [
-                                "suggestion" => $suggestion
-                            ];
-                        }
-                        else
-                        {
-                            $results = [
-                                "noResult" => ''
-                            ];                            
-                        }                        
-                    }
-                }
+                $suggestion = $candidate;
+                break;
             }
         }
     }
 
+    if(count($results) === 0 && $q !== '')
+    {
+        if($suggestion)
+        {
+            echo json_encode([
+                'suggestion' => $suggestion
+            ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+            exit;
+        }
 
-    // Retour en JSON
-    echo json_encode($results, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        echo json_encode([
+            'noResult' => true
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
+
+    $payload = [];
+
+    foreach($results as $result)
+    {
+        $item = [
+            'id' => (int)$result['id'],
+            'label' => $result['label'],
+            'slug' => $result['slug'],
+            'source' => $result['source'],
+            'description' => $result['description'] ?? '',
+            'url' => '/shop?query='.rawurlencode($result['label']),
+        ];
+
+        if($result['source'] === 'articles')
+        {
+            $article = only_select("articles", "id = '".(int)$result['id']."'", null, null);
+            if(!$article || !ohnous_is_article_visible($article))
+            {
+                continue;
+            }
+
+            $image = ohnous_get_article_primary_image((int)$result['id']);
+            $pricing = ohnous_get_article_pricing($article);
+
+            $item['url'] = '/article/'.$result['slug'];
+            $item['price_label'] = '$ '.number_format((float)$pricing['prix_final'], 2, '.', ' ');
+            $item['background'] = $image['background'] ?? '';
+            $item['style'] = $image['styles'] ?? '';
+            $item['image'] = $image['img'] ?? '';
+        }
+        elseif($result['source'] === 'boutiques')
+        {
+            $item['url'] = '/boutique/'.$result['slug'];
+        }
+        elseif($result['source'] === 'categorie')
+        {
+            $item['url'] = '/shop?categorie='.rawurlencode((string)$result['slug']);
+        }
+        elseif($result['source'] === 'types')
+        {
+            $item['url'] = '/shop?type='.rawurlencode((string)$result['slug']);
+        }
+        elseif($result['source'] === 'tailles')
+        {
+            $item['url'] = '/shop?taille='.rawurlencode((string)$result['slug']);
+        }
+
+        $payload[] = $item;
+    }
+
+    if($suggestion)
+    {
+        echo json_encode([
+            'suggestion' => $suggestion,
+            'results' => $payload
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
+
+    echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 ?>

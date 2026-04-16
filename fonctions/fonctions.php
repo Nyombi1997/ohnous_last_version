@@ -1075,7 +1075,8 @@
         $connectedClass = $account['connected'] ? 'is-connected' : 'is-guest';
         $label = $likes['liked'] ? 'Retirer des favoris' : 'Ajouter aux favoris';
 
-        return '
+        //like masquer pour le moment
+        /*return '
             <button
                 type="button"
                 class="like_affiche_produit js-like-button '.$activeClass.' '.$connectedClass.'"
@@ -1088,7 +1089,7 @@
                 <i class="'.($likes['liked'] ? 'fa-solid' : 'fa-regular').' fa-heart"></i>
                 <span class="like_affiche_produit__count" data-like-count>'.$likes['count_formatted'].'</span>
             </button>
-        ';
+        ';*/
     }
 
     /* lien direct WhatsApp */
@@ -1435,6 +1436,101 @@
             'prix_final' => $promoActif ? $promoPrix : $prix,
             'reduction' => ($promoActif && $prix > 0 && $promoPrix !== null) ? max(0, round((1 - ($promoPrix / $prix)) * 100)) : 0,
         ];
+    }
+
+    /* prix final réellement utilisé dans le catalogue */
+    function ohnous_get_article_effective_price(array $article)
+    {
+        $pricing = ohnous_get_article_pricing($article);
+        return (float)$pricing['prix_final'];
+    }
+
+    /* bornes de filtres de prix côté catalogue */
+    function ohnous_get_price_filter_ranges()
+    {
+        return [
+            'moins-25' => ['label' => 'Moins de 25 $', 'min' => null, 'max' => 25],
+            '25-50' => ['label' => '25 $ à 50 $', 'min' => 25, 'max' => 50],
+            '50-100' => ['label' => '50 $ à 100 $', 'min' => 50, 'max' => 100],
+            'plus-100' => ['label' => 'Plus de 100 $', 'min' => 100, 'max' => null],
+        ];
+    }
+
+    /* vérifier si un article correspond au filtre prix sélectionné */
+    function ohnous_match_price_filter(array $article, $priceFilter = '')
+    {
+        $priceFilter = trim((string)$priceFilter);
+        if($priceFilter === '')
+        {
+            return true;
+        }
+
+        $ranges = ohnous_get_price_filter_ranges();
+        if(!isset($ranges[$priceFilter]))
+        {
+            return true;
+        }
+
+        $price = ohnous_get_article_effective_price($article);
+        $min = $ranges[$priceFilter]['min'];
+        $max = $ranges[$priceFilter]['max'];
+
+        if($min !== null && $price < (float)$min)
+        {
+            return false;
+        }
+
+        if($max !== null && $price > (float)$max)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    /* récupérer le catalogue visible selon recherche et filtres */
+    function ohnous_get_catalog_articles(array $filters = [], $search = '', $order = 'date_desc')
+    {
+        global $bdd;
+
+        $search = trim((string)$search);
+        $priceFilter = trim((string)($filters['prix'] ?? ''));
+
+        $baseFilters = [
+            'category' => (int)($filters['category'] ?? 0),
+            'type' => (int)($filters['type'] ?? 0),
+            'taille' => (int)($filters['taille'] ?? 0),
+            'boutique' => (int)($filters['boutique'] ?? 0),
+            'promotion' => 0
+        ];
+
+        if($search !== '')
+        {
+            $query = found($search, null, 0, $order, false);
+            $articles = getArticlesFromSearch($query, null, 0, $order, false);
+        }
+        elseif($baseFilters['category'] !== 0 || $baseFilters['type'] !== 0 || $baseFilters['taille'] !== 0 || $baseFilters['boutique'] !== 0)
+        {
+            $articles = select_articles_filtre($bdd, $baseFilters, null, 0, $order, false);
+        }
+        else
+        {
+            $defaultOrder = $order === 'prix_desc' || $order === 'plus_chers'
+                ? "prix DESC, id DESC"
+                : ($order === 'prix_asc' ? "prix ASC, id DESC" : "date_ajout DESC, id DESC");
+            $articles = ohnous_get_visible_articles(null, 0, $defaultOrder, false);
+        }
+
+        $articles = ohnous_filter_visible_articles($articles);
+
+        if($priceFilter !== '')
+        {
+            $articles = array_values(array_filter($articles, function($article) use ($priceFilter){
+                return ohnous_match_price_filter($article, $priceFilter);
+            }));
+        }
+
+        return array_values($articles);
     }
 
     /* savoir si un article est en promotion */

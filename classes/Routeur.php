@@ -9,6 +9,7 @@
 
                             "ajouter-articles" => ["controller" => 'Home', "method" => 'showAddProduct'],
                             
+                            "shop" => ["controller" => 'Home', "method" => 'showShop'],
                             "articles" => ["controller" => 'Home', "method" => 'showArticles'],
                             "Articles" => ["controller" => 'Home', "method" => 'showArticles'],
                             "Article" => ["controller" => 'Home', "method" => 'showArticles'],

@@ -36,3 +36,17 @@ J'ai joins ma structure sql au besoin.
 Petite précision que celui qui veut laisser un commentaire ou un avis doit se connecter ou s'inscrire via un pop up moderne avant de le faire
 Respect la façon dont j'ai fais les vérifications avant la connexion pour que le compte soit connecter sans comportement étranger du système
 Change automatiquement l'icone de connexion et le lien en fonction de la connexion faite
+
+
+
+
+repons sans explicdation et un seul message
+
+Mon système d'ajout au pan,ier marche mais quand je veux supprimer quelque chose du panier ça ne fonctionne pas ça fait l'inverse. corrige ça stp
+
+Dans la vue de l'article, le bouton commander maintenant ne fonctionne pas complètement. je veux que si on passe par le checkout du panier qu'on ait accès ia tous les articles du panier dans le chekout mais que si la personne clique dans la vue article sur le bouton "commander maintenant" qu'il soit emmener vers le chekout avec l'article enquestion uniquement.
+
+Dans la vue d'images que ce soit à l'accueil ou à au shop ou dans la vue de la boutique ex: /boutique/fashion-exo-kin 
+je veux dans le design mobile que soit les images groupé par deux plus une seule image.
+
+Que les boutiques soient visible à l'acceuil en swipe js "Slides per view" je ne veux pas de pagination, pas de flech de swipe, que à la fin on puisse avoir un slide qui propose d'aller dans la page pour voir toutes les boutiques. donc crée une page pour la vue des boutique avec leurs photos de profile et si y'en pas met le profile par defaut, qu'on puisse voir 4 boutiques par slides que ce soit juste après

@@ -228,115 +228,189 @@ function ajouterAuPanier(imgSrc = null, produitId = null, produitNom = null, pro
 
 
 
-/* fonction pour nfaire la recherche d'articles */
+/* recherche catalogue */
 let donnee_de_recherche = document.querySelectorAll("#donnee_de_recherche");
 let input_search_bar_2 = document.getElementById("input_search_bar_2");
+
+function fermerRechercheSuggestions()
+{
+    donnee_de_recherche.forEach(function (element){
+        element.innerHTML = "";
+        element.classList.add("null");
+    });
+}
+
+function ouvrirRechercheSuggestions(html)
+{
+    donnee_de_recherche.forEach(function (element){
+        element.innerHTML = html;
+        element.classList.remove("null");
+    });
+
+    if (typeof window.initLiquidImages === "function") {
+        window.initLiquidImages();
+    }
+}
+
+function handleSearchSuggestionClick(event, source, value, slug)
+{
+    if (typeof window.ohnousShopApplySearchResult !== "function" || window.location.pathname !== "/shop") {
+        return true;
+    }
+
+    if (source === "categorie") {
+        event.preventDefault();
+        window.ohnousShopApplySearchResult("categorie", value, slug);
+        fermerRechercheSuggestions();
+        return false;
+    }
+
+    if (source === "types") {
+        event.preventDefault();
+        window.ohnousShopApplySearchResult("type", value, slug);
+        fermerRechercheSuggestions();
+        return false;
+    }
+
+    if (source === "tailles") {
+        event.preventDefault();
+        window.ohnousShopApplySearchResult("taille", value, slug);
+        fermerRechercheSuggestions();
+        return false;
+    }
+
+    if (source === "search") {
+        event.preventDefault();
+        window.ohnousShopApplySearchResult("search", value, "");
+        fermerRechercheSuggestions();
+        return false;
+    }
+
+    return true;
+}
+
+function handleShopSearchSubmit(event)
+{
+    if (window.location.pathname === "/shop" && typeof window.ohnousShopSubmitSearch === "function") {
+        event.preventDefault();
+        window.ohnousShopSubmitSearch((input_search_bar_2 && input_search_bar_2.value) ? input_search_bar_2.value : "");
+        fermerRechercheSuggestions();
+        return false;
+    }
+
+    return true;
+}
+
+function buildSearchSuggestionHtml(item)
+{
+    if (item.source === "articles") {
+        let thumb = "";
+        if (item.image) {
+            let liquid = buildLiquidImagePayload(item.image, "62px");
+            thumb = `
+                <span class="search-result-thumb" style="background:${item.background || "rgba(255,255,255,.35)"};">
+                    <img
+                        class="blur-up js-liquid-image"
+                        src="${liquid.placeholder}"
+                        data-image-base="${item.image}"
+                        data-image-fallback="${liquid.fallback}"
+                        data-image-high="${liquid.high}"
+                        data-image-srcset="${liquid.srcset}"
+                        data-image-sizes="${liquid.sizes}"
+                        loading="lazy"
+                        style="${item.style || ""}"
+                        alt="${item.label}"
+                    />
+                </span>`;
+        }
+
+        return `
+            <a href="${item.url}" class="link search-result-card">
+                ${thumb}
+                <span class="search-result-meta">
+                    <strong>${item.label}</strong>
+                    <span>Article</span>
+                </span>
+                <span class="search-result-price">${item.price_label || ""}</span>
+            </a>`;
+    }
+
+    let icon = '<i class="fa-solid fa-magnifying-glass"></i>';
+    let source = "Recherche";
+    let clickHandler = "";
+
+    if (item.source === "boutiques") {
+        icon = '<i class="fa-solid fa-store"></i>';
+        source = "Boutique";
+    } else if (item.source === "categorie") {
+        icon = '<i class="fa-solid fa-layer-group"></i>';
+        source = "Catégorie";
+        clickHandler = ` onclick="return handleSearchSuggestionClick(event, 'categorie', ${JSON.stringify(item.label)}, ${JSON.stringify(item.slug)})"`;
+    } else if (item.source === "types") {
+        icon = '<i class="fa-solid fa-list"></i>';
+        source = "Type";
+        clickHandler = ` onclick="return handleSearchSuggestionClick(event, 'types', ${JSON.stringify(item.label)}, ${JSON.stringify(item.slug)})"`;
+    } else if (item.source === "tailles") {
+        icon = '<i class="fa-solid fa-ruler"></i>';
+        source = "Taille";
+        clickHandler = ` onclick="return handleSearchSuggestionClick(event, 'tailles', ${JSON.stringify(item.label)}, ${JSON.stringify(item.slug)})"`;
+    }
+
+    return `<a href="${item.url}" class="link"${clickHandler}>${icon} ${item.label} <span>${source}</span></a>`;
+}
+
 function rechercheArticles(value)
 {
-    if((value || '').trim() === ''){
-        donnee_de_recherche.forEach(function (element){
-            element.innerHTML = "";
-            element.classList.add("null");
-        });
+    value = (value || "").trim();
+
+    if(value === ""){
+        fermerRechercheSuggestions();
         return;
     }
 
     $.post("/fonctions/recherche.php",{q : value },function(data){
-        const result = data;
-        /* si on a une suggestion */
-        if(result.suggestion != undefined)
+        let resultList = Array.isArray(data) ? data : (Array.isArray(data.results) ? data.results : []);
+        let html = "";
+
+        if(data.suggestion !== undefined)
         {
-            donnee_de_recherche.forEach(function (element){
-                element.innerHTML = "";
-                element.classList.remove("null");
-                element.innerHTML += `<div class="suggestion">Vous recherchez <a href="/q?query=${result.suggestion}" onclick="suggestionRecherche(this)">${result.suggestion}</a> ?</div>`;
-            })
+            html += `<div class="suggestion">Vous recherchez <a href="/shop?query=${encodeURIComponent(data.suggestion)}" onclick="return handleSearchSuggestionClick(event, 'search', ${JSON.stringify(data.suggestion)}, '')">${data.suggestion}</a> ?</div>`;
         }
-        else if(result.noResult == undefined)
+
+        if(data.noResult !== undefined)
         {
-            donnee_de_recherche.forEach(function (element){
-                element.innerHTML = "";
-                element.classList.remove("null");
-            })
-            let tableau = [];
-            result.forEach(function(item){
-                if(tableau.includes(item.label))
-                {
-                    return;
-                }
-                else
-                {
-                    tableau.push(item.label);
-                }
-                /* si c'est une article */
-                if(item.source == "articles")
-                {
-                    donnee_de_recherche.forEach(function (element){
-                        /* si c'est un prix */
-                        let prix_article_depuis_recherche = '';
-                        let icone_article_depuis_recherche = '';
-                        if (/(\d+)\s*(\$|dollars?|fcfa?|euros?|francs?|\w*)?/i.test(value))
-                        {
-                            prix_article_depuis_recherche = '| '+item.prix ? '- ' + item.prix + ' USD' : '';
-                            icone_article_depuis_recherche = '<i class="fa-solid fa-magnifying-glass-dollar"></i>';
-                        }
-                        element.innerHTML += `<a href="/article/${item.slug}" class="link"> ${icone_article_depuis_recherche} ${item.label} ${prix_article_depuis_recherche}</a>`;
-                    })
-                }
-                /* si c'est une boutique */
-                else if(item.source == "boutiques")
-                {
-                    donnee_de_recherche.forEach(function (element){
-                        element.innerHTML += `<a href="/boutique/${item.slug}" class="link"><i class="fa-solid fa-store"></i> ${item.label}</a>`;
-                    })
-                }
-                /* si c'est une categorie */
-                else if(item.source == "categorie")
-                {
-                    donnee_de_recherche.forEach(function (element){
-                        element.innerHTML += `<a href="/categorie/${item.slug}" class="link" onclick="filtre_categorie('${item.id}', '${item.label}', '${item.slug}', event, 'ok')"><i class="fa-solid fa-layer-group"></i> ${item.label}</a>`;
-                    })
-                }
-                /* si c'est un type */
-                else if(item.source == "types")
-                {
-                    donnee_de_recherche.forEach(function (element){
-                        element.innerHTML += `<a href="/type/${item.slug}" class="link" onclick="filtre_types('${item.id}', '${item.label}', '${item.slug}', event, 'ok')"><i class="fa-solid fa-list"></i> ${item.label}</a>`;
-                    })
-                }
-                /* si c'est une taille */
-                else if(item.source == "tailles")
-                {
-                    donnee_de_recherche.forEach(function (element){
-                        element.innerHTML += `<a href="/taille/${item.slug}" class="link" onclick="filtre_tailles('${item.id}', '${item.label}', '${item.slug}', event, 'ok')"><i class="fa-solid fa-up-right-and-down-left-from-center"></i> ${item.label}</a>`;
-                    })
-                }
-            })
+            ouvrirRechercheSuggestions(`<div class="no_result">Aucun article disponible.</div>`);
+            return;
         }
-        else
-        {
-            donnee_de_recherche.forEach(function (element){
-                element.innerHTML = "";
-                element.classList.remove("null");
-                element.innerHTML += `<div class="no_result">Aucun resultat</div>`;
-            })
-        }
-    })
+        let labels = [];
+
+        resultList.forEach(function(item){
+            if(labels.indexOf(item.source + ":" + item.label) !== -1)
+            {
+                return;
+            }
+
+            labels.push(item.source + ":" + item.label);
+            html += buildSearchSuggestionHtml(item);
+        });
+
+        ouvrirRechercheSuggestions(html !== "" ? html : `<div class="no_result">Aucun article disponible.</div>`);
+    }, "json");
 }
-/* lire le scroll */
+
 $(window).on("scroll", function () {
-    donnee_de_recherche.forEach(function (element){
-        element.innerHTML = "";
-        element.classList.add("null");
-    })
+    fermerRechercheSuggestions();
 });
-// clic partout sur le document
+
 document.addEventListener("click", (e) => {
-    // si le clic est en dehors de la div
+    if (input_search_bar_2 && input_search_bar_2.contains(e.target)) {
+        return;
+    }
+
     donnee_de_recherche.forEach(function (element){
         if (!element.contains(e.target)) {
             element.innerHTML = "";
             element.classList.add("null");
         }
-    })
+    });
 });

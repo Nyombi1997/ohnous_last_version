@@ -1,5 +1,7 @@
 <?php
     include_once __DIR__ . "/../model/bdd.php";
+    include_once __DIR__ . "/../model/select.php";
+    include_once __DIR__ . "/fonctions.php";
     header('Content-Type: application/json; charset=utf-8');
 
     $category_id = filter_input(INPUT_POST, 'categorie', FILTER_VALIDATE_INT);

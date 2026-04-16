@@ -312,6 +312,24 @@
 }
 
 @media (max-width: 768px){
+    .shop-filter-head,
+    .shop-results-head,
+    .shop-toolbar{
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .shop-results-shell{
+        width: 100%;
+        padding: 16px;
+        border-radius: 24px;
+    }
+
+    .shop-reset-button{
+        width: 100%;
+        justify-content: center;
+    }
+
     .admin-page-shell{
         padding: 18px 12px 40px;
     }
