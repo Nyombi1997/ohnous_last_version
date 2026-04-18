@@ -1,0 +1,1 @@
+merchant_id=VOTRE_MERCHANT_ID&merchant_secrete=VOTRE_MERCHANT_SECRET&amount=149.99&currency=USD&action=payment&customer_number=%2B243900000000&firstname=Client&lastname=OhNous&e-mail=client%40exemple.com&reference=FP-20260417-EXEMPLE&method=mobile_money&callback_url=https%3A%2F%2Fvotre-domaine.tld%2Fpaiement-callback-freshpay&operator=orange

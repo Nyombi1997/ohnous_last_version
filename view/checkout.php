@@ -132,7 +132,7 @@
                                                 <option value="airtel">Airtel Money</option>
                                                 <option value="orange">Orange Money</option>
                                                 <option value="mpesa">M-Pesa</option>
-                                                <option value="moov">Moov Money</option>
+                                                <option value="afrimoney">Afrimoney</option>
                                             </select>
                                         </div>
 

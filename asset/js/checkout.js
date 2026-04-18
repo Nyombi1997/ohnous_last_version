@@ -7,6 +7,7 @@
     var paymentMethodInputs = document.querySelectorAll('input[name="payment_method"]');
     var mobileMoneyFields = document.getElementById('mobile_money_fields');
     var customerNumberInput = document.getElementById('checkout_customer_number');
+    var operatorSelect = document.getElementById('checkout_operator');
     var addressTextarea = document.getElementById('checkout_address');
     var checkoutConfig = window.ohnousCheckoutConfig || { subtotal: 0, mode: 'cart', visaEnabled: false };
 
@@ -66,6 +67,10 @@
 
         if (customerNumberInput) {
             customerNumberInput.required = method === 'mobile_money';
+        }
+
+        if (operatorSelect) {
+            operatorSelect.required = method === 'mobile_money';
         }
 
         if (method === 'visa') {
@@ -141,9 +146,9 @@
                 resultIcon = 'info';
                 updateFeedback('Paiement initié. Nous attendons encore la confirmation finale de FreshPay.', 'is-pending');
             } else if (data.payment_status === 'success' || data.payment_status === 'paid' || data.payment_status === 'successful') {
-                updateFeedback('Paiement confirmé.', 'is-success');
+                updateFeedback('✅ Paiement réussi', 'is-success');
             } else {
-                updateFeedback(data.msg || 'Le paiement a échoué.', 'is-error');
+                updateFeedback(data.msg || '❌ Paiement refusé', 'is-error');
             }
 
             Swal.fire({

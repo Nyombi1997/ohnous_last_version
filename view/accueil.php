@@ -1,8 +1,9 @@
 <?php
     ohnous_sync_test_store_activation();
 
-    $visibleArticles = ohnous_get_visible_articles(null, 0, null, true);
+    $visibleArticles = ohnous_get_visible_articles(null, 0, "date_ajout DESC, id DESC", false);
     $visibleArticles = array_values($visibleArticles);
+    $visibleStores = ohnous_get_visible_stores(5, 0);
 
     $categoryCards = [];
     $all_categories = [];
@@ -78,7 +79,7 @@
     </script>
 </div>
 
-<div class="parent_div_section_categorie">
+<div class="parent_div_section_categorie home-category-strip">
     <div class="swiper section_categorie">
         <div class="swiper-wrapper">
             <?php foreach($categoryCards as $card): ?>
@@ -122,16 +123,50 @@
     </script>
 </div>
 
-<div class="container_affiche_produit">
-    <?php
-        $homeArticles = array_slice($visibleArticles, 0, 12);
-        foreach($homeArticles as $data)
-        {
-            affiche_produit($data);
-        }
-        echo '
-            <div class="div_btn_voir_plus">
-                <a href="/shop" class="btn_voir_plus" role="button">Voir plus <i class="fa-solid fa-arrow-right-long"></i></a>
-            </div>';
-    ?>
-</div>
+<section class="home-curated-section">
+    <div class="shop-results-head home-curated-section__head">
+        <div>
+            <h2 class="shop-results-head__title">Boutiques</h2>
+        </div>
+    </div>
+
+    <div class="public-store-grid public-store-grid--home">
+        <?php
+            foreach($visibleStores as $store)
+            {
+                echo ohnous_render_public_store_card($store, true);
+            }
+
+            echo ohnous_render_public_store_card([], true, true);
+        ?>
+    </div>
+</section>
+
+<section class="home-curated-section">
+    <div class="shop-results-head home-curated-section__head">
+        <div>
+            <p class="shop-results-head__eyebrow">Nouveautés</p>
+            <h2 class="shop-results-head__title">Les derniers articles</h2>
+        </div>
+    </div>
+
+    <div class="container_affiche_produit home-products-grid">
+        <?php
+            $homeArticles = array_slice($visibleArticles, 0, 7);
+            foreach($homeArticles as $data)
+            {
+                affiche_produit($data);
+            }
+        ?>
+        <div class="div_affiche_produit div_affiche_produit--cta">
+            <article class="public-store-card public-store-card--cta public-store-card--articles">
+                <div class="public-store-card__orb"></div>
+                <div class="public-store-card__content">
+                    <span class="public-store-card__eyebrow">Catalogue complet</span>
+                    <h3>Voir plus d’articles</h3>
+                    <a href="/shop?order=date_desc" class="btn_voir_plus" role="button">Voir plus <i class="fa-solid fa-arrow-right-long"></i></a>
+                </div>
+            </article>
+        </div>
+    </div>
+</section>

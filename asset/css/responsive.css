@@ -127,18 +127,38 @@
     }
     .div_affiche_produit
     {
-        width: 100%;
-        padding: 10px;
+        width: 50%;
+        padding: 6px;
     }
     .vue_article
     .div_affiche_produit
     {
-        width: 100%;
+        width: 50%;
     }
     .div_img_affiche_produit
     {
-        height: 450px;
-        }
+        height: 240px;
+    }
+    .public-store-grid
+    {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+    .public-store-card__visual
+    {
+        min-height: 128px;
+        padding: 18px 18px 0;
+    }
+    .public-store-card__avatar
+    {
+        width: 82px;
+        height: 82px;
+        border-radius: 24px;
+    }
+    .public-store-card__content
+    {
+        padding: 18px;
+    }
     .container_affiche_produit.vue_article
     {
         width: 100%;
@@ -325,6 +345,11 @@
         border-radius: 24px;
     }
 
+    .store-directory-shell{
+        padding: 18px 14px;
+        border-radius: 24px;
+    }
+
     .shop-reset-button{
         width: 100%;
         justify-content: center;
@@ -362,7 +387,7 @@
     }
 
     .checkout-main{
-        padding: 20px;
+        padding: 16px;
         border-radius: 24px;
     }
 
@@ -393,6 +418,21 @@
     .checkout-form__row,
     .admin-account-grid{
         grid-template-columns: 1fr;
+    }
+
+    .checkout-summary{
+        padding: 16px;
+    }
+
+    .checkout-payment-method{
+        padding: 14px;
+        border-radius: 18px;
+    }
+
+    .checkout-order-item,
+    .checkout-order-item.compact{
+        padding: 12px;
+        border-radius: 18px;
     }
 
     .articles-toolbar{

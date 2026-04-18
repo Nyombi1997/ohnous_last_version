@@ -1,5 +1,47 @@
 # Checkout, FreshPay, filtres, formulaires et multi-admin
 
+## Correctifs FreshPay production du 18 avril 2026
+
+- Mode FreshPay par défaut passé en `production`.
+- Endpoint d’initiation et de vérification aligné sur `https://paydrc.gofreshbakery.net/api/v5/`.
+- Requêtes FreshPay envoyées en `json`.
+- Action d’initiation corrigée en `debit`.
+- Action de vérification corrigée en `verify`.
+- Le statut réel du paiement repose désormais sur `Trans_Status`, pas sur `Status`.
+- Callback durci avec lecture JSON, signature `X-Signature`, HMAC SHA-256 et déchiffrement configurable.
+- Méthodes Mobile Money alignées côté config et checkout : `airtel`, `orange`, `mpesa`, `afrimoney`.
+- Visa laissé désactivé avec commentaire `TODO FreshPay`.
+
+## Variables FreshPay production
+
+```env
+FRESHPAY_MODE=production
+FRESHPAY_MERCHANT_ID=jV]M|@2gr{b+G])6b
+FRESHPAY_MERCHANT_SECRET=jz5epFB9Z2xfr!nNJb
+FRESHPAY_SECRET_KEY4=4357975872d4498e
+FRESHPAY_HMAC_KEY4=2f76bc4319f04357
+FRESHPAY_PROD_INITIATE_URL=https://paydrc.gofreshbakery.net/api/v5/
+FRESHPAY_PROD_STATUS_URL=https://paydrc.gofreshbakery.net/api/v5/
+FRESHPAY_REQUEST_FORMAT=json
+FRESHPAY_HTTP_TIMEOUT=20
+FRESHPAY_HTTP_CONNECT_TIMEOUT=10
+FRESHPAY_CALLBACK_DECRYPT_MODE=aes
+FRESHPAY_CALLBACK_DECRYPT_CIPHER=AES-128-CBC
+FRESHPAY_CALLBACK_URL=https://ohnous.store/payments/freshpay/callback
+FRESHPAY_METHOD_AIRTEL=airtel
+FRESHPAY_METHOD_ORANGE=orange
+FRESHPAY_METHOD_MPESA=mpesa
+FRESHPAY_METHOD_AFRIMONEY=afrimoney
+```
+
+## À compléter manuellement pour la production
+
+- Configurer réellement `FRESHPAY_CALLBACK_URL` sur l’URL publique qui reçoit le callback.
+- Vérifier que l’URL exposée côté FreshPay pointe bien vers la route MVC active `/paiement-callback-freshpay` ou ajouter la redirection serveur nécessaire.
+- Whitelister les IP callback FreshPay si l’environnement serveur le permet.
+- Confirmer avec FreshPay si `afrimoney` ou `africell` est la valeur finale attendue en production.
+- Confirmer avec FreshPay si le callback de production doit rester en `AES-128-CBC` ou passer en `AES-256-CBC`.
+
 ## Ce qui a été intégré
 
 - Loader visuel pendant le chargement des articles dans l’espace shop.
@@ -77,6 +119,81 @@ FRESHPAY_CALLBACK_DECRYPT_MODE=plain_json
 FRESHPAY_ENABLE_VISA=0
 FRESHPAY_VISA_SHARED_ENDPOINT=1
 ```
+
+## Ou creer ces variables
+
+Ce projet ne charge pas automatiquement un fichier `.env`.
+`config/payment.php` utilise directement `getenv(...)`.
+
+Concretement, pour que le systeme fonctionne, il faut definir ces variables dans l'environnement PHP du serveur qui execute le site.
+
+Cas les plus frequents :
+
+- hebergement Apache mutualise : dans `.htaccess` avec `SetEnv`
+- serveur Apache/VPS : dans le VirtualHost Apache
+- panel d'hebergement : dans la zone `Environment Variables` si ton hebergeur la propose
+
+Exemple dans `.htaccess` :
+
+```apache
+SetEnv FRESHPAY_MODE test
+SetEnv FRESHPAY_SECRET_KEY4 4357975872d4498e
+SetEnv FRESHPAY_HMAC_KEY4 2f76bc4319f04357
+SetEnv FRESHPAY_MERCHANT_ID your_merchant_id
+SetEnv FRESHPAY_MERCHANT_SECRET your_merchant_secret
+
+SetEnv FRESHPAY_TEST_INITIATE_URL https://sandbox.example.com/initiate
+SetEnv FRESHPAY_TEST_STATUS_URL https://sandbox.example.com/status
+SetEnv FRESHPAY_PROD_INITIATE_URL https://api.example.com/initiate
+SetEnv FRESHPAY_PROD_STATUS_URL https://api.example.com/status
+
+SetEnv FRESHPAY_METHOD_MOBILE_MONEY mobile_money
+SetEnv FRESHPAY_METHOD_VISA visa
+
+SetEnv FRESHPAY_HTTP_TIMEOUT 20
+SetEnv FRESHPAY_HTTP_CONNECT_TIMEOUT 10
+SetEnv FRESHPAY_REQUEST_FORMAT form
+
+SetEnv FRESHPAY_CALLBACK_SIGNATURE_FIELD signature
+SetEnv FRESHPAY_CALLBACK_ENCRYPTED_FIELD data
+SetEnv FRESHPAY_CALLBACK_STATUS_FIELD Status
+SetEnv FRESHPAY_CALLBACK_TRANS_STATUS_FIELD Trans_Status
+SetEnv FRESHPAY_CALLBACK_DESCRIPTION_FIELD Trans_Status_Description
+SetEnv FRESHPAY_CALLBACK_TRANSACTION_ID_FIELD TransactionId
+SetEnv FRESHPAY_CALLBACK_FINANCIAL_INSTITUTION_ID_FIELD FinancialInstitutionId
+SetEnv FRESHPAY_CALLBACK_DECRYPT_MODE plain_json
+
+SetEnv FRESHPAY_ENABLE_VISA 0
+SetEnv FRESHPAY_VISA_SHARED_ENDPOINT 1
+```
+
+Exemple dans la configuration Apache du site :
+
+```apache
+<VirtualHost *:80>
+    ServerName ohnous.store
+    DocumentRoot /var/www/ohnous
+
+    SetEnv FRESHPAY_MODE test
+    SetEnv FRESHPAY_SECRET_KEY4 4357975872d4498e
+    SetEnv FRESHPAY_HMAC_KEY4 2f76bc4319f04357
+    SetEnv FRESHPAY_MERCHANT_ID your_merchant_id
+    SetEnv FRESHPAY_MERCHANT_SECRET your_merchant_secret
+</VirtualHost>
+```
+
+Si tu developpes en local sous Windows :
+
+1. N'ecris pas seulement un fichier `.env`, car il ne sera pas lu tout seul.
+2. Definis les variables dans Apache, dans ton terminal avant de lancer PHP, ou ajoute ensuite un vrai chargeur `.env` au projet.
+
+Verification rapide :
+
+```php
+var_dump(getenv('FRESHPAY_MODE'));
+```
+
+Si cette ligne retourne `false` ou une chaine vide, PHP ne voit pas encore ta variable d'environnement.
 
 ## Important sur FreshPay
 

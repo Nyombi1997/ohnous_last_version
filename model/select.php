@@ -595,6 +595,7 @@
             $orderBy = "RAND()";
         } elseif ($order) {
             $allowed = [
+                'date_desc' => 'a.date_ajout DESC, a.id DESC',
                 'prix_asc'  => 'a.prix ASC',
                 'prix_desc' => 'a.prix DESC',
                 'nom'       => 'a.nom ASC'

@@ -2,15 +2,11 @@
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
-    /* si boutique */
+
     if(isset($GLOBALS['boutique']))
     {
         $boutique = $GLOBALS['boutique'];
-        /* si il n'y a pas encore de session */
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-        $boutique = select_bdd($bdd, "boutiques", $where = 'id = "'.$boutique['id'].'"', $limit = null, $offset = 0, $order = null, $random = false);
+        $boutique = select_bdd($bdd, "boutiques", 'id = "'.$boutique['id'].'"', null, 0, null, false);
         if(count($boutique)>0){
             $boutique = $boutique[0];
             $backgrounds = "";
@@ -38,14 +34,13 @@
         }
         else
         {
-            // Rediriger vers une page d'erreur ou afficher un message
             header("Location:/404");
             exit();            
         }
     }
     else if(isset($_SESSION['store_ohnous_987654321']))
     {
-        $boutique = select_bdd($bdd, "boutiques", $where = 'unique_id = "'.$_SESSION['store_ohnous_987654321'].'"', $limit = null, $offset = 0, $order = null, $random = false);
+        $boutique = select_bdd($bdd, "boutiques", 'unique_id = "'.$_SESSION['store_ohnous_987654321'].'"', null, 0, null, false);
         if(count($boutique)!=0)
         {
             $boutique = $boutique[0];
@@ -70,8 +65,8 @@
                                 class="blur-up"
                             />';
             }
-            /* verifier si l'utilisateur a déjà reçu l'email de bienvenue */
-            $verif_welcome_email = select_bdd($bdd, "bienvenue_email", $where = 'client_unique_id = "'.$boutique['unique_id'].'"', $limit = null, $offset = 0, $order = null, $random = false);
+
+            $verif_welcome_email = select_bdd($bdd, "bienvenue_email", 'client_unique_id = "'.$boutique['unique_id'].'"', null, 0, null, false);
             if(count($verif_welcome_email)==0)
             {
                 welcome($email = $boutique['adresse_email']);
@@ -83,14 +78,12 @@
         }
         else
         {
-            // Rediriger vers une page d'erreur ou afficher un message
             header("Location:/404");
             exit();
         }
     }
     else
     {
-        // Rediriger vers une page d'erreur ou afficher un message
         header("Location:/404");
         exit();
     }
@@ -108,79 +101,70 @@
     }
 
     $storeSocials = $isActiveStore ? ohnous_get_store_social_links($boutique) : [];
+    $storeQuery = trim((string)($_GET['query'] ?? ''));
 ?>
 <script>
     let home_page = true;
+    window.storeArticlesConfig = {
+        storeId: <?= (int)$boutique['id'] ?>,
+        query: <?= json_encode($storeQuery, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>
+    };
 </script>
 
-
-<!-- baniere -->
 <div class="banniere_boutique">
-    <!-- container profile -->
     <div class="container_profile_boutique">
         <div class="background_baniere_boutique" <?= $backgrounds; ?>></div>
 
-        <!-- logout -->
         <?php
             if(isset($_SESSION['store_ohnous_987654321']))
             {
-                echo '<a href="/deconnexion" class="deconnexion_boutique">Deconnexion</a>';
+                echo '<a href="/deconnexion" class="deconnexion_boutique">Déconnexion</a>';
             }
         ?>
 
-        <!-- profile -->
         <div class="div_profile_boutique">
             <div class="profile_boutique">
                 <?= $profile; ?>
             </div>
-        </div>  
+        </div>
 
-        <!-- div nom -->
         <div class="div_nom_boutique">
-            <h1 class="nom_boutique"><?= $boutique['nom'] ?></h1>
+            <h1 class="nom_boutique"><?= htmlspecialchars($boutique['nom'], ENT_QUOTES, 'UTF-8') ?></h1>
         </div>
 
         <div class="store-status-pill <?= $isActiveStore ? 'is-active' : 'is-pending' ?>">
             <?= $isActiveStore ? 'Boutique active' : 'Boutique en attente d’activation' ?>
         </div>
 
-        <!-- description boutique -->
         <div class="div_description_boutique">
             <p class="div_description_boutique">
-                <?= $boutique['description'] ?>
+                <?= nl2br(htmlspecialchars((string)$boutique['description'], ENT_QUOTES, 'UTF-8')) ?>
             </p>
         </div>
 
-        <!-- bouton editer laisser une message et social media -->
         <div class="container_message_edit_social_media_boutique">
             <div class="div_edit_message_boutique">
                 <?php
                     if($isOwner)
                     {
-                        echo '
-                        <a href="/editer-boutique" class="editer_boutique message">Editer</a>';
+                        echo '<a href="/editer-boutique" class="editer_boutique message">Éditer</a>';
                     }
-                ?>
-                <?php
+
                     if($isOwner && !$isActiveStore)
                     {
-                        echo '
-                        <a href="/activer-boutique" class="editer_boutique message">Activer boutique <i class="fa-solid fa-triangle-exclamation"></i></a>';
+                        echo '<a href="/activer-boutique" class="editer_boutique message">Activer boutique <i class="fa-solid fa-triangle-exclamation"></i></a>';
                     }
-                ?>
-                <?php
+
                     if($isOwner && $isActiveStore)
                     {
                         echo '<a href="/ajouter-articles" class="editer_boutique message">Ajouter un article</a>';
                     }
-                ?>
-                <?php
+
                     if($currentAccount['connected'])
                     {
                         echo '<a href="/articles-aimes" class="editer_boutique message">Articles aimés</a>';
                     }
-                ?>
-                <?php
+
                     $messageLink = '/connexion';
                     if($isOwner)
                     {
@@ -195,8 +179,7 @@
                     if($isOwner)
                     {
                         $messages = gestion_9_plus(ohnous_get_unread_messages_count($currentAccount));
-                        echo '
-                        <span>'.$messages.'</span>';
+                        echo '<span>'.$messages.'</span>';
                     }
                 ?></a>
             </div>
@@ -204,37 +187,32 @@
                 <?php
                     foreach($storeSocials as $social)
                     {
-                        echo '
-                        <a href="'.htmlspecialchars($social['url'], ENT_QUOTES, 'UTF-8').'" target="_blank" rel="noopener"><i class="fa-brands '.$social['icon'].'"></i></a>';
+                        echo '<a href="'.htmlspecialchars($social['url'], ENT_QUOTES, 'UTF-8').'" target="_blank" rel="noopener"><i class="fa-brands '.$social['icon'].'"></i></a>';
                     }
-                ?>                
+                ?>
             </div>
         </div>
 
-        <!-- div categories -->
         <div class="parent_div_section_categorie">
-            <!-- Swiper -->
             <div class="swiper section_categorie">
                 <div class="swiper-wrapper">
                     <?php
-                        /* afficher les categories */
                         $categories = $isActiveStore ? categorieBoutique($boutique['id']) : [];
                         $category_ids = array();
                         foreach ($categories as $category) {
-                            $detail_category = only_select("categorie", $where = "id = '".$category['id']."'", $order = null, $limit = null);
-                            $category = only_select("categorie_article", $where = "categorie = '".$category['id']."'", $order = null, $limit = null);
-                            $detail_article = select_bdd($bdd, "image_articles", $where = "article = '".$category['article']."'", $limit = null, $offset = 0, $order = null, $random = true);
+                            $detail_category = only_select("categorie", "id = '".$category['id']."'", null, null);
+                            $category = only_select("categorie_article", "categorie = '".$category['id']."'", null, null);
+                            $detail_article = select_bdd($bdd, "image_articles", "article = '".$category['article']."'", null, 0, null, true);
                             if(empty($detail_article))
                             {
                                 continue;
                             }
                             $liquid_image = ohnous_prepare_liquid_image($detail_article[0]['img'], '(max-width: 768px) 35vw, 180px');
                             if(in_array($detail_category['id'], $category_ids)) {
-                                continue; // Passer à l'itération suivante si l'ID de catégorie a déjà été traité
+                                continue;
                             }
                             echo '
-                                <!-- details -->
-                                <a href="categorie/'.$detail_category['slug'].'" class="swiper-slide">
+                                <a href="/shop?categorie='.rawurlencode((string)$detail_category['slug']).'&query='.rawurlencode((string)$boutique['nom']).'" class="swiper-slide">
                                     <div class="section_categorie_nom">
                                         <p>'.$detail_category['nom'].'</p>
                                     </div>
@@ -273,34 +251,37 @@
     </div>
 </div>
 
+<section class="store-directory-shell liquid-panel store-articles-shell" id="store_articles_page">
+    <div class="shop-results-head">
+        <div>
+            <p class="shop-results-head__eyebrow">Boutique</p>
+            <h2 class="shop-results-head__title"><?= $storeQuery !== '' ? 'Résultats pour “'.htmlspecialchars($storeQuery, ENT_QUOTES, 'UTF-8').'”' : 'Articles de la boutique' ?></h2>
+        </div>
+    </div>
 
-<!-- afficher les articles -->
-<div class="container_affiche_produit" id="afficher_article">
-    <?php
-        if(!$isActiveStore)
-        {
-            echo '<div class="empty-liquid-state"><div class="empty-liquid-state__icon"><i class="fa-solid fa-store-slash"></i></div><p>Cette boutique n’est pas encore visible sur le site. Dès l’activation, ses articles apparaîtront ici.</p></div>';
-        }
-        /* si c'est une recherche */
-        else if(isset($_GET['query']))
-        {
-            $query =  found($_GET['query'], $limit = null, 0, $order = null, $random = false);
-            $donnee = ohnous_filter_visible_articles(getArticlesFromSearch($query, $limit = 24, 0, $order = null, $random = false));
-            foreach($donnee as $data)
-            {
-                if((int)$data['boutique'] === (int)$boutique['id'])
-                {
-                    affiche_produit($data);
-                }
-            }
-        }
-        else
-        {
-            $donnee = ohnous_filter_visible_articles(select_bdd($bdd, "articles", $where = "boutique = '".$boutique['id']."'", $limit = null, $offset = 0, $order = null, $random = true));
-            foreach($donnee as $data)
-            {
-                affiche_produit($data);
-            }
-        }
-    ?>
-</div>
+    <?php if(!$isActiveStore): ?>
+        <div class="empty-liquid-state">
+            <div class="empty-liquid-state__icon"><i class="fa-solid fa-store-slash"></i></div>
+            <p>Cette boutique n’est pas encore visible sur le site. Dès l’activation, ses articles apparaîtront ici.</p>
+        </div>
+    <?php else: ?>
+        <div class="shop-loading-state" id="store_articles_loader">
+            <span class="shop-loading-state__bubble"></span>
+            <span class="shop-loading-state__bubble"></span>
+            <span class="shop-loading-state__bubble"></span>
+        </div>
+
+        <div class="shop-empty-state null" id="store_articles_empty">
+            <div class="empty-liquid-state">
+                <div class="empty-liquid-state__icon"><i class="fa-solid fa-box-open"></i></div>
+                <p>Aucun article n’est disponible pour cette boutique.</p>
+            </div>
+        </div>
+
+        <div class="container_affiche_produit vue_article" id="store_articles_results"></div>
+    <?php endif; ?>
+</section>
+
+<?php if($isActiveStore): ?>
+    <script src="/asset/js/boutique_articles.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/boutique_articles.js") ?>" defer></script>
+<?php endif; ?>

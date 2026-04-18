@@ -53,6 +53,12 @@
             $myView->render('Ohnous | BOUTIQUE OHNOUS !');
         }
 
+        public function showStores ()
+        {
+            $myView = new View('boutiques');
+            $myView->render('Ohnous | BOUTIQUES');
+        }
+
         public function showLogout ()
         {
             $myView = new View('logout');

@@ -27,6 +27,7 @@
                             "editer-profile-utilisateur" => ["controller" => 'Home', "method" => 'showEditUserProfile'],
 
                             "boutique" => ["controller" => 'Home', "method" => 'showStore'],
+                            "boutiques" => ["controller" => 'Home', "method" => 'showStores'],
                             "editer-boutique" => ["controller" => 'Home', "method" => 'showEditStore'],
                             "editer-profile-boutique" => ["controller" => 'Home', "method" => 'showEditStoreProfile'],
                             "activer-boutique" => ["controller" => 'Home', "method" => 'showActiveStore'],
@@ -48,6 +49,7 @@
                             "admin-acces" => ["controller" => 'AdminController', "method" => 'consumeAccessToken'],
                             "paiement-demarrer" => ["controller" => 'PaymentController', "method" => 'startPayment'],
                             "paiement-callback-freshpay" => ["controller" => 'PaymentController', "method" => 'handleFreshPayCallback'],
+                            "payments/freshpay/callback" => ["controller" => 'PaymentController', "method" => 'handleFreshPayCallback'],
                             "paiement-verifier" => ["controller" => 'PaymentController', "method" => 'verifyPaymentStatus'],
                             "paiement-retour" => ["controller" => 'PaymentController', "method" => 'showReturnPage'],
 

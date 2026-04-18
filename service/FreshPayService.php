@@ -38,7 +38,7 @@ class FreshPayService
         $email = trim((string)($request['email'] ?? ''));
         $zoneId = (int)($request['zone_id'] ?? 0);
         $paymentMethod = trim((string)($request['payment_method'] ?? 'mobile_money'));
-        $paymentOperator = trim((string)($request['payment_operator'] ?? ''));
+        $paymentOperator = strtolower(trim((string)($request['payment_operator'] ?? '')));
         $customerNumber = trim((string)($request['customer_number'] ?? $telephone));
         $firstname = trim((string)($request['firstname'] ?? 'Client'));
         $lastname = trim((string)($request['lastname'] ?? 'OhNous'));
@@ -64,6 +64,10 @@ class FreshPayService
             return ['result' => 'error', 'msg' => "Veuillez saisir le numéro Mobile Money du client."];
         }
 
+        if ($paymentMethod === 'mobile_money' && !$this->isSupportedMobileMoneyOperator($paymentOperator)) {
+            return ['result' => 'error', 'msg' => "Veuillez sélectionner un opérateur Mobile Money pris en charge."];
+        }
+
         $account = ohnous_get_current_account();
         $totals = $this->amountService->resolveCheckoutTotals($context['items'], $zoneId);
         $fingerprint = sha1(json_encode([
@@ -73,6 +77,7 @@ class FreshPayService
             'email' => $email,
             'zone_id' => $zoneId,
             'payment_method' => $paymentMethod,
+            'payment_operator' => $paymentOperator,
             'customer_number' => $customerNumber,
             'total' => $totals['total'],
         ], JSON_UNESCAPED_UNICODE));
@@ -121,19 +126,15 @@ class FreshPayService
             'merchant_secrete' => (string)$this->config['freshpay']['merchant_secret'],
             'amount' => number_format((float)$totals['total'], 2, '.', ''),
             'currency' => $totals['currency'],
-            'action' => 'payment',
+            'action' => 'debit',
             'customer_number' => $customerNumber,
             'firstname' => $firstname,
             'lastname' => $lastname,
             'e-mail' => $email,
             'reference' => $reference,
-            'method' => $this->resolveFreshPayMethod($paymentMethod),
-            'callback_url' => rtrim(HOST, '/') . '/paiement-callback-freshpay',
+            'method' => $this->resolveFreshPayMethod($paymentMethod, $paymentOperator),
+            'callback_url' => $this->resolveCallbackUrl(),
         ];
-
-        if ($paymentOperator !== '') {
-            $requestPayload['operator'] = $paymentOperator;
-        }
 
         $transactionId = $this->transactionModel->create([
             'order_id' => (int)$order['order_id'],
@@ -150,14 +151,14 @@ class FreshPayService
             'callback_payload' => null,
             'status' => 'initiated',
             'trans_status' => 'pending',
-            'trans_status_description' => 'Paiement initié côté OhNous, en attente de la réponse FreshPay.',
+            'trans_status_description' => 'Paiement initié côté OhNous, en attente de la confirmation FreshPay.',
         ]);
 
         if ($paymentMethod === 'visa') {
             $this->transactionModel->updateById($transactionId, [
                 'status' => 'todo',
                 'trans_status' => 'todo',
-                'trans_status_description' => 'TODO Visa : compléter les paramètres FreshPay Visa dès que le flux officiel est confirmé.',
+                'trans_status_description' => 'TODO FreshPay : compléter les paramètres FreshPay Visa dès que le flux officiel est confirmé.',
             ]);
 
             return [
@@ -168,7 +169,10 @@ class FreshPayService
         }
 
         $remoteResponse = $this->sendApiRequest('initiate', $requestPayload);
-        $normalized = $this->normalizeGatewayResponse($remoteResponse);
+        $normalized = $this->normalizeGatewayResponse($remoteResponse, [
+            'source' => 'initiate',
+            'default_description' => 'Demande de paiement reçue par FreshPay. Confirmation finale en attente.',
+        ]);
         $this->clearCheckoutSource($context['mode']);
 
         $this->transactionModel->updateById($transactionId, [
@@ -190,6 +194,7 @@ class FreshPayService
             'reference' => $reference,
             'order_number' => $order['order_number'],
             'payment_status' => $normalized['trans_status'],
+            'transaction_id' => $normalized['transaction_id'],
             'redirect' => '/paiement-retour?reference=' . rawurlencode($reference),
         ];
     }
@@ -198,7 +203,24 @@ class FreshPayService
     {
         $rawBody = file_get_contents('php://input');
         $decoded = json_decode($rawBody, true);
-        $payload = is_array($decoded) ? $decoded : $_POST;
+
+        if (!is_array($decoded)) {
+            http_response_code(400);
+            return [
+                'result' => 'error',
+                'msg' => 'Le callback FreshPay doit être envoyé en JSON.'
+            ];
+        }
+
+        $payload = $decoded;
+        $signature = $this->extractProvidedCallbackSignature($payload);
+        if ($signature === '') {
+            http_response_code(400);
+            return [
+                'result' => 'error',
+                'msg' => 'Signature callback absente.'
+            ];
+        }
 
         if (!$this->isValidCallbackSignature($rawBody, $payload)) {
             http_response_code(401);
@@ -208,9 +230,17 @@ class FreshPayService
             ];
         }
 
-        $data = $this->extractCallbackData($payload);
-        $reference = trim((string)($data['reference'] ?? $payload['reference'] ?? ''));
+        try {
+            $data = $this->extractCallbackData($payload);
+        } catch (RuntimeException $e) {
+            http_response_code(400);
+            return [
+                'result' => 'error',
+                'msg' => $e->getMessage(),
+            ];
+        }
 
+        $reference = trim((string)($data['Reference'] ?? $data['reference'] ?? $payload['reference'] ?? ''));
         if ($reference === '') {
             http_response_code(422);
             return [
@@ -228,7 +258,9 @@ class FreshPayService
             ];
         }
 
-        $normalized = $this->normalizeGatewayResponse($data);
+        $normalized = $this->normalizeGatewayResponse($data, [
+            'source' => 'callback',
+        ]);
         $this->transactionModel->updateById((int)$transaction['id'], [
             'status' => $normalized['status'],
             'trans_status' => $normalized['trans_status'],
@@ -243,11 +275,13 @@ class FreshPayService
             'statut' => $normalized['order_status'],
         ], "id = '" . (int)$transaction['order_id'] . "'");
 
+        http_response_code(200);
         return [
             'result' => 'ok',
             'msg' => 'Callback FreshPay traité.',
             'reference' => $reference,
             'trans_status' => $normalized['trans_status'],
+            'data' => $data,
         ];
     }
 
@@ -264,13 +298,17 @@ class FreshPayService
         }
 
         $requestPayload = [
-            'reference' => $reference,
             'merchant_id' => (string)$this->config['freshpay']['merchant_id'],
             'merchant_secrete' => (string)$this->config['freshpay']['merchant_secret'],
+            'action' => 'verify',
+            'reference' => $reference,
         ];
 
         $remoteResponse = $this->sendApiRequest('status', $requestPayload);
-        $normalized = $this->normalizeGatewayResponse($remoteResponse);
+        $normalized = $this->normalizeGatewayResponse($remoteResponse, [
+            'source' => 'verify',
+            'default_description' => 'Statut récupéré depuis FreshPay.',
+        ]);
 
         $this->transactionModel->updateById((int)$transaction['id'], [
             'status' => $normalized['status'],
@@ -346,10 +384,31 @@ class FreshPayService
         return 'FP-' . date('YmdHis') . '-' . (int)$orderId . '-' . strtoupper(substr(bin2hex(random_bytes(3)), 0, 6));
     }
 
-    private function resolveFreshPayMethod($paymentMethod)
+    private function resolveFreshPayMethod($paymentMethod, $paymentOperator = '')
     {
         $map = $this->config['freshpay']['method_map'];
+
+        if ($paymentMethod === 'mobile_money') {
+            $operatorKey = strtolower(trim((string)$paymentOperator));
+            return $map[$operatorKey] ?? $operatorKey;
+        }
+
         return $map[$paymentMethod] ?? $paymentMethod;
+    }
+
+    private function isSupportedMobileMoneyOperator($paymentOperator)
+    {
+        return in_array((string)$paymentOperator, ['airtel', 'orange', 'mpesa', 'afrimoney'], true);
+    }
+
+    private function resolveCallbackUrl()
+    {
+        $callbackUrl = trim((string)($this->config['freshpay']['callback_url'] ?? ''));
+        if ($callbackUrl !== '') {
+            return $callbackUrl;
+        }
+
+        return rtrim(HOST, '/') . '/paiement-callback-freshpay';
     }
 
     private function sendApiRequest($type, array $payload)
@@ -409,17 +468,29 @@ class FreshPayService
         ];
     }
 
-    private function normalizeGatewayResponse(array $response)
+    private function normalizeGatewayResponse(array $response, array $options = [])
     {
         $callbackConfig = $this->config['freshpay']['callback'];
-        $status = strtolower((string)($response[$callbackConfig['status_field']] ?? $response['status'] ?? 'submitted'));
-        $transStatus = strtolower((string)($response[$callbackConfig['trans_status_field']] ?? $response['trans_status'] ?? $status));
-        $description = trim((string)($response[$callbackConfig['description_field']] ?? $response['message'] ?? 'Paiement en attente de confirmation.'));
-        $transactionId = trim((string)($response[$callbackConfig['transaction_id_field']] ?? $response['transaction_id'] ?? ''));
+        $source = $options['source'] ?? 'generic';
+
+        $status = strtolower(trim((string)($response[$callbackConfig['status_field']] ?? $response['status'] ?? 'submitted')));
+        $transStatusRaw = trim((string)($response[$callbackConfig['trans_status_field']] ?? $response['trans_status'] ?? ''));
+        $description = trim((string)($response[$callbackConfig['description_field']] ?? $response['message'] ?? $response['Comment'] ?? ($options['default_description'] ?? 'Paiement en attente de confirmation.')));
+        $transactionId = trim((string)($response[$callbackConfig['transaction_id_field']] ?? $response['transaction_id'] ?? $response['PayDRC_Reference'] ?? ''));
         $financialInstitutionId = trim((string)($response[$callbackConfig['financial_institution_id_field']] ?? $response['financial_institution_id'] ?? ''));
+
+        $transStatus = strtolower($transStatusRaw);
+        if ($transStatus === '') {
+            $transStatus = 'pending';
+        }
 
         $isSuccess = in_array($transStatus, ['success', 'successful', 'paid', 'completed'], true);
         $isFailed = in_array($transStatus, ['failed', 'cancelled', 'canceled', 'rejected', 'error'], true);
+        $statusAcknowledged = in_array($status, ['success', 'submitted', 'accepted'], true);
+
+        if (!$isSuccess && !$isFailed && $source === 'initiate' && $statusAcknowledged) {
+            $transStatus = 'pending';
+        }
 
         return [
             'result' => $isFailed ? 'error' : 'ok',
@@ -428,10 +499,10 @@ class FreshPayService
             'description' => $description !== '' ? $description : 'Paiement en attente de confirmation.',
             'transaction_id' => $transactionId !== '' ? $transactionId : null,
             'financial_institution_id' => $financialInstitutionId !== '' ? $financialInstitutionId : null,
-            'order_status' => $isSuccess ? 'payée' : ($isFailed ? 'paiement_échoué' : 'paiement_en_attente'),
+            'order_status' => $isSuccess ? 'payée' : ($isFailed ? 'échouée' : 'paiement_en_attente'),
             'frontend_message' => $isSuccess
-                ? 'Paiement confirmé.'
-                : ($isFailed ? 'Le paiement a échoué.' : 'Paiement en cours de confirmation.'),
+                ? '✅ Paiement réussi'
+                : ($isFailed ? '❌ Paiement refusé' : 'Paiement en cours de confirmation.'),
         ];
     }
 
@@ -442,31 +513,20 @@ class FreshPayService
             return true;
         }
 
-        $provided = '';
-        foreach ($this->config['freshpay']['callback']['signature_headers'] as $serverKey) {
-            if (!empty($_SERVER[$serverKey])) {
-                $provided = trim((string)$_SERVER[$serverKey]);
-                break;
-            }
-        }
-
-        if ($provided === '') {
-            $field = $this->config['freshpay']['callback']['signature_field'];
-            $provided = trim((string)($payload[$field] ?? ''));
-        }
-
+        $provided = $this->extractProvidedCallbackSignature($payload);
         if ($provided === '') {
             return false;
         }
 
-        $computed = hash_hmac('sha256', (string)$rawBody, $hmacKey);
+        $signedMessage = $this->extractSignedCallbackMessage($rawBody, $payload);
+        $computed = hash_hmac('sha256', $signedMessage, $hmacKey);
         return hash_equals($computed, $provided);
     }
 
     private function extractCallbackData(array $payload)
     {
         $field = $this->config['freshpay']['callback']['encrypted_field'];
-        $mode = $this->config['freshpay']['callback']['decrypt_mode'];
+        $mode = strtolower(trim((string)$this->config['freshpay']['callback']['decrypt_mode']));
 
         if ($mode === 'plain_json') {
             if (isset($payload[$field]) && is_array($payload[$field])) {
@@ -483,8 +543,120 @@ class FreshPayService
             return $payload;
         }
 
-        // TODO FreshPay : compléter ici le déchiffrement exact dès validation du mode réel documenté.
-        return $payload;
+        if (!isset($payload[$field]) || !is_string($payload[$field]) || trim($payload[$field]) === '') {
+            throw new RuntimeException('Le body callback ne contient pas le champ chiffré attendu.');
+        }
+
+        if ($mode !== 'aes') {
+            throw new RuntimeException('Mode de déchiffrement FreshPay non pris en charge.');
+        }
+
+        $encryptedData = trim($payload[$field]);
+        $decodedData = base64_decode($encryptedData, true);
+        if ($decodedData === false) {
+            throw new RuntimeException('Le body callback FreshPay n’est pas un payload Base64 valide.');
+        }
+
+        $cipher = trim((string)$this->config['freshpay']['callback']['decrypt_cipher']);
+        if ($cipher === '') {
+            throw new RuntimeException('Cipher FreshPay manquant pour le callback.');
+        }
+
+        $key = $this->resolveCallbackSecretKey($cipher);
+        $iv = $this->resolveCallbackIv($payload, $cipher, $key);
+        $decrypted = openssl_decrypt($decodedData, $cipher, $key, OPENSSL_RAW_DATA, $iv);
+
+        if ($decrypted === false) {
+            throw new RuntimeException('Le déchiffrement du callback FreshPay a échoué.');
+        }
+
+        $decoded = json_decode($decrypted, true);
+        if (!is_array($decoded)) {
+            throw new RuntimeException('Le callback FreshPay déchiffré n’est pas un JSON valide.');
+        }
+
+        return $decoded;
+    }
+
+    private function resolveCallbackSecretKey($cipher)
+    {
+        $secretKey = (string)$this->config['freshpay']['secret_key'];
+        if ($secretKey === '') {
+            throw new RuntimeException('FRESHPAY_SECRET_KEY4 est manquante pour le callback.');
+        }
+
+        $expectedLength = $this->resolveCipherKeyLength($cipher);
+        if ($expectedLength === 0) {
+            // TODO FreshPay : confirmer la longueur exacte de clé si un autre cipher est livré en production.
+            return $secretKey;
+        }
+
+        if (strlen($secretKey) !== $expectedLength) {
+            throw new RuntimeException('La clé de déchiffrement FreshPay ne correspond pas à la longueur attendue pour ' . $cipher . '.');
+        }
+
+        return $secretKey;
+    }
+
+    private function resolveCallbackIv(array $payload, $cipher, $key)
+    {
+        $ivLength = openssl_cipher_iv_length($cipher);
+        if ($ivLength <= 0) {
+            throw new RuntimeException('Longueur IV FreshPay invalide pour le cipher configuré.');
+        }
+
+        $ivField = $this->config['freshpay']['callback']['decrypt_iv_field'];
+        $payloadIv = $payload[$ivField] ?? null;
+        if (is_string($payloadIv) && trim($payloadIv) !== '') {
+            $candidate = trim($payloadIv);
+            $decoded = base64_decode($candidate, true);
+            if ($decoded !== false && strlen($decoded) === $ivLength) {
+                return $decoded;
+            }
+
+            if (strlen($candidate) === $ivLength) {
+                return $candidate;
+            }
+        }
+
+        // TODO FreshPay : la doc publique parle d’AES-256-CBC alors que l’exemple PHP réutilise SECRET_KEY comme IV.
+        return substr($key, 0, $ivLength);
+    }
+
+    private function resolveCipherKeyLength($cipher)
+    {
+        $cipher = strtoupper(trim((string)$cipher));
+        if (strpos($cipher, 'AES-128-') === 0) {
+            return 16;
+        }
+
+        if (strpos($cipher, 'AES-256-') === 0) {
+            return 32;
+        }
+
+        return 0;
+    }
+
+    private function extractProvidedCallbackSignature(array $payload)
+    {
+        foreach ($this->config['freshpay']['callback']['signature_headers'] as $serverKey) {
+            if (!empty($_SERVER[$serverKey])) {
+                return trim((string)$_SERVER[$serverKey]);
+            }
+        }
+
+        $field = $this->config['freshpay']['callback']['signature_field'];
+        return trim((string)($payload[$field] ?? ''));
+    }
+
+    private function extractSignedCallbackMessage($rawBody, array $payload)
+    {
+        $field = $this->config['freshpay']['callback']['encrypted_field'];
+        if (isset($payload[$field]) && is_string($payload[$field]) && trim($payload[$field]) !== '') {
+            return trim($payload[$field]);
+        }
+
+        return (string)$rawBody;
     }
 
     private function maskCustomerNumber($number)

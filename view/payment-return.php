@@ -4,7 +4,7 @@
     $status = strtolower((string)($paymentReturn['status'] ?? 'pending'));
     $isSuccess = in_array($status, ['success', 'successful', 'paid', 'completed'], true);
     $isFailed = in_array($status, ['failed', 'cancelled', 'canceled', 'rejected', 'error'], true);
-    $title = $isSuccess ? 'Paiement confirmé' : ($isFailed ? 'Paiement échoué' : 'Paiement en attente');
+    $title = $isSuccess ? '✅ Paiement réussi' : ($isFailed ? '❌ Paiement refusé' : 'Paiement en attente');
     $description = $payment['trans_status_description'] ?? ($isSuccess
         ? "Votre paiement a bien été confirmé."
         : ($isFailed ? "Le paiement n'a pas pu être confirmé." : "Votre paiement est en cours de confirmation."));
@@ -27,6 +27,12 @@
                     <strong><?= htmlspecialchars((string)($paymentReturn['reference'] ?? ''), ENT_QUOTES, 'UTF-8') ?></strong>
                 </div>
                 <?php if($payment): ?>
+                    <?php if(!empty($payment['freshpay_transaction_id'])): ?>
+                        <div class="checkout-summary__line">
+                            <span>Transaction ID</span>
+                            <strong><?= htmlspecialchars((string)$payment['freshpay_transaction_id'], ENT_QUOTES, 'UTF-8') ?></strong>
+                        </div>
+                    <?php endif; ?>
                     <div class="checkout-summary__line">
                         <span>Montant</span>
                         <strong>$ <?= number_format((float)$payment['amount'], 2, '.', ' ') ?></strong>
@@ -61,8 +67,18 @@
 
             button.setAttribute('disabled', '');
             $.get('/paiement-verifier', { reference: reference }, function (data) {
+                var successStates = ['success', 'successful', 'paid', 'completed'];
+                var failedStates = ['failed', 'rejected', 'error', 'cancelled', 'canceled'];
+                var icon = 'info';
+
+                if (successStates.indexOf(data.trans_status) !== -1) {
+                    icon = 'success';
+                } else if (failedStates.indexOf(data.trans_status) !== -1) {
+                    icon = 'error';
+                }
+
                 Swal.fire({
-                    icon: data.result === 'ok' ? 'success' : 'error',
+                    icon: icon,
                     title: data.msg || 'Vérification terminée.',
                     text: data.trans_status ? ('Statut : ' + data.trans_status) : '',
                     confirmButtonColor: '#6775d6'

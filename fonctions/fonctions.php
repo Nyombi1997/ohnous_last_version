@@ -855,6 +855,186 @@
         return array_slice($articles, 0, (int)$limit);
     }
 
+    function ohnous_get_visible_stores($limit = null, $offset = 0, $order = "date_ajout DESC, id DESC")
+    {
+        global $bdd;
+
+        ohnous_sync_test_store_activation();
+
+        if($limit === null)
+        {
+            $stores = select_bdd($bdd, "boutiques", null, null, 0, $order, false);
+        }
+        else
+        {
+            $poolLimit = max((int)$limit * 6, 30);
+            $stores = select_bdd($bdd, "boutiques", null, $poolLimit, (int)$offset, $order, false);
+        }
+
+        $stores = array_values(array_filter($stores, function($store){
+            return ohnous_is_store_active($store);
+        }));
+
+        if($limit !== null)
+        {
+            return array_slice($stores, 0, (int)$limit);
+        }
+
+        return $stores;
+    }
+
+    function ohnous_get_public_store_description($description, $maxLength = 120)
+    {
+        $description = trim(strip_tags((string)$description));
+        if($description === '')
+        {
+            return 'Découvrez les nouveautés de cette boutique sur OhNous.';
+        }
+
+        if(mb_strlen($description, 'UTF-8') <= $maxLength)
+        {
+            return $description;
+        }
+
+        return rtrim(mb_substr($description, 0, $maxLength - 1, 'UTF-8')).'…';
+    }
+
+    function ohnous_render_public_store_card(array $boutique, $return = false, $isCta = false)
+    {
+        if($isCta)
+        {
+            $html = '
+                <article class="public-store-card public-store-card--cta">
+                    <div class="public-store-card__orb"></div>
+                    <div class="public-store-card__content">
+                        <span class="public-store-card__eyebrow">Explorer</span>
+                        <h3>Toutes les boutiques</h3>
+                        <p>Accédez à l’espace boutiques pour découvrir encore plus d’univers.</p>
+                        <a href="/boutiques" class="btn_voir_plus" role="button">Voir les boutiques <i class="fa-solid fa-arrow-right-long"></i></a>
+                    </div>
+                </article>
+            ';
+
+            if($return)
+            {
+                return $html;
+            }
+
+            echo $html;
+            return;
+        }
+
+        if(!ohnous_is_store_active($boutique))
+        {
+            return '';
+        }
+
+        $profileUrl = ohnous_get_profile_picture($boutique['profile'] ?? '', 'boutique');
+        $profileImage = ohnous_prepare_liquid_image($profileUrl, '(max-width: 768px) 32vw, 180px');
+        $name = htmlspecialchars((string)($boutique['nom'] ?? 'Boutique OhNous'), ENT_QUOTES, 'UTF-8');
+        $description = htmlspecialchars(ohnous_get_public_store_description($boutique['description'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $slug = trim((string)($boutique['slug'] ?? ''));
+        $link = $slug !== '' ? '/boutique/'.$slug : '/boutique';
+
+        $html = '
+            <article class="public-store-card">
+                <a href="'.htmlspecialchars($link, ENT_QUOTES, 'UTF-8').'" class="public-store-card__link">
+                    <div class="public-store-card__visual">
+                        <div class="public-store-card__glow"></div>
+                        <div class="public-store-card__avatar">
+                            <img
+                                class="blur-up js-liquid-image"
+                                src="'.htmlspecialchars($profileImage['placeholder'], ENT_QUOTES, 'UTF-8').'"
+                                data-image-base="'.htmlspecialchars($profileImage['base'], ENT_QUOTES, 'UTF-8').'"
+                                data-image-fallback="'.htmlspecialchars($profileImage['fallback'], ENT_QUOTES, 'UTF-8').'"
+                                data-image-high="'.htmlspecialchars($profileImage['high'], ENT_QUOTES, 'UTF-8').'"
+                                data-image-srcset="'.htmlspecialchars($profileImage['srcset'], ENT_QUOTES, 'UTF-8').'"
+                                data-image-sizes="'.htmlspecialchars($profileImage['sizes'], ENT_QUOTES, 'UTF-8').'"
+                                loading="lazy"
+                                alt="'.$name.'"
+                            >
+                        </div>
+                    </div>
+                    <div class="public-store-card__content">
+                        <span class="public-store-card__eyebrow">Boutique</span>
+                        <h3>'.$name.'</h3>
+                        <p>'.$description.'</p>
+                        <span class="public-store-card__action">Voir la boutique <i class="fa-solid fa-arrow-right-long"></i></span>
+                    </div>
+                </a>
+            </article>
+        ';
+
+        if($return)
+        {
+            return $html;
+        }
+
+        echo $html;
+    }
+
+    function ohnous_article_has_relation($articleId, $table, $column, $valueId)
+    {
+        global $bdd;
+
+        $articleId = (int)$articleId;
+        $valueId = (int)$valueId;
+
+        if($articleId <= 0 || $valueId <= 0)
+        {
+            return false;
+        }
+
+        $stmt = $bdd->prepare("SELECT COUNT(*) FROM {$table} WHERE article = :article AND {$column} = :value");
+        $stmt->bindValue(':article', $articleId, PDO::PARAM_INT);
+        $stmt->bindValue(':value', $valueId, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return ((int)$stmt->fetchColumn()) > 0;
+    }
+
+    function ohnous_match_catalog_filters(array $article, array $filters = [])
+    {
+        $articleId = (int)($article['id'] ?? 0);
+        if($articleId <= 0)
+        {
+            return false;
+        }
+
+        $categoryId = (int)($filters['category'] ?? 0);
+        $typeId = (int)($filters['type'] ?? 0);
+        $tailleId = (int)($filters['taille'] ?? 0);
+        $boutiqueId = (int)($filters['boutique'] ?? 0);
+        $priceFilter = trim((string)($filters['prix'] ?? ''));
+
+        if($boutiqueId > 0 && (int)($article['boutique'] ?? 0) !== $boutiqueId)
+        {
+            return false;
+        }
+
+        if($categoryId > 0 && !ohnous_article_has_relation($articleId, 'categorie_article', 'categorie', $categoryId))
+        {
+            return false;
+        }
+
+        if($typeId > 0 && !ohnous_article_has_relation($articleId, 'types_article', 'types', $typeId))
+        {
+            return false;
+        }
+
+        if($tailleId > 0 && !ohnous_article_has_relation($articleId, 'taille_articles', 'taille', $tailleId))
+        {
+            return false;
+        }
+
+        if($priceFilter !== '' && !ohnous_match_price_filter($article, $priceFilter))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     /* récupérer les suggestions d'articles visibles */
     function ohnous_get_article_suggestions($excludeArticleIds = [], $limit = 8)
     {
@@ -1523,10 +1703,16 @@
 
         $articles = ohnous_filter_visible_articles($articles);
 
-        if($priceFilter !== '')
+        if(
+            $baseFilters['category'] !== 0
+            || $baseFilters['type'] !== 0
+            || $baseFilters['taille'] !== 0
+            || $baseFilters['boutique'] !== 0
+            || $priceFilter !== ''
+        )
         {
-            $articles = array_values(array_filter($articles, function($article) use ($priceFilter){
-                return ohnous_match_price_filter($article, $priceFilter);
+            $articles = array_values(array_filter($articles, function($article) use ($filters){
+                return ohnous_match_catalog_filters($article, $filters);
             }));
         }
 
