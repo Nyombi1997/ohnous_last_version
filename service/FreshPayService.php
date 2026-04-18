@@ -207,8 +207,16 @@ class FreshPayService
         $rawBody = file_get_contents('php://input');
         $decoded = json_decode($rawBody, true);
 
+        // Pour désactiver tous les logs callback, commente simplement la ligne ci-dessous.
+        $callbackLogger = function ($stage, $httpStatus, array $context = []) use ($rawBody, $decoded) {
+            $this->logFreshPayCallbackDebug($stage, $httpStatus, $rawBody, is_array($decoded) ? $decoded : null, $context);
+        };
+
         if (!is_array($decoded)) {
             http_response_code(400);
+            $callbackLogger('invalid_json', 400, [
+                'message' => 'Le callback FreshPay doit être envoyé en JSON.',
+            ]);
             return [
                 'result' => 'error',
                 'msg' => 'Le callback FreshPay doit être envoyé en JSON.'
@@ -219,6 +227,10 @@ class FreshPayService
         $signature = $this->extractProvidedCallbackSignature($payload);
         if ($signature === '') {
             http_response_code(400);
+            $callbackLogger('missing_signature', 400, [
+                'message' => 'Signature callback absente.',
+                'payload' => $payload,
+            ]);
             return [
                 'result' => 'error',
                 'msg' => 'Signature callback absente.'
@@ -227,6 +239,10 @@ class FreshPayService
 
         if (!$this->isValidCallbackSignature($rawBody, $payload)) {
             http_response_code(401);
+            $callbackLogger('invalid_signature', 401, [
+                'message' => 'Signature callback invalide.',
+                'payload' => $payload,
+            ]);
             return [
                 'result' => 'error',
                 'msg' => 'Signature callback invalide.'
@@ -237,6 +253,10 @@ class FreshPayService
             $data = $this->extractCallbackData($payload);
         } catch (RuntimeException $e) {
             http_response_code(400);
+            $callbackLogger('invalid_callback_data', 400, [
+                'message' => $e->getMessage(),
+                'payload' => $payload,
+            ]);
             return [
                 'result' => 'error',
                 'msg' => $e->getMessage(),
@@ -246,6 +266,11 @@ class FreshPayService
         $reference = trim((string)($data['Reference'] ?? $data['reference'] ?? $payload['reference'] ?? ''));
         if ($reference === '') {
             http_response_code(422);
+            $callbackLogger('missing_reference', 422, [
+                'message' => 'Référence callback manquante.',
+                'payload' => $payload,
+                'data' => $data,
+            ]);
             return [
                 'result' => 'error',
                 'msg' => 'Référence callback manquante.'
@@ -255,6 +280,12 @@ class FreshPayService
         $transaction = $this->transactionModel->findByReference($reference);
         if (!$transaction) {
             http_response_code(404);
+            $callbackLogger('transaction_not_found', 404, [
+                'message' => 'Transaction introuvable.',
+                'reference' => $reference,
+                'payload' => $payload,
+                'data' => $data,
+            ]);
             return [
                 'result' => 'error',
                 'msg' => 'Transaction introuvable.'
@@ -279,6 +310,13 @@ class FreshPayService
         ], "id = '" . (int)$transaction['order_id'] . "'");
 
         http_response_code(200);
+        $callbackLogger('callback_processed', 200, [
+            'message' => 'Callback FreshPay traité.',
+            'reference' => $reference,
+            'normalized' => $normalized,
+            'payload' => $payload,
+            'data' => $data,
+        ]);
         return [
             'result' => 'ok',
             'msg' => 'Callback FreshPay traité.',
@@ -425,6 +463,28 @@ class FreshPayService
     {
         $formatted = number_format((float)$amount, 2, '.', '');
         return rtrim(rtrim($formatted, '0'), '.');
+    }
+
+    private function logFreshPayCallbackDebug($stage, $httpStatus, $rawBody, $decodedBody = null, array $context = [])
+    {
+        $logFile = ROOT . 'freshpay-callback.log';
+
+        $entry = [
+            'logged_at' => date('Y-m-d H:i:s'),
+            'stage' => $stage,
+            'http_status' => (int)$httpStatus,
+            'request_uri' => $_SERVER['REQUEST_URI'] ?? '',
+            'remote_addr' => $_SERVER['REMOTE_ADDR'] ?? '',
+            'raw_body' => $rawBody,
+            'decoded_body' => $decodedBody,
+            'context' => $context,
+        ];
+
+        error_log(
+            json_encode($entry, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL,
+            3,
+            $logFile
+        );
     }
 
     private function sendApiRequest($type, array $payload)

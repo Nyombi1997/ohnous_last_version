@@ -141,6 +141,8 @@
             var resultIcon = data.result === 'ok' ? 'success' : 'error';
             var resultText = data.reference ? ('Référence : ' + data.reference) : '';
             var technicalText = buildErrorText(data);
+            // Pour masquer ce log plus tard, commente simplement cette ligne.
+            //console.log('[FreshPay][startPayment]', data);
 
             if (data.payment_status === 'pending' || data.payment_status === 'submitted') {
                 resultIcon = 'info';
@@ -166,6 +168,12 @@
         }, 'json').fail(function (xhr) {
             var data = xhr.responseJSON || null;
             var technicalText = buildErrorText(data);
+            // Pour masquer ce log plus tard, commente simplement cette ligne.
+            /* console.log('[FreshPay][startPayment][error]', {
+                status: xhr.status,
+                response: data,
+                raw: xhr.responseText || ''
+            }); */
 
             updateFeedback("Le paiement n'a pas pu être initié. Veuillez réessayer.", 'is-error');
             Swal.fire({

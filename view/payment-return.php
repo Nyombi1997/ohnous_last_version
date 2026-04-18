@@ -2,6 +2,16 @@
     $paymentReturn = $GLOBALS['payment_return'] ?? [];
     $payment = $paymentReturn['payment'] ?? null;
     $status = strtolower((string)($paymentReturn['status'] ?? 'pending'));
+    $callbackPayload = null;
+    if (!empty($payment['callback_payload'])) {
+        $decodedCallbackPayload = json_decode((string)($payment['callback_payload'] ?? ''), true);
+        $callbackPayload = is_array($decodedCallbackPayload) ? $decodedCallbackPayload : $payment['callback_payload'];
+    }
+    $responsePayload = null;
+    if (!empty($payment['response_payload'])) {
+        $decodedResponsePayload = json_decode((string)($payment['response_payload'] ?? ''), true);
+        $responsePayload = is_array($decodedResponsePayload) ? $decodedResponsePayload : $payment['response_payload'];
+    }
     $isSuccess = in_array($status, ['success', 'successful', 'paid', 'completed'], true);
     $isFailed = in_array($status, ['failed', 'cancelled', 'canceled', 'rejected', 'error'], true);
     $title = $isSuccess ? '✅ Paiement réussi' : ($isFailed ? '❌ Paiement refusé' : 'Paiement en attente');
@@ -55,6 +65,21 @@
 <script>
     (function ($) {
         var button = document.getElementById('payment_verify_button');
+        var freshPayDebugData = {
+            reference: <?= json_encode((string)($paymentReturn['reference'] ?? ''), JSON_UNESCAPED_UNICODE) ?>,
+            callbackPayload: <?= json_encode($callbackPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
+            responsePayload: <?= json_encode($responsePayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>
+        };
+
+        // Pour masquer ces logs plus tard, commente simplement ce bloc.
+        console.log('[FreshPay][payment-return]', freshPayDebugData);
+        if (freshPayDebugData.callbackPayload) {
+            console.log('[FreshPay][callback_payload]', freshPayDebugData.callbackPayload);
+        }
+        if (freshPayDebugData.responsePayload) {
+            console.log('[FreshPay][response_payload]', freshPayDebugData.responsePayload);
+        }
+
         if (!button) {
             return;
         }
@@ -70,6 +95,8 @@
                 var successStates = ['success', 'successful', 'paid', 'completed'];
                 var failedStates = ['failed', 'rejected', 'error', 'cancelled', 'canceled'];
                 var icon = 'info';
+                // Pour masquer ce log plus tard, commente simplement cette ligne.
+                console.log('[FreshPay][verifyPaymentStatus]', data);
 
                 if (successStates.indexOf(data.trans_status) !== -1) {
                     icon = 'success';
@@ -84,6 +111,12 @@
                     confirmButtonColor: '#6775d6'
                 }).then(function () {
                     window.location.reload();
+                });
+            }, 'json').fail(function (xhr) {
+                // Pour masquer ce log plus tard, commente simplement cette ligne.
+                console.log('[FreshPay][verifyPaymentStatus][error]', {
+                    status: xhr.status,
+                    raw: xhr.responseText || ''
                 });
             }, 'json').always(function () {
                 button.removeAttribute('disabled');
