@@ -9,7 +9,7 @@
     var customerNumberInput = document.getElementById('checkout_customer_number');
     var operatorSelect = document.getElementById('checkout_operator');
     var addressTextarea = document.getElementById('checkout_address');
-    var checkoutConfig = window.ohnousCheckoutConfig || { subtotal: 0, mode: 'cart', visaEnabled: false };
+    var checkoutConfig = window.ohnousCheckoutConfig || { subtotal: 0, mode: 'cart', visaEnabled: false, gatewayCurrency: 'USD' };
 
     if (!form) {
         return;
@@ -81,7 +81,7 @@
                 'is-pending'
             );
         } else {
-            updateFeedback('Le paiement Mobile Money sera initié, puis confirmé de manière asynchrone par FreshPay.', 'is-pending');
+            updateFeedback('Le paiement Mobile Money sera initié, puis confirmé de manière asynchrone par FreshPay en ' + checkoutConfig.gatewayCurrency + '.', 'is-pending');
         }
     }
 

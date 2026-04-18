@@ -2966,6 +2966,38 @@ span
     gap: 18px;
 }
 
+.admin-test-store-form__grid{
+    display: grid;
+    grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+}
+
+.admin-test-store-form__media,
+.admin-test-store-form__fields{
+    display: grid;
+    gap: 14px;
+}
+
+.admin-test-store-profile-preview{
+    width: min(100%, 260px);
+    aspect-ratio: 1;
+    border-radius: 28px;
+    border: 1px solid rgba(255,255,255,0.65);
+    background: rgba(255,255,255,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: 0 24px 45px rgba(39, 52, 88, 0.12);
+}
+
+.admin-test-store-profile-preview img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 .admin-store-messages__head,
 .admin-store-articles__head{
     display: flex;

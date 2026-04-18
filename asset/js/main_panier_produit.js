@@ -126,12 +126,59 @@ function calculPrixTotalPanier()
     prix_total_panier.innerText = prix_total.toFixed(2);
 }
 
+function getCartKey(produitId, produitTaille)
+{
+    return String(produitId) + "_" + String(produitTaille || "");
+}
+
+function cssEscape(value)
+{
+    if(window.CSS && typeof window.CSS.escape === "function")
+    {
+        return window.CSS.escape(value);
+    }
+
+    return String(value).replace(/"/g, '\\"');
+}
+
+function getCartItemElement(cartKey)
+{
+    return document.querySelector('.detail_panier[data-cart-key="' + cssEscape(cartKey) + '"]');
+}
+
+function updateEmptyCartState()
+{
+    let prix_panier_exist = document.querySelector(".prix-panier");
+    let corps_detail_panier = document.getElementById("corps_detail_panier");
+
+    if(prix_panier_exist == null && corps_detail_panier)
+    {
+        corps_detail_panier.innerHTML = '<h2 class="titre_panier">Votre panier est vide</h2>';
+    }
+}
+
+function removeCartItemElement(cartKey)
+{
+    let cartItem = getCartItemElement(cartKey);
+
+    if(cartItem && cartItem.parentElement)
+    {
+        cartItem.parentElement.removeChild(cartItem);
+    }
+
+    indiceNombreArticlePanier();
+    calculPrixTotalPanier();
+    updateEmptyCartState();
+    onImageLoad();
+}
+
 /* ajouter au panier */
 function ajouterAuPanier(imgSrc = null, produitId = null, produitNom = null, produitSlug = null, produitTaille = null, produitPrix = null, produitStyle = null, produitBackground = null) {
     /* retrouver le bouton d'ajoout au panier */
     let prix_panier_exist = document.querySelector(".prix-panier");
     let retirer_du_panier = false;
     let corps_detail_panier = document.getElementById("corps_detail_panier");
+    let cartKey = getCartKey(produitId, produitTaille);
     document.querySelectorAll("#btn_panier_"+produitId).forEach(function(element){
         if(element.classList.contains("active"))
         {
@@ -225,8 +272,140 @@ function ajouterAuPanier(imgSrc = null, produitId = null, produitNom = null, pro
     /* ajouter au panier */
     editIconAjouterPanier(produitId = produitId, ajouter = true, retire = false, imgSrc = imgSrc, produitNom = produitNom, produitSlug = produitSlug, produitTaille = produitTaille, produitPrix = produitPrix, produitStyle = produitStyle, produitBackground = produitBackground);
 }
+/* recherche catalogue */
+function ajouterAuPanier(imgSrc = null, produitId = null, produitNom = null, produitSlug = null, produitTaille = null, produitPrix = null, produitStyle = null, produitBackground = null) {
+    let prix_panier_exist = document.querySelector(".prix-panier");
+    let retirer_du_panier = false;
+    let corps_detail_panier = document.getElementById("corps_detail_panier");
+    let cartKey = getCartKey(produitId, produitTaille);
 
+    document.querySelectorAll("#btn_panier_"+produitId).forEach(function(element){
+        if(element.classList.contains("active"))
+        {
+            Swal.fire({
+                title: "Produit retiré du panier !",
+                text: "Cet article a été retiré de votre panier.",
+                icon: "success",
+                confirmButtonColor: '#6775d6',
+                timer: 1500
+            });
+            removeCartItemElement(cartKey);
+            editIconAjouterPanier(produitId, false, true, imgSrc, produitNom, produitSlug, produitTaille, produitPrix, produitStyle, produitBackground);
+            retirer_du_panier = true;
+        }
+    });
 
+    if(retirer_du_panier)
+    {
+        return;
+    }
+
+    Swal.fire({
+        title: "Produit ajouté au panier !",
+        text: "Vous pouvez consulter votre panier pour finaliser votre achat.",
+        icon: "success",
+        confirmButtonColor: '#6775d6',
+        timer: 1500
+    });
+
+    let liquidImage = buildLiquidImagePayload(imgSrc, "(max-width: 768px) 35vw, 180px");
+    let detail = `
+                <!-- images -->
+                <div class="div_img_detail_panier" style="background: ${produitBackground}">
+                    <img
+                        class="blur-up js-liquid-image"
+                        src="${liquidImage.placeholder}"
+                        data-image-base="${imgSrc}"
+                        data-image-fallback="${liquidImage.fallback}"
+                        data-image-high="${liquidImage.high}"
+                        data-image-srcset="${liquidImage.srcset}"
+                        data-image-sizes="${liquidImage.sizes}"
+                        loading="lazy"
+                        style="${produitStyle}"
+                        alt="${produitSlug}"
+                    />
+                    <div class="div_supp_produit_panier" onclick="retirerDuPanierDepuisVue(${JSON.stringify(imgSrc)},${JSON.stringify(produitId)},${JSON.stringify(produitNom)},${JSON.stringify(produitSlug)},${JSON.stringify(produitTaille)},${JSON.stringify(produitPrix)},${JSON.stringify(produitStyle)},${JSON.stringify(produitBackground)},${JSON.stringify(cartKey)})">
+                        <i class="fa fa-trash"></i>
+                    </div>
+                </div>
+                <!-- details -->
+                <div class="infos_detail_panier">
+                    <p class="titre_produit_detail_panier">${produitNom}</p>
+                    <p class="prix_produit_detail_panier">$ <span class="prix-panier">${produitPrix}</span></p>
+                    <p class="taille_produit_detail_panier">${produitTaille}</p>
+                </div>`;
+    let corps_article = document.createElement("div");
+    corps_article.classList.add("detail_panier");
+    corps_article.setAttribute("data-cart-key", cartKey);
+    corps_article.innerHTML = detail;
+
+    if(prix_panier_exist)
+    {
+        corps_detail_panier.appendChild(corps_article);
+    }
+    else
+    {
+        corps_detail_panier.innerHTML = "";
+        corps_detail_panier.appendChild(corps_article);
+    }
+
+    indiceNombreArticlePanier();
+    calculPrixTotalPanier();
+    onImageLoad();
+    if (typeof window.initLiquidImages === "function") {
+        window.initLiquidImages();
+    }
+    editIconAjouterPanier(produitId, true, false, imgSrc, produitNom, produitSlug, produitTaille, produitPrix, produitStyle, produitBackground);
+}
+
+function retirerDuPanierDepuisVue(imgSrc = null, produitId = null, produitNom = null, produitSlug = null, produitTaille = null, produitPrix = null, produitStyle = null, produitBackground = null, cartKey = null)
+{
+    let resolvedCartKey = cartKey || getCartKey(produitId, produitTaille);
+
+    Swal.fire({
+        title: "Produit retiré du panier !",
+        text: "Cet article a été retiré de votre panier.",
+        icon: "success",
+        confirmButtonColor: '#6775d6',
+        timer: 1500
+    });
+
+    removeCartItemElement(resolvedCartKey);
+    editIconAjouterPanier(produitId, false, true, imgSrc, produitNom, produitSlug, produitTaille, produitPrix, produitStyle, produitBackground);
+}
+
+function commanderDirectement(imgSrc = null, produitId = null, produitNom = null, produitSlug = null, produitTaille = null, produitPrix = null, produitStyle = null, produitBackground = null)
+{
+    $.post("/fonctions/checkout_actions.php", {
+        action: "prepare_direct_checkout",
+        id: produitId,
+        name: produitNom,
+        price: produitPrix,
+        size: produitTaille,
+        image: imgSrc,
+        style: produitStyle,
+        background: produitBackground,
+        slug: produitSlug
+    }, function(data){
+        if(data.result !== "ok")
+        {
+            Swal.fire({
+                icon: "error",
+                title: data.msg || "Impossible de préparer cette commande directe.",
+                confirmButtonColor: '#6775d6'
+            });
+            return;
+        }
+
+        window.location.href = data.redirect || "/checkout?mode=direct";
+    }, "json").fail(function(){
+        Swal.fire({
+            icon: "error",
+            title: "Impossible de préparer cette commande directe.",
+            confirmButtonColor: '#6775d6'
+        });
+    });
+}
 
 /* recherche catalogue */
 let donnee_de_recherche = document.querySelectorAll("#donnee_de_recherche");

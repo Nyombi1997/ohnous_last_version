@@ -143,6 +143,12 @@
             $myView->render('Ohnous | DÉTAIL BOUTIQUE ADMIN');
         }
 
+        public function showAdminEditStoreProfile ()
+        {
+            $myView = new View('admin-edit-store-profile');
+            $myView->render('Ohnous | PHOTO BOUTIQUE ADMIN');
+        }
+
         public function showAdminArticles ()
         {
             $myView = new View('admin-articles');

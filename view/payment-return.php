@@ -35,7 +35,7 @@
                     <?php endif; ?>
                     <div class="checkout-summary__line">
                         <span>Montant</span>
-                        <strong>$ <?= number_format((float)$payment['amount'], 2, '.', ' ') ?></strong>
+                        <strong><?= number_format((float)$payment['amount'], 2, '.', ' ') ?> <?= htmlspecialchars((string)($payment['currency'] ?? 'USD'), ENT_QUOTES, 'UTF-8') ?></strong>
                     </div>
                     <div class="checkout-summary__line">
                         <span>Statut</span>

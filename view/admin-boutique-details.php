@@ -18,6 +18,7 @@
         $message['profile'] = $boutique['profile'] ?? '';
         $threadHtml .= ohnous_render_admin_store_message_bubble($message);
     }
+    $isTestStore = ohnous_is_test_store($boutique);
 ?>
 <div class="content_page admin-page-shell">
     <section class="admin-page-head liquid-panel admin-store-detail-head">
@@ -41,6 +42,9 @@
                 <span class="status <?= ((int)$boutique['activer'] === 1) ? 'active' : 'inactive' ?>"><?= ((int)$boutique['activer'] === 1) ? 'Active' : 'Inactive' ?></span>
                 <span>Activation : <?= !empty($boutique['date_activation_debut']) ? htmlspecialchars($boutique['date_activation_debut'], ENT_QUOTES, 'UTF-8') : 'Non définie' ?></span>
                 <span>Expiration : <?= !empty($boutique['date_activation_fin']) ? htmlspecialchars($boutique['date_activation_fin'], ENT_QUOTES, 'UTF-8') : 'Non définie' ?></span>
+                <?php if($isTestStore): ?>
+                    <span class="status test">Boutique test</span>
+                <?php endif; ?>
             </div>
             <div class="admin-store-overview__actions">
                 <button
@@ -48,6 +52,7 @@
                     class="btn_ohnous admin-toggle-store"
                     data-store-id="<?= (int)$boutique['id'] ?>"
                     data-next-state="<?= ((int)$boutique['activer'] === 1) ? '0' : '1' ?>"
+                    <?= $isTestStore ? 'data-is-test="1"' : '' ?>
                 >
                     <?= ((int)$boutique['activer'] === 1) ? 'Désactiver la boutique' : 'Activer la boutique' ?>
                 </button>
@@ -68,6 +73,45 @@
             </form>
         </article>
     </section>
+
+    <?php if($isTestStore): ?>
+        <section class="liquid-panel admin-edit-form admin-test-store-form">
+            <div class="admin-store-articles__head">
+                <div>
+                    <h2>Éditer la boutique test</h2>
+                    <p>Modifiez son nom et sa description. La photo de profil se change sur une page dédiée.</p>
+                </div>
+                <a href="/admin-editer-photo-boutique?id=<?= (int)$boutique['id'] ?>" class="btn_ohnous second">Modifier la photo</a>
+            </div>
+
+            <form id="admin_test_store_form" class="admin-test-store-form__grid" data-store-id="<?= (int)$boutique['id'] ?>">
+                <div class="admin-test-store-form__media">
+                    <label class="label_ajout_image">Photo actuelle</label>
+                    <div class="admin-test-store-profile-preview" id="admin_test_store_profile_preview" style="background: <?= htmlspecialchars((string)($boutique['backgrounds'] ?? 'rgba(255,255,255,.55)'), ENT_QUOTES, 'UTF-8') ?>;">
+                        <img src="<?= htmlspecialchars(ohnous_get_profile_picture($boutique['profile'] ?? '', 'boutique'), ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars($boutique['nom'], ENT_QUOTES, 'UTF-8') ?>" id="admin_test_store_profile_image">
+                    </div>
+                    <small>Utilisez le bouton dédié pour recadrer et changer cette photo.</small>
+                </div>
+
+                <div class="admin-test-store-form__fields">
+                    <div class="form_group_ajout_image">
+                        <label class="label_ajout_image" for="admin_test_store_name">Nom de la boutique</label>
+                        <input type="text" id="admin_test_store_name" class="input_ajout_image checkout-input" value="<?= htmlspecialchars((string)$boutique['nom'], ENT_QUOTES, 'UTF-8') ?>" required>
+                    </div>
+
+                    <div class="form_group_ajout_image">
+                        <label class="label_ajout_image" for="admin_test_store_description">Description</label>
+                        <textarea id="admin_test_store_description" rows="5" class="input_ajout_image checkout-input checkout-textarea"><?= htmlspecialchars((string)$boutique['description'], ENT_QUOTES, 'UTF-8') ?></textarea>
+                    </div>
+
+                    <div class="admin-edit-form__actions">
+                        <button type="submit" class="btn_ohnous">Enregistrer</button>
+                        <a href="/boutique/<?= htmlspecialchars((string)$boutique['slug'], ENT_QUOTES, 'UTF-8') ?>" target="_blank" class="btn_ohnous second">Voir la boutique</a>
+                    </div>
+                </div>
+            </form>
+        </section>
+    <?php endif; ?>
 
     <section class="liquid-panel admin-store-articles">
         <div class="admin-store-articles__head">

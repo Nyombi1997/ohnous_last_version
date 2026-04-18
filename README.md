@@ -7,6 +7,7 @@
 - Requêtes FreshPay envoyées en `json`.
 - Action d’initiation corrigée en `debit`.
 - Action de vérification corrigée en `verify`.
+- Payload FreshPay aligné sur le contrat communiqué par FreshPay, avec conservation de l’envoi en `USD`, champ `email`, `callback_url` vide et profil client FreshPay figé.
 - Le statut réel du paiement repose désormais sur `Trans_Status`, pas sur `Status`.
 - Callback durci avec lecture JSON, signature `X-Signature`, HMAC SHA-256 et déchiffrement configurable.
 - Méthodes Mobile Money alignées côté config et checkout : `airtel`, `orange`, `mpesa`, `afrimoney`.
@@ -198,7 +199,8 @@ Si cette ligne retourne `false` ou une chaine vide, PHP ne voit pas encore ta va
 ## Important sur FreshPay
 
 - Le total envoyé est bien calculé ainsi : `sous_total + frais_livraison`.
-- La devise envoyée est `USD`.
+- La devise envoyée à FreshPay est `USD`.
+- Les champs FreshPay `merchant_id`, `merchant_secrete`, `firstname`, `lastname` et `email` sont figés dans `config/payment.php` selon les valeurs validées par FreshPay.
 - Le flux est asynchrone :
   - initiation du paiement
   - enregistrement local

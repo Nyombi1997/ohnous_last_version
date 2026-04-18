@@ -42,6 +42,7 @@ class FreshPayService
         $customerNumber = trim((string)($request['customer_number'] ?? $telephone));
         $firstname = trim((string)($request['firstname'] ?? 'Client'));
         $lastname = trim((string)($request['lastname'] ?? 'OhNous'));
+        $gatewayProfile = $this->resolveGatewayCustomerProfile();
 
         if ($telephone === '' || $adresse === '' || $email === '' || $zoneId <= 0) {
             return ['result' => 'error', 'msg' => "Veuillez renseigner le téléphone, l'adresse, l'email et la zone de livraison."];
@@ -80,6 +81,7 @@ class FreshPayService
             'payment_operator' => $paymentOperator,
             'customer_number' => $customerNumber,
             'total' => $totals['total'],
+            'currency' => $totals['currency'],
         ], JSON_UNESCAPED_UNICODE));
 
         $duplicateGuard = $_SESSION['ohnous_payment_guard'] ?? [];
@@ -124,13 +126,14 @@ class FreshPayService
         $requestPayload = [
             'merchant_id' => (string)$this->config['freshpay']['merchant_id'],
             'merchant_secrete' => (string)$this->config['freshpay']['merchant_secret'],
-            'amount' => number_format((float)$totals['total'], 2, '.', ''),
+            // FreshPay attend ici le payload contractuel communiqué par leur équipe.
+            'amount' => $this->formatFreshPayAmount($totals['total']),
             'currency' => $totals['currency'],
             'action' => 'debit',
             'customer_number' => $customerNumber,
-            'firstname' => $firstname,
-            'lastname' => $lastname,
-            'e-mail' => $email,
+            'firstname' => $gatewayProfile['firstname'],
+            'lastname' => $gatewayProfile['lastname'],
+            'email' => $gatewayProfile['email'],
             'reference' => $reference,
             'method' => $this->resolveFreshPayMethod($paymentMethod, $paymentOperator),
             'callback_url' => $this->resolveCallbackUrl(),
@@ -403,12 +406,25 @@ class FreshPayService
 
     private function resolveCallbackUrl()
     {
-        $callbackUrl = trim((string)($this->config['freshpay']['callback_url'] ?? ''));
-        if ($callbackUrl !== '') {
-            return $callbackUrl;
-        }
+        // FreshPay a demandé un callback_url vide dans le payload actuel.
+        return (string)($this->config['freshpay']['callback_url'] ?? '');
+    }
 
-        return rtrim(HOST, '/') . '/paiement-callback-freshpay';
+    private function resolveGatewayCustomerProfile()
+    {
+        $profile = $this->config['freshpay']['customer_profile'] ?? [];
+
+        return [
+            'firstname' => trim((string)($profile['firstname'] ?? 'Edo')),
+            'lastname' => trim((string)($profile['lastname'] ?? 'systeme')),
+            'email' => trim((string)($profile['email'] ?? 'edosysteme@gmail.com')),
+        ];
+    }
+
+    private function formatFreshPayAmount($amount)
+    {
+        $formatted = number_format((float)$amount, 2, '.', '');
+        return rtrim(rtrim($formatted, '0'), '.');
     }
 
     private function sendApiRequest($type, array $payload)

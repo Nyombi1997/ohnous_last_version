@@ -727,6 +727,78 @@
         return $boutique ?: null;
     }
 
+    /* gÃ©nÃ©rer un slug boutique unique sans bloquer l'Ã©dition de la boutique courante */
+    function ohnous_generate_unique_store_slug($name, $excludeStoreId = 0)
+    {
+        global $bdd;
+
+        $excludeStoreId = (int)$excludeStoreId;
+        $name = trim((string)$name);
+        if($name === '')
+        {
+            return '';
+        }
+
+        $baseSlug = strtolower($name);
+        $baseSlug = iconv('UTF-8', 'ASCII//TRANSLIT', $baseSlug);
+        $baseSlug = preg_replace('/[^a-z0-9]+/i', '-', $baseSlug);
+        $baseSlug = preg_replace('/-+/', '-', (string)$baseSlug);
+        $baseSlug = trim((string)$baseSlug, '-');
+
+        if($baseSlug === '')
+        {
+            $baseSlug = 'boutique';
+        }
+
+        $slug = $baseSlug;
+        $suffix = 1;
+
+        while(true)
+        {
+            $isUsed = false;
+            $tablesStmt = $bdd->query("
+                SELECT TABLE_NAME
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE()
+                AND COLUMN_NAME = 'slug'
+            ");
+            $tables = $tablesStmt ? $tablesStmt->fetchAll(PDO::FETCH_COLUMN) : [];
+
+            foreach($tables as $table)
+            {
+                if($table === 'boutiques' && $excludeStoreId > 0)
+                {
+                    $stmt = $bdd->prepare("SELECT id FROM boutiques WHERE slug = :slug AND id != :id LIMIT 1");
+                    $stmt->execute([
+                        ':slug' => $slug,
+                        ':id' => $excludeStoreId
+                    ]);
+                }
+                else
+                {
+                    $stmt = $bdd->prepare("SELECT 1 FROM `$table` WHERE slug = :slug LIMIT 1");
+                    $stmt->execute([
+                        ':slug' => $slug
+                    ]);
+                }
+
+                if($stmt->fetch())
+                {
+                    $isUsed = true;
+                    break;
+                }
+            }
+
+            if(!$isUsed)
+            {
+                return $slug;
+            }
+
+            $slug = $baseSlug.'-'.$suffix;
+            $suffix++;
+        }
+    }
+
     /* une boutique test n’a pas d’adresse email */
     function ohnous_is_test_store($store)
     {

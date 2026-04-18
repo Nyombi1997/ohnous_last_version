@@ -1,4 +1,5 @@
 (function($){
+
     function initSearchSuggestions(inputId, listId, suggestions){
         const input = document.getElementById(inputId);
         const list = document.getElementById(listId);
@@ -129,6 +130,73 @@
 
                 textarea.value = '';
                 thread.innerHTML = data.thread_html;
+            }, 'json').always(function(){
+                button.removeAttribute('disabled');
+                button.innerHTML = tempText;
+            });
+        });
+    }
+
+    function slugify(value){
+        return String(value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+            .replace(/-+/g, '-');
+    }
+
+    const adminTestStoreForm = document.getElementById('admin_test_store_form');
+    if(adminTestStoreForm){
+        const storeId = adminTestStoreForm.getAttribute('data-store-id');
+        const nameInput = document.getElementById('admin_test_store_name');
+        const slugInput = document.getElementById('admin_test_store_slug');
+        const descriptionInput = document.getElementById('admin_test_store_description');
+
+        if(nameInput && slugInput){
+            const syncSlugPreview = function(){
+                slugInput.value = slugify(nameInput.value || '') || 'boutique';
+            };
+
+            nameInput.addEventListener('input', syncSlugPreview);
+            syncSlugPreview();
+        }
+
+        adminTestStoreForm.addEventListener('submit', function(e){
+            e.preventDefault();
+
+            const button = adminTestStoreForm.querySelector('button[type="submit"]');
+            const tempText = button.innerHTML;
+            button.setAttribute('disabled', '');
+            button.innerHTML = '<i class="fa-solid fa-circle-notch rotate"></i>';
+
+            $.post('/fonctions/admin_store_actions.php', {
+                action: 'update_test_store',
+                store_id: storeId,
+                nom: nameInput ? nameInput.value.trim() : '',
+                description: descriptionInput ? descriptionInput.value.trim() : ''
+            }, function(data){
+                if(data.result !== 'ok'){
+                    Swal.fire({
+                        icon: 'error',
+                        title: data.msg || 'Impossible de mettre à jour la boutique.',
+                        confirmButtonColor: '#6775d6'
+                    });
+                    return;
+                }
+
+                if(slugInput && data.slug){
+                    slugInput.value = data.slug;
+                }
+
+                Swal.fire({
+                    icon: 'success',
+                    title: data.msg,
+                    confirmButtonColor: '#6775d6'
+                }).then(function(){
+                    window.location.reload();
+                });
             }, 'json').always(function(){
                 button.removeAttribute('disabled');
                 button.innerHTML = tempText;

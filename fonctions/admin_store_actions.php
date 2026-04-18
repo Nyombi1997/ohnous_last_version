@@ -135,6 +135,71 @@
         exit;
     }
 
+    if($action === 'update_test_store')
+    {
+        if(!ohnous_is_test_store($boutique))
+        {
+            echo json_encode([
+                'result' => 'error',
+                'msg' => "Seules les boutiques test peuvent être modifiées depuis cet espace."
+            ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+            exit;
+        }
+
+        $nom = trim((string)html_entity_decode(filter_var($_POST['nom'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
+        $description = trim((string)html_entity_decode(filter_var($_POST['description'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
+        $profile = trim((string)html_entity_decode(filter_var($_POST['profile'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
+        $background = trim((string)html_entity_decode(filter_var($_POST['background'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
+        $fileId = trim((string)html_entity_decode(filter_var($_POST['fileId'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
+
+        if($nom === '')
+        {
+            echo json_encode([
+                'result' => 'error',
+                'msg' => "Le nom de la boutique est obligatoire."
+            ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+            exit;
+        }
+
+        /* Le changement de nom met aussi à jour le slug en suivant la logique existante. */
+        $slug = trim((string)($boutique['slug'] ?? ''));
+        if($nom !== trim((string)($boutique['nom'] ?? '')))
+        {
+            $slug = generateSlug($nom, '-');
+        }
+
+        $updateData = [
+            'nom' => $nom,
+            'slug' => $slug,
+            'description' => $description
+        ];
+
+        if($profile !== '')
+        {
+            $updateData['profile'] = $profile;
+        }
+
+        if($background !== '' && ohnous_column_exists('boutiques', 'backgrounds'))
+        {
+            $updateData['backgrounds'] = $background;
+        }
+
+        if($fileId !== '' && ohnous_column_exists('boutiques', 'fileId'))
+        {
+            $updateData['fileId'] = $fileId;
+        }
+
+        update_bdd($bdd, 'boutiques', $updateData, "id = '".(int)$storeId."'");
+
+        echo json_encode([
+            'result' => 'ok',
+            'msg' => "La boutique test a bien été mise à jour.",
+            'slug' => $slug,
+            'store_url' => '/boutique/'.$slug
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
+
     echo json_encode([
         'result' => 'error',
         'msg' => "Action admin boutique inconnue."

@@ -79,7 +79,7 @@
                                                 style="'.$item['style'].'"
                                                 alt="article/'.$item['slug'].'"
                                             />
-                                            <div class="div_supp_produit_panier" onclick="ajouterAuPanier('.ohnous_js_html_arg($item['image']).','.ohnous_js_html_arg((string)$item['id']).','.ohnous_js_html_arg($item['name']).','.ohnous_js_html_arg($item['slug']).','.ohnous_js_html_arg($item['size']).','.ohnous_js_html_arg((string)$item['price']).','.ohnous_js_html_arg($item['style']).','.ohnous_js_html_arg($item['background']).')">
+                                            <div class="div_supp_produit_panier" onclick="retirerDuPanierDepuisVue('.ohnous_js_html_arg($item['image']).','.ohnous_js_html_arg((string)$item['id']).','.ohnous_js_html_arg($item['name']).','.ohnous_js_html_arg($item['slug']).','.ohnous_js_html_arg($item['size']).','.ohnous_js_html_arg((string)$item['price']).','.ohnous_js_html_arg($item['style']).','.ohnous_js_html_arg($item['background']).','.ohnous_js_html_arg((string)$itemKey).')">
                                                 <i class="fa fa-trash"></i>
                                             </div>
                                         </div>

@@ -5,6 +5,8 @@
     $deliverySettings = ohnous_get_delivery_settings();
     $paymentConfig = include CONFIG . 'payment.php';
     $visaEnabled = !empty($paymentConfig['freshpay']['visa']['enabled']);
+    $displayCurrency = trim((string)($paymentConfig['display_currency'] ?? 'USD'));
+    $gatewayCurrency = trim((string)($paymentConfig['currency'] ?? 'CDF'));
     $checkoutSuccess = isset($_GET['success']) && (int)$_GET['success'] === 1;
     $orderNumber = trim((string)($_GET['order'] ?? ''));
 ?>
@@ -99,7 +101,7 @@
                             <section class="checkout-payment-panel liquid-panel">
                                 <div class="checkout-payment-panel__head">
                                     <h2>Méthode de paiement</h2>
-                                    <span>Devise : USD</span>
+                                    <span>Encaissement FreshPay : <?= htmlspecialchars($gatewayCurrency, ENT_QUOTES, 'UTF-8') ?></span>
                                 </div>
 
                                 <div class="checkout-payment-methods">
@@ -145,7 +147,7 @@
 
                                 <div id="checkout_payment_feedback" class="checkout-payment-feedback" aria-live="polite">
                                     <i class="fa-solid fa-circle-info"></i>
-                                    <p>Le montant final inclut le sous-total du panier et les frais de livraison en USD.</p>
+                                    <p>Le montant final inclut le sous-total et la livraison. FreshPay recevra la requête dans la devise <?= htmlspecialchars($gatewayCurrency, ENT_QUOTES, 'UTF-8') ?>.</p>
                                 </div>
                             </section>
                         </div>
@@ -165,15 +167,15 @@
                             <div class="checkout-summary__totals">
                                 <div class="checkout-summary__line">
                                     <span>Sous-total</span>
-                                    <strong>$ <span id="checkout_subtotal"><?= number_format($checkoutContext['subtotal'], 2, '.', ' ') ?></span></strong>
+                                    <strong><span id="checkout_subtotal"><?= number_format($checkoutContext['subtotal'], 2, '.', ' ') ?></span> <?= htmlspecialchars($displayCurrency, ENT_QUOTES, 'UTF-8') ?></strong>
                                 </div>
                                 <div class="checkout-summary__line">
                                     <span>Livraison</span>
-                                    <strong>$ <span id="checkout_delivery_price">0.00</span></strong>
+                                    <strong><span id="checkout_delivery_price">0.00</span> <?= htmlspecialchars($displayCurrency, ENT_QUOTES, 'UTF-8') ?></strong>
                                 </div>
                                 <div class="checkout-summary__line total">
                                     <span>Total</span>
-                                    <strong>$ <span id="checkout_total"><?= number_format($checkoutContext['subtotal'], 2, '.', ' ') ?></span></strong>
+                                    <strong><span id="checkout_total"><?= number_format($checkoutContext['subtotal'], 2, '.', ' ') ?></span> <?= htmlspecialchars($displayCurrency, ENT_QUOTES, 'UTF-8') ?></strong>
                                 </div>
                             </div>
 
@@ -191,7 +193,8 @@
         window.ohnousCheckoutConfig = {
             subtotal: <?= json_encode((float)$checkoutContext['subtotal']) ?>,
             mode: <?= json_encode($checkoutContext['mode']) ?>,
-            visaEnabled: <?= json_encode($visaEnabled) ?>
+            visaEnabled: <?= json_encode($visaEnabled) ?>,
+            gatewayCurrency: <?= json_encode($gatewayCurrency) ?>
         };
     </script>
     <script src="/asset/js/checkout.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/checkout.js") ?>" defer></script>

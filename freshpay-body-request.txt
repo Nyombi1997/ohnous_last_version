@@ -1,1 +1,14 @@
-merchant_id=VOTRE_MERCHANT_ID&merchant_secrete=VOTRE_MERCHANT_SECRET&amount=149.99&currency=USD&action=payment&customer_number=%2B243900000000&firstname=Client&lastname=OhNous&e-mail=client%40exemple.com&reference=FP-20260417-EXEMPLE&method=mobile_money&callback_url=https%3A%2F%2Fvotre-domaine.tld%2Fpaiement-callback-freshpay&operator=orange
+{
+  "merchant_id": "jV]M|@2gr{b+G])6b",
+  "merchant_secrete": "jz5epFB9Z2xfr!nNJb",
+  "amount": "100",
+  "currency": "USD",
+  "action": "debit",
+  "customer_number": "0971069967",
+  "firstname": "Edo",
+  "lastname": "systeme",
+  "email": "edosysteme@gmail.com",
+  "reference": "testfp09",
+  "method": "airtel",
+  "callback_url": ""
+}

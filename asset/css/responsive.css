@@ -316,6 +316,7 @@
     .admin-shortcuts,
     .admin-list-grid,
     .admin-store-layout,
+    .admin-test-store-form__grid,
     .admin-mini-grid,
     .admin-form-grid{
         grid-template-columns: 1fr;
