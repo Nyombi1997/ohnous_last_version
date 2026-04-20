@@ -3,19 +3,20 @@
     include_once "../model/select.php";
     include_once "fonctions.php";
     header('Content-Type: application/json; charset=utf-8');
-    /* si il n'y a pas encore de session */
+
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
-    $id = html_entity_decode(filter_var($_POST['id'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-    $price = html_entity_decode(filter_var($_POST['price'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-    $name = html_entity_decode(filter_var($_POST['name'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-    $size = html_entity_decode(filter_var($_POST['size'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-    $image = html_entity_decode(filter_var($_POST['image'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-    $style = html_entity_decode(filter_var($_POST['style'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-    $background = html_entity_decode(filter_var($_POST['background'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-    $slug = html_entity_decode(filter_var($_POST['slug'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-    /* ajouter au panier */
+
+    $id = html_entity_decode(filter_var($_POST['id'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+    $price = html_entity_decode(filter_var($_POST['price'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+    $name = html_entity_decode(filter_var($_POST['name'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+    $size = html_entity_decode(filter_var($_POST['size'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+    $image = html_entity_decode(filter_var($_POST['image'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+    $style = html_entity_decode(filter_var($_POST['style'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+    $background = html_entity_decode(filter_var($_POST['background'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+    $slug = html_entity_decode(filter_var($_POST['slug'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+
     function addToCart($id, $name, $price, $size, $image, $style = "", $background = "", $slug = "") {
         $key = cartKey($id, $size);
 
@@ -27,11 +28,11 @@
             $_SESSION[ohnous_get_cart_session_key()][$key]['qty']++;
         } else {
             $_SESSION[ohnous_get_cart_session_key()][$key] = [
-                'id'    => $id,
-                'name'  => $name,
+                'id' => $id,
+                'name' => $name,
                 'price' => $price,
-                'size'  => $size,
-                'qty'   => 1,
+                'size' => $size,
+                'qty' => 1,
                 'image' => $image,
                 'style' => $style,
                 'background' => $background,
@@ -39,7 +40,7 @@
             ];
         }
     }
-    /* retirer du panier */
+
     function removeFromCart($id, $size) {
         $key = cartKey($id, $size);
 
@@ -47,27 +48,27 @@
             unset($_SESSION[ohnous_get_cart_session_key()][$key]);
         }
     }
-    /* envoyer les donner pour le panier */
-    if(isset($_POST['ajout']))
-    {
+
+    $results = [
+        'result' => 'error',
+        'msg' => 'Action panier introuvable.'
+    ];
+
+    if (isset($_POST['ajout'])) {
         addToCart($id, $name, $price, $size, $image, $style, $background, $slug);
 
         $results = [
-            "result" => "ok",
-            "msg" => ""
+            'result' => 'ok',
+            'msg' => 'Article ajouté au panier.'
         ];
-    }
-    /* si on veut retirer */
-    elseif(isset($_POST['retire']))
-    {
+    } elseif (isset($_POST['retire'])) {
         removeFromCart($id, $size);
 
         $results = [
-            "result" => "ok",
-            "msg" => "lol"
+            'result' => 'ok',
+            'msg' => 'Article retiré du panier.'
         ];
     }
 
-    // Retour en JSON
     echo json_encode($results, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 ?>

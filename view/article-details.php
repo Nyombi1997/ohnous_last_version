@@ -19,6 +19,11 @@
 ?>
 <script>
     let home_page = true;
+    window.articleShareConfig = {
+        title: <?= json_encode($article['nom'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
+        text: <?= json_encode('Decouvrez cet article sur OhNous : '.$article['nom'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
+        url: <?= json_encode((((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http').'://'.($_SERVER['HTTP_HOST'] ?? 'localhost').($_SERVER['REQUEST_URI'] ?? '/article/'.$article['slug'])), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>
+    };
     window.articleReviewsConfig = {
         articleId: <?= (int)$article['id'] ?>,
         isConnected: <?= $currentAccount['connected'] ? 'true' : 'false' ?>,
@@ -130,6 +135,10 @@
                         class="acheter_directement"
                         onclick="commanderDirectement(<?= ohnous_js_html_arg($mainImage['img']) ?>, <?= (int)$article['id'] ?>, <?= ohnous_js_html_arg($article['nom']) ?>, <?= ohnous_js_html_arg($article['slug']) ?>, <?= ohnous_js_html_arg($tailles) ?>, <?= ohnous_js_html_arg((string)$pricing['prix_final']) ?>, <?= ohnous_js_html_arg($image_article_style) ?>, <?= ohnous_js_html_arg($image_article_background) ?>)"
                     >Commander maintenant</button>
+                    <button type="button" class="partager_article js-article-share-trigger">
+                        <i class="fa-solid fa-share-nodes"></i>
+                        <span>Partager</span>
+                    </button>
                 </div>
                 <div class="plus_details">
                     <?php
@@ -169,11 +178,11 @@
                         else
                         {
                             $categorie = [
-                                'nom' => 'Aucune catégorie',
+                                'nom' => 'Aucune cat&eacute;gorie',
                                 'slug' => '/'
                             ];
                         }
-                        echo '<div class="details"><strong>Catégorie : </strong><a href="/categorie/'.$categorie['slug'].'">'.$categorie['nom'].'</a></div>';
+                        echo '<div class="details"><strong>Cat&eacute;gorie : </strong><a href="/categorie/'.$categorie['slug'].'">'.$categorie['nom'].'</a></div>';
 
                         /* types */
                         $types = select_bdd($bdd, "types_article", $where = "article = '".$article['id']."'", $limit = null, $offset = 0, $order = null, $random = false);
@@ -251,10 +260,10 @@
                             </div>
                             <div class="review-login-callout__content">
                                 <strong>Connectez-vous pour noter et commenter.</strong>
-                                <p>Votre connexion et votre inscription restent gérées par vos pages actuelles, sans changer votre logique existante.</p>
+                                <p>Votre connexion et votre inscription restent g&eacute;r&eacute;es par vos pages actuelles, sans changer votre logique existante.</p>
                             </div>
                             <button type="button" class="btn_ohnous review-login-callout__button" id="open-review-auth">
-                                Se connecter ou s’inscrire
+                                Se connecter ou s&rsquo;inscrire
                             </button>
                         </div>
                     <?php endif; ?>
@@ -273,16 +282,16 @@
                             <button type="button" class="star" data-value="1" aria-label="Noter 1 sur 5">&#9733;</button>
                         </div>
 
-                        <textarea id="comment-text" placeholder="Dites ce que vous avez aimé, la qualité, la taille, la livraison, ou ce qui pourrait être amélioré."></textarea>
+                        <textarea id="comment-text" placeholder="Dites ce que vous avez aim&eacute;, la qualit&eacute;, la taille, la livraison, ou ce qui pourrait &ecirc;tre am&eacute;lior&eacute;."></textarea>
                         <div class="review-editor__actions">
-                            <span class="review-editor__hint">Un seul avis par compte. Si vous republiez, votre avis sera mis à jour.</span>
+                            <span class="review-editor__hint">Un seul avis par compte. Si vous republiez, votre avis sera mis &agrave; jour.</span>
                             <button id="submit-rating" class="btn_ohnous">Publier mon avis</button>
                         </div>
                     </div>
 
                     <div class="review-feed">
                         <div class="review-feed__head">
-                            <h4>Commentaires récents</h4>
+                            <h4>Commentaires r&eacute;cents</h4>
                             <span id="review-feed-count"><?= $ratingSummary['total_formatted'] ?> avis</span>
                         </div>
                         <div id="reviews-list"><?= $reviewListHtml ?></div>

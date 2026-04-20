@@ -21,7 +21,7 @@
     <!-- swiper -->
     <link rel="stylesheet" href="<?= ASSET ?>css/swiper.min.css?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/css/swiper.min.css") ?>">
     <script src="<?= ASSET ?>js/swiper-bundle.min.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/swiper-bundle.min.js") ?>"></script>
-    <script src="https://unpkg.com/@imagekit/javascript@5.0.0/dist/imagekit.min.js"></script>​​
+    <script src="https://unpkg.com/@imagekit/javascript@5.0.0/dist/imagekit.min.js"></script>
     <!-- jquery -->
     <script src="<?= ASSET ?>js/jquery-2.2.4.min.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/jquery-2.2.4.min.js") ?>"></script>
     <!-- sweat alert -->
@@ -64,6 +64,8 @@
                                 $itemDomId = 'detail_panier_'.md5((string)$itemKey);
                                 $liquid_image = ohnous_prepare_liquid_image($item['image'], '(max-width: 768px) 35vw, 180px');
 
+                                $articleUrl = '/article/'.rawurlencode((string)$item['slug']);
+
                                 echo '
                                     <div class="detail_panier" id="'.$itemDomId.'" data-cart-key="'.htmlspecialchars((string)$itemKey, ENT_QUOTES, 'UTF-8').'">
                                         <div class="div_img_detail_panier" style="background: '.$item['background'].'">
@@ -79,15 +81,21 @@
                                                 style="'.$item['style'].'"
                                                 alt="article/'.$item['slug'].'"
                                             />
-                                            <div class="div_supp_produit_panier" onclick="retirerDuPanierDepuisVue('.ohnous_js_html_arg($item['image']).','.ohnous_js_html_arg((string)$item['id']).','.ohnous_js_html_arg($item['name']).','.ohnous_js_html_arg($item['slug']).','.ohnous_js_html_arg($item['size']).','.ohnous_js_html_arg((string)$item['price']).','.ohnous_js_html_arg($item['style']).','.ohnous_js_html_arg($item['background']).','.ohnous_js_html_arg((string)$itemKey).')">
+                                            <button
+                                                type="button"
+                                                class="div_supp_produit_panier js-remove-cart-item"
+                                                data-cart-key="'.htmlspecialchars((string)$itemKey, ENT_QUOTES, 'UTF-8').'"
+                                                data-product-id="'.(int)$item['id'].'"
+                                                data-product-size="'.htmlspecialchars((string)$item['size'], ENT_QUOTES, 'UTF-8').'"
+                                            >
                                                 <i class="fa fa-trash"></i>
-                                            </div>
+                                            </button>
                                         </div>
                                         <div class="infos_detail_panier">
-                                            <p class="titre_produit_detail_panier">'.$item['name'].'</p>
+                                            <a href="'.$articleUrl.'" class="titre_produit_detail_panier_link">'.$item['name'].'</a>
                                             <p class="prix_produit_detail_panier">$ <span class="prix-panier">'.number_format(((float)$item['price']) * max(1, (int)$item['qty']), 2, '.', ' ').'</span></p>
-                                            <p class="taille_produit_detail_panier">'.($item['size'] !== '' ? $item['size'] : 'Taille non précisée').'</p>
-                                            <p class="taille_produit_detail_panier">Quantité : '.max(1, (int)$item['qty']).'</p>
+                                            <p class="taille_produit_detail_panier">'.($item['size'] !== '' ? $item['size'] : 'Taille non pr&eacute;cis&eacute;e').'</p>
+                                            <p class="taille_produit_detail_panier">Quantit&eacute; : '.max(1, (int)$item['qty']).'</p>
                                         </div>
                                     </div>';
                             }
@@ -152,7 +160,7 @@
                                     continue;
                                 }
                                 if(in_array($detail_category['id'], $category_ids)) {
-                                    continue; // Passer à l'itération suivante si l'ID de catégorie a déjà été traité
+                                    continue; // Passer ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  l'itÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©ration suivante si l'ID de catÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©gorie a dÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©jÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©tÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â© traitÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©
                                 }
                                 echo '
                                     <a href="/shop?categorie='.rawurlencode((string)$detail_category['slug']).'" class="swiper-slide">'.$detail_category['nom'].'</a>';
@@ -205,7 +213,7 @@
 				<input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="input_search_bar" id="input_search_bar_2" name="query" placeholder="Rechercher un article..." required oninput="rechercheArticles(this.value)" onfocus="rechercheArticles(this.value)" value=<?php if(isset($_GET['query'])){ echo json_encode($_GET['query']); } ?>>
 				<button type="submit" class="button_search_bar"><i class="fa fa-search"></i></button>
 			</form>
-            <!-- div des donnés de recherche -->
+            <!-- div des donnÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©s de recherche -->
             <div class="donnee_de_recherche null" id="donnee_de_recherche">
 
             </div>
@@ -214,7 +222,7 @@
 </body>
 </html>
 
-<!-- création des tables slugs  -->
+<!-- crÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©ation des tables slugs  -->
 <?php
     /* ajouter dans types */
     $table = "types";
@@ -374,7 +382,7 @@
     }
 ?>
 
-<!-- créer la table note article si nécessaire -->
+<!-- crÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©er la table note article si nÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©cessaire -->
 <?php
     createTable('notes_article', [
         'id INT AUTO_INCREMENT PRIMARY KEY',
@@ -434,7 +442,7 @@
     ]);
 ?>
 
-<!-- création des tables slugs, background  -->
+<!-- crÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©ation des tables slugs, background  -->
 <?php
     /* ajouter dans types */
     $table = "types";

@@ -1,3 +1,19 @@
+Réponds de manière concise et directe.
+- Pas d'explication inutile
+- Pas de répétition
+- Pas de texte décoratif
+- Donne uniquement le résultat ou le code final fonctionnel
+- Si du code est demandé : complet, propre, sans commentaire inutile
+- Si une explication est nécessaire : maximum 3 lignes
+
+Priorité : efficacité, clarté, minimalisme.
+
+
+Réponse courte uniquement.
+Pas d'explication sauf si demandé.
+Code complet sans commentaires.
+Pas de blabla.
+
 suis ma logique de programmation
 Ne modifie pas model/bdd.php
 utilise correctement les sessions que tu trouveras dans fonctions/

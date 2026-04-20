@@ -1,32 +1,35 @@
 /* afficher panier */
-let
-afficher_panier = document.querySelectorAll("#afficher_panier"),
-sortie_panier = document.querySelectorAll("#sortie_panier"),
-div_slide_panier = document.getElementById("div_slide_panier");
+let afficher_panier = document.querySelectorAll("#afficher_panier"),
+    sortie_panier = document.querySelectorAll("#sortie_panier"),
+    div_slide_panier = document.getElementById("div_slide_panier"),
+    nombre_total_panier = document.getElementById("nombre_total_panier");
 
 afficher_panier.forEach(function(element){
-    element.addEventListener("click",function(e){
+    element.addEventListener("click", function(e){
         e.preventDefault();
         div_slide_panier.classList.add("active");
-    })
-})
-sortie_panier.forEach(function(element){
-    element.addEventListener("click",function(e){
-        div_slide_panier.classList.remove("active");
-    })
-})
+    });
+});
 
-/* afficher les images après le floutage */
+sortie_panier.forEach(function(element){
+    element.addEventListener("click", function(){
+        div_slide_panier.classList.remove("active");
+    });
+});
+
 function onImageLoad() {
     document.querySelectorAll(".blur-up").forEach(function(img) {
-        img.onload = () => {
-            img.classList.add('blur-up-loaded');
+        img.onload = function() {
+            img.classList.add("blur-up-loaded");
+        };
+
+        if (img.complete) {
+            img.classList.add("blur-up-loaded");
         }
     });
 }
 onImageLoad();
 
-/* préparer les URLs ImageKit côté JS pour le HTML injecté dynamiquement */
 function buildImageKitUrl(url, transformations) {
     if (!url) {
         return "";
@@ -54,299 +57,205 @@ function buildLiquidImagePayload(url, sizes) {
     };
 }
 
-/* éditer icone ajouter au panier */
-function editIconAjouterPanier(produitId = null, ajouter = true, retire = false, imgSrc = "", produitNom = "", produitSlug = "", produitTaille = "", produitPrix = "", produitStyle = "", produitBackground = "") {
-    if(produitId!=null)
-    {
-        /* retirer du panier */
-        if(retire)
-        {
-            $.post(
-                "/fonctions/panier.php",
-                {
-                    id : produitId,
-                    price : produitPrix,
-                    name : produitNom,
-                    size : produitTaille,
-                    image : imgSrc,
-                    retire : "ok",
-                    style : produitStyle,
-                    background : produitBackground,
-                    slug : produitSlug,
-                },
-                function(data){
-                }
-            ); 
-            document.querySelectorAll("#btn_panier_"+produitId).forEach(function(element){
-                element.innerHTML = `<span class="icon-panier_plus"></span>`;
-                element.classList.remove("active");
-            });
-            return;
-        }
-        /* ajouter au panier */
-        $.post(
-            "/fonctions/panier.php",
-            {
-                id : produitId,
-                price : produitPrix,
-                name : produitNom,
-                size : produitTaille,
-                image : imgSrc,
-                ajout : "ok",
-                style : produitStyle,
-                background : produitBackground,
-                slug : produitSlug,
-            },
-            function(data){
-            }
-        ); 
-        document.querySelectorAll("#btn_panier_"+produitId).forEach(function(element){
-            element.innerHTML = `<span class="icon-panier_moins"></span>`;
-            element.classList.add("active");
-        })
+function escapeHtml(value) {
+    return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function buildArticleUrl(produitSlug) {
+    return "/article/" + encodeURIComponent(produitSlug || "");
+}
+
+function formatCartPrice(value) {
+    var amount = parseFloat(value || 0);
+    if (isNaN(amount)) {
+        amount = 0;
     }
+    return amount.toFixed(2);
 }
 
-/* indice nombre article panier */
-function indiceNombreArticlePanier()
-{
-    let prix_panier_exist = document.querySelectorAll(".prix-panier");
-    nombre_total_panier.innerText = prix_panier_exist.length;
-}
-
-/* calcul prix total panier */
-function calculPrixTotalPanier()
-{
-    let prix_panier_exist = document.querySelectorAll(".prix-panier");
-    let prix_total_panier = document.getElementById("prix_total_panier");
-    let prix_total = 0;
-    prix_panier_exist.forEach(function(element){
-        prix_total += parseFloat(element.innerText);
-    });
-    prix_total_panier.innerText = prix_total.toFixed(2);
-}
-
-function getCartKey(produitId, produitTaille)
-{
+function getCartKey(produitId, produitTaille) {
     return String(produitId) + "_" + String(produitTaille || "");
 }
 
-function cssEscape(value)
-{
-    if(window.CSS && typeof window.CSS.escape === "function")
-    {
+function cssEscape(value) {
+    if (window.CSS && typeof window.CSS.escape === "function") {
         return window.CSS.escape(value);
     }
 
     return String(value).replace(/"/g, '\\"');
 }
 
-function getCartItemElement(cartKey)
-{
+function getCartItemElement(cartKey) {
     return document.querySelector('.detail_panier[data-cart-key="' + cssEscape(cartKey) + '"]');
 }
 
-function updateEmptyCartState()
-{
-    let prix_panier_exist = document.querySelector(".prix-panier");
+function indiceNombreArticlePanier() {
+    if (!nombre_total_panier) {
+        return;
+    }
+
+    nombre_total_panier.innerText = document.querySelectorAll(".detail_panier[data-cart-key]").length;
+}
+
+function calculPrixTotalPanier() {
+    let prix_panier_exist = document.querySelectorAll(".prix-panier");
+    let prix_total_panier = document.getElementById("prix_total_panier");
+    let prix_total = 0;
+
+    prix_panier_exist.forEach(function(element){
+        prix_total += parseFloat(element.innerText || 0);
+    });
+
+    if (prix_total_panier) {
+        prix_total_panier.innerText = prix_total.toFixed(2);
+    }
+}
+
+function updateEmptyCartState() {
     let corps_detail_panier = document.getElementById("corps_detail_panier");
 
-    if(prix_panier_exist == null && corps_detail_panier)
-    {
+    if (!corps_detail_panier) {
+        return;
+    }
+
+    if (document.querySelectorAll(".detail_panier[data-cart-key]").length === 0) {
         corps_detail_panier.innerHTML = '<h2 class="titre_panier">Votre panier est vide</h2>';
     }
 }
 
-function removeCartItemElement(cartKey)
-{
+function removeCartItemElement(cartKey) {
     let cartItem = getCartItemElement(cartKey);
 
-    if(cartItem && cartItem.parentElement)
-    {
+    if (cartItem && cartItem.parentElement) {
         cartItem.parentElement.removeChild(cartItem);
     }
 
     indiceNombreArticlePanier();
     calculPrixTotalPanier();
     updateEmptyCartState();
-    onImageLoad();
 }
 
-/* ajouter au panier */
-function ajouterAuPanier(imgSrc = null, produitId = null, produitNom = null, produitSlug = null, produitTaille = null, produitPrix = null, produitStyle = null, produitBackground = null) {
-    /* retrouver le bouton d'ajoout au panier */
-    let prix_panier_exist = document.querySelector(".prix-panier");
-    let retirer_du_panier = false;
-    let corps_detail_panier = document.getElementById("corps_detail_panier");
-    let cartKey = getCartKey(produitId, produitTaille);
-    document.querySelectorAll("#btn_panier_"+produitId).forEach(function(element){
-        if(element.classList.contains("active"))
-        {
-            Swal.fire({
-                title: "Produit retiré du panier !",
-                text: "Cet article a été retiré de votre panier.",
-                icon: "success",
-                confirmButtonColor: '#6775d6',
-                timer: 1500
-            });
-            document.getElementById("detail_panier_"+produitId).parentElement.removeChild(document.getElementById("detail_panier_"+produitId));
-            /* mettre à jour l'indice du nombre d'articles au panier */
-            indiceNombreArticlePanier();
-            /* calcul prix total panier */
-            calculPrixTotalPanier();
-            /* afficher les images après le floutage */
-            onImageLoad();
-            /* ajouter au panier */
-            editIconAjouterPanier(produitId = produitId, ajouter = false, retire = true, imgSrc = imgSrc, produitNom = produitNom, produitSlug = produitSlug, produitTaille = produitTaille, produitPrix = produitPrix, produitStyle = produitStyle, produitBackground = produitBackground);
-            retirer_du_panier = true;
-            /* vérifier s'il y'a des elements dans le panier */
-            prix_panier_exist = document.querySelector(".prix-panier");
-            if(prix_panier_exist == null)
-            {
-                corps_detail_panier.innerHTML = '<h2 class="titre_panier">Votre panier est vide</h2>';
-            }
-        }
-    })
-    if(retirer_du_panier)
-    {
+function setCartButtonState(produitId, isActive) {
+    document.querySelectorAll("#btn_panier_" + produitId).forEach(function(element){
+        element.innerHTML = isActive ? '<span class="icon-panier_moins"></span>' : '<span class="icon-panier_plus"></span>';
+        element.classList.toggle("active", isActive);
+    });
+}
+
+function editIconAjouterPanier(produitId = null, ajouter = true, retire = false, imgSrc = "", produitNom = "", produitSlug = "", produitTaille = "", produitPrix = "", produitStyle = "", produitBackground = "") {
+    if (produitId == null) {
         return;
     }
-    /* ajouter au panier */
-    Swal.fire({
-        title: "Produit ajouté au panier !",
-        text: "Vous pouvez consulter votre panier pour finaliser votre achat.",
-        icon: "success",
-        confirmButtonColor: '#6775d6',
-        timer: 1500
+
+    if (retire) {
+        $.post("/fonctions/panier.php", {
+            id: produitId,
+            price: produitPrix,
+            name: produitNom,
+            size: produitTaille,
+            image: imgSrc,
+            retire: "ok",
+            style: produitStyle,
+            background: produitBackground,
+            slug: produitSlug
+        });
+        setCartButtonState(produitId, false);
+        return;
+    }
+
+    $.post("/fonctions/panier.php", {
+        id: produitId,
+        price: produitPrix,
+        name: produitNom,
+        size: produitTaille,
+        image: imgSrc,
+        ajout: "ok",
+        style: produitStyle,
+        background: produitBackground,
+        slug: produitSlug
     });
-    let liquidImage = buildLiquidImagePayload(imgSrc, "(max-width: 768px) 35vw, 180px");
-    /* ajouter au panier */
-    let detail = `
-                <!-- images -->
-                <div class="div_img_detail_panier" style="background: ${produitBackground}">
-                    <img
-                        class="blur-up js-liquid-image"
-                        src="${liquidImage.placeholder}"
-                        data-image-base="${imgSrc}"
-                        data-image-fallback="${liquidImage.fallback}"
-                        data-image-high="${liquidImage.high}"
-                        data-image-srcset="${liquidImage.srcset}"
-                        data-image-sizes="${liquidImage.sizes}"
-                        loading="lazy"
-                        style="${produitStyle}"
-                        alt="${produitSlug}"
-                    />
-                    <div class="div_supp_produit_panier" onclick="ajouterAuPanier('${imgSrc}','${produitId}','${produitNom}','${produitSlug}','${produitTaille}','${produitPrix}','${produitStyle}','${produitBackground}')">
-                        <i class="fa fa-trash"></i>
-                    </div>
-                </div>
-                <!-- details -->
-                <div class="infos_detail_panier">
-                    <p class="titre_produit_detail_panier">${produitNom}</p>
-                    <p class="prix_produit_detail_panier">$ <span class="prix-panier">${produitPrix}</span></p>
-                    <p class="taille_produit_detail_panier">${produitTaille}</p>
-                </div>`;
-    let corps_article = document.createElement("div");
-    corps_article.classList.add("detail_panier");
-    corps_article.id = "detail_panier_"+produitId;
-    corps_article.innerHTML = detail;
-    /* vérifier s'il y'a des elements dans le panier */
-    if(prix_panier_exist)
-    {
-        corps_detail_panier.appendChild(corps_article);
-    }
-    else
-    {
-        corps_detail_panier.innerHTML = "";
-        corps_detail_panier.appendChild(corps_article);
-    }
-    /* mettre à jour l'indice du nombre d'articles au panier */
-    indiceNombreArticlePanier();
-    /* calcul prix total panier */
-    calculPrixTotalPanier();
-    /* afficher les images après le floutage */
-    onImageLoad();
-    if (typeof window.initLiquidImages === "function") {
-        window.initLiquidImages();
-    }
-    /* ajouter au panier */
-    editIconAjouterPanier(produitId = produitId, ajouter = true, retire = false, imgSrc = imgSrc, produitNom = produitNom, produitSlug = produitSlug, produitTaille = produitTaille, produitPrix = produitPrix, produitStyle = produitStyle, produitBackground = produitBackground);
+    setCartButtonState(produitId, true);
 }
-/* recherche catalogue */
+
+function buildCartItemMarkup(imgSrc, produitId, produitNom, produitSlug, produitTaille, produitPrix, produitStyle, produitBackground, cartKey) {
+    let liquidImage = buildLiquidImagePayload(imgSrc, "(max-width: 768px) 35vw, 180px");
+
+    return `
+        <div class="detail_panier" data-cart-key="${escapeHtml(cartKey)}">
+            <div class="div_img_detail_panier" style="background: ${escapeHtml(produitBackground)}">
+                <img
+                    class="blur-up js-liquid-image"
+                    src="${escapeHtml(liquidImage.placeholder)}"
+                    data-image-base="${escapeHtml(imgSrc)}"
+                    data-image-fallback="${escapeHtml(liquidImage.fallback)}"
+                    data-image-high="${escapeHtml(liquidImage.high)}"
+                    data-image-srcset="${escapeHtml(liquidImage.srcset)}"
+                    data-image-sizes="${escapeHtml(liquidImage.sizes)}"
+                    loading="lazy"
+                    style="${escapeHtml(produitStyle)}"
+                    alt="${escapeHtml(produitSlug)}"
+                />
+                <button
+                    type="button"
+                    class="div_supp_produit_panier js-remove-cart-item"
+                    data-cart-key="${escapeHtml(cartKey)}"
+                    data-product-id="${escapeHtml(produitId)}"
+                    data-product-size="${escapeHtml(produitTaille)}"
+                >
+                    <i class="fa fa-trash"></i>
+                </button>
+            </div>
+            <div class="infos_detail_panier">
+                <a href="${buildArticleUrl(produitSlug)}" class="titre_produit_detail_panier_link">${escapeHtml(produitNom)}</a>
+                <p class="prix_produit_detail_panier">$ <span class="prix-panier">${formatCartPrice(produitPrix)}</span></p>
+                <p class="taille_produit_detail_panier">${escapeHtml(produitTaille || "Taille non pr\u00e9cis\u00e9e")}</p>
+                <p class="taille_produit_detail_panier">Quantit\u00e9 : 1</p>
+            </div>
+        </div>`;
+}
+
 function ajouterAuPanier(imgSrc = null, produitId = null, produitNom = null, produitSlug = null, produitTaille = null, produitPrix = null, produitStyle = null, produitBackground = null) {
-    let prix_panier_exist = document.querySelector(".prix-panier");
-    let retirer_du_panier = false;
     let corps_detail_panier = document.getElementById("corps_detail_panier");
     let cartKey = getCartKey(produitId, produitTaille);
+    let shouldRemove = false;
 
-    document.querySelectorAll("#btn_panier_"+produitId).forEach(function(element){
-        if(element.classList.contains("active"))
-        {
-            Swal.fire({
-                title: "Produit retiré du panier !",
-                text: "Cet article a été retiré de votre panier.",
-                icon: "success",
-                confirmButtonColor: '#6775d6',
-                timer: 1500
-            });
-            removeCartItemElement(cartKey);
-            editIconAjouterPanier(produitId, false, true, imgSrc, produitNom, produitSlug, produitTaille, produitPrix, produitStyle, produitBackground);
-            retirer_du_panier = true;
+    document.querySelectorAll("#btn_panier_" + produitId).forEach(function(element){
+        if (element.classList.contains("active")) {
+            shouldRemove = true;
         }
     });
 
-    if(retirer_du_panier)
-    {
+    if (shouldRemove) {
+        Swal.fire({
+            title: "Produit retir\u00e9 du panier !",
+            text: "Cet article a \u00e9t\u00e9 retir\u00e9 de votre panier.",
+            icon: "success",
+            confirmButtonColor: "#6775d6",
+            timer: 1500
+        });
+        removeCartItemElement(cartKey);
+        editIconAjouterPanier(produitId, false, true, imgSrc, produitNom, produitSlug, produitTaille, produitPrix, produitStyle, produitBackground);
         return;
     }
 
     Swal.fire({
-        title: "Produit ajouté au panier !",
+        title: "Produit ajout\u00e9 au panier !",
         text: "Vous pouvez consulter votre panier pour finaliser votre achat.",
         icon: "success",
-        confirmButtonColor: '#6775d6',
+        confirmButtonColor: "#6775d6",
         timer: 1500
     });
 
-    let liquidImage = buildLiquidImagePayload(imgSrc, "(max-width: 768px) 35vw, 180px");
-    let detail = `
-                <!-- images -->
-                <div class="div_img_detail_panier" style="background: ${produitBackground}">
-                    <img
-                        class="blur-up js-liquid-image"
-                        src="${liquidImage.placeholder}"
-                        data-image-base="${imgSrc}"
-                        data-image-fallback="${liquidImage.fallback}"
-                        data-image-high="${liquidImage.high}"
-                        data-image-srcset="${liquidImage.srcset}"
-                        data-image-sizes="${liquidImage.sizes}"
-                        loading="lazy"
-                        style="${produitStyle}"
-                        alt="${produitSlug}"
-                    />
-                    <div class="div_supp_produit_panier" onclick="retirerDuPanierDepuisVue(${JSON.stringify(imgSrc)},${JSON.stringify(produitId)},${JSON.stringify(produitNom)},${JSON.stringify(produitSlug)},${JSON.stringify(produitTaille)},${JSON.stringify(produitPrix)},${JSON.stringify(produitStyle)},${JSON.stringify(produitBackground)},${JSON.stringify(cartKey)})">
-                        <i class="fa fa-trash"></i>
-                    </div>
-                </div>
-                <!-- details -->
-                <div class="infos_detail_panier">
-                    <p class="titre_produit_detail_panier">${produitNom}</p>
-                    <p class="prix_produit_detail_panier">$ <span class="prix-panier">${produitPrix}</span></p>
-                    <p class="taille_produit_detail_panier">${produitTaille}</p>
-                </div>`;
-    let corps_article = document.createElement("div");
-    corps_article.classList.add("detail_panier");
-    corps_article.setAttribute("data-cart-key", cartKey);
-    corps_article.innerHTML = detail;
-
-    if(prix_panier_exist)
-    {
-        corps_detail_panier.appendChild(corps_article);
-    }
-    else
-    {
-        corps_detail_panier.innerHTML = "";
-        corps_detail_panier.appendChild(corps_article);
+    if (corps_detail_panier) {
+        if (document.querySelectorAll(".detail_panier[data-cart-key]").length === 0) {
+            corps_detail_panier.innerHTML = "";
+        }
+        corps_detail_panier.insertAdjacentHTML("beforeend", buildCartItemMarkup(imgSrc, produitId, produitNom, produitSlug, produitTaille, produitPrix, produitStyle, produitBackground, cartKey));
     }
 
     indiceNombreArticlePanier();
@@ -358,24 +267,26 @@ function ajouterAuPanier(imgSrc = null, produitId = null, produitNom = null, pro
     editIconAjouterPanier(produitId, true, false, imgSrc, produitNom, produitSlug, produitTaille, produitPrix, produitStyle, produitBackground);
 }
 
-function retirerDuPanierDepuisVue(imgSrc = null, produitId = null, produitNom = null, produitSlug = null, produitTaille = null, produitPrix = null, produitStyle = null, produitBackground = null, cartKey = null)
-{
+function retirerDuPanierDepuisVue(produitId = null, produitTaille = "", cartKey = null) {
     let resolvedCartKey = cartKey || getCartKey(produitId, produitTaille);
 
     Swal.fire({
-        title: "Produit retiré du panier !",
-        text: "Cet article a été retiré de votre panier.",
+        title: "Produit retir\u00e9 du panier !",
+        text: "Cet article a \u00e9t\u00e9 retir\u00e9 de votre panier.",
         icon: "success",
-        confirmButtonColor: '#6775d6',
+        confirmButtonColor: "#6775d6",
         timer: 1500
     });
 
     removeCartItemElement(resolvedCartKey);
-    editIconAjouterPanier(produitId, false, true, imgSrc, produitNom, produitSlug, produitTaille, produitPrix, produitStyle, produitBackground);
+    editIconAjouterPanier(produitId, false, true, "", "", "", produitTaille, "", "", "");
 }
 
-function commanderDirectement(imgSrc = null, produitId = null, produitNom = null, produitSlug = null, produitTaille = null, produitPrix = null, produitStyle = null, produitBackground = null)
-{
+$(document).on("click", ".js-remove-cart-item", function(){
+    retirerDuPanierDepuisVue($(this).data("product-id"), $(this).data("product-size"), $(this).data("cart-key"));
+});
+
+function commanderDirectement(imgSrc = null, produitId = null, produitNom = null, produitSlug = null, produitTaille = null, produitPrix = null, produitStyle = null, produitBackground = null) {
     $.post("/fonctions/checkout_actions.php", {
         action: "prepare_direct_checkout",
         id: produitId,
@@ -387,12 +298,11 @@ function commanderDirectement(imgSrc = null, produitId = null, produitNom = null
         background: produitBackground,
         slug: produitSlug
     }, function(data){
-        if(data.result !== "ok")
-        {
+        if (data.result !== "ok") {
             Swal.fire({
                 icon: "error",
-                title: data.msg || "Impossible de préparer cette commande directe.",
-                confirmButtonColor: '#6775d6'
+                title: data.msg || "Impossible de pr\u00e9parer cette commande directe.",
+                confirmButtonColor: "#6775d6"
             });
             return;
         }
@@ -401,8 +311,8 @@ function commanderDirectement(imgSrc = null, produitId = null, produitNom = null
     }, "json").fail(function(){
         Swal.fire({
             icon: "error",
-            title: "Impossible de préparer cette commande directe.",
-            confirmButtonColor: '#6775d6'
+            title: "Impossible de pr\u00e9parer cette commande directe.",
+            confirmButtonColor: "#6775d6"
         });
     });
 }
@@ -411,16 +321,14 @@ function commanderDirectement(imgSrc = null, produitId = null, produitNom = null
 let donnee_de_recherche = document.querySelectorAll("#donnee_de_recherche");
 let input_search_bar_2 = document.getElementById("input_search_bar_2");
 
-function fermerRechercheSuggestions()
-{
+function fermerRechercheSuggestions() {
     donnee_de_recherche.forEach(function (element){
         element.innerHTML = "";
         element.classList.add("null");
     });
 }
 
-function ouvrirRechercheSuggestions(html)
-{
+function ouvrirRechercheSuggestions(html) {
     donnee_de_recherche.forEach(function (element){
         element.innerHTML = html;
         element.classList.remove("null");
@@ -431,8 +339,7 @@ function ouvrirRechercheSuggestions(html)
     }
 }
 
-function handleSearchSuggestionClick(event, source, value, slug)
-{
+function handleSearchSuggestionClick(event, source, value, slug) {
     if (typeof window.ohnousShopApplySearchResult !== "function" || window.location.pathname !== "/shop") {
         return true;
     }
@@ -468,8 +375,7 @@ function handleSearchSuggestionClick(event, source, value, slug)
     return true;
 }
 
-function handleShopSearchSubmit(event)
-{
+function handleShopSearchSubmit(event) {
     if (window.location.pathname === "/shop" && typeof window.ohnousShopSubmitSearch === "function") {
         event.preventDefault();
         window.ohnousShopSubmitSearch((input_search_bar_2 && input_search_bar_2.value) ? input_search_bar_2.value : "");
@@ -480,8 +386,7 @@ function handleShopSearchSubmit(event)
     return true;
 }
 
-function buildSearchSuggestionHtml(item)
-{
+function buildSearchSuggestionHtml(item) {
     if (item.source === "articles") {
         let thumb = "";
         if (item.image) {
@@ -523,7 +428,7 @@ function buildSearchSuggestionHtml(item)
         source = "Boutique";
     } else if (item.source === "categorie") {
         icon = '<i class="fa-solid fa-layer-group"></i>';
-        source = "Catégorie";
+        source = "Cat\u00e9gorie";
         clickHandler = ` onclick="return handleSearchSuggestionClick(event, 'categorie', ${JSON.stringify(item.label)}, ${JSON.stringify(item.slug)})"`;
     } else if (item.source === "types") {
         icon = '<i class="fa-solid fa-list"></i>';
@@ -538,34 +443,30 @@ function buildSearchSuggestionHtml(item)
     return `<a href="${item.url}" class="link"${clickHandler}>${icon} ${item.label} <span>${source}</span></a>`;
 }
 
-function rechercheArticles(value)
-{
+function rechercheArticles(value) {
     value = (value || "").trim();
 
-    if(value === ""){
+    if (value === "") {
         fermerRechercheSuggestions();
         return;
     }
 
-    $.post("/fonctions/recherche.php",{q : value },function(data){
+    $.post("/fonctions/recherche.php", { q: value }, function(data){
         let resultList = Array.isArray(data) ? data : (Array.isArray(data.results) ? data.results : []);
         let html = "";
 
-        if(data.suggestion !== undefined)
-        {
+        if (data.suggestion !== undefined) {
             html += `<div class="suggestion">Vous recherchez <a href="/shop?query=${encodeURIComponent(data.suggestion)}" onclick="return handleSearchSuggestionClick(event, 'search', ${JSON.stringify(data.suggestion)}, '')">${data.suggestion}</a> ?</div>`;
         }
 
-        if(data.noResult !== undefined)
-        {
-            ouvrirRechercheSuggestions(`<div class="no_result">Aucun article disponible.</div>`);
+        if (data.noResult !== undefined) {
+            ouvrirRechercheSuggestions('<div class="no_result">Aucun article disponible.</div>');
             return;
         }
-        let labels = [];
 
+        let labels = [];
         resultList.forEach(function(item){
-            if(labels.indexOf(item.source + ":" + item.label) !== -1)
-            {
+            if (labels.indexOf(item.source + ":" + item.label) !== -1) {
                 return;
             }
 
@@ -573,7 +474,7 @@ function rechercheArticles(value)
             html += buildSearchSuggestionHtml(item);
         });
 
-        ouvrirRechercheSuggestions(html !== "" ? html : `<div class="no_result">Aucun article disponible.</div>`);
+        ouvrirRechercheSuggestions(html !== "" ? html : '<div class="no_result">Aucun article disponible.</div>');
     }, "json");
 }
 
@@ -581,7 +482,7 @@ $(window).on("scroll", function () {
     fermerRechercheSuggestions();
 });
 
-document.addEventListener("click", (e) => {
+document.addEventListener("click", function(e) {
     if (input_search_bar_2 && input_search_bar_2.contains(e.target)) {
         return;
     }

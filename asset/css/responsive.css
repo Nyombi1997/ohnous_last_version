@@ -455,3 +455,13 @@
         align-items: stretch;
     }
 }
+
+@media screen and (max-width: 780px) {
+    .div_detail_vu_article .action_panier button{
+        width:100%;
+    }
+
+    .share-network-grid{
+        grid-template-columns:1fr;
+    }
+}
