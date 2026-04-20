@@ -41,41 +41,11 @@
             <div class="div_image_vu_article">
                 <?php
                     /* afficher les images de l'article */
-                    $image_article = select_bdd($bdd, "image_articles", $where = "article = '".$article['id']."'", $limit = null, $offset = 0, $order = null, $random = false);
+                    $image_article = ohnous_get_article_images((int)$article['id']);
                     $mainImage = $image_article[0];
                     $image_article_style = $mainImage['styles'];
                     $image_article_background = $mainImage['background'];
-                    echo '<div class="swiper article-gallery-swiper js-article-gallery-swiper">';
-                    echo '<div class="swiper-wrapper">';
-                    foreach($image_article as $singleImage)
-                    {
-                        $liquid_image = ohnous_prepare_liquid_image($singleImage['img']);
-                        $image_article_id = 'img_produit_'.$singleImage['id'];
-                        $image_article_div_img_id = 'div_img_produit_'.$singleImage['id'];
-                        echo '
-                            <div class="swiper-slide">
-                                <div class="div_img_affiche_produit div_img_affiche_produit--detail" id="'.$image_article_div_img_id.'" style="background: '.$singleImage['background'].';">
-                                    <img
-                                        crossorigin="anonymous"
-                                        src="'.$liquid_image['placeholder'].'"
-                                        alt="'.$article['slug'].'"
-                                        class="img_affiche blur-up js-liquid-image"
-                                        data-img ="'.$singleImage['img'].'"
-                                        data-image-base="'.$liquid_image['base'].'"
-                                        data-image-fallback="'.$liquid_image['fallback'].'"
-                                        data-image-high="'.$liquid_image['high'].'"
-                                        data-image-srcset="'.$liquid_image['srcset'].'"
-                                        data-image-sizes="'.$liquid_image['sizes'].'"
-                                        id="'.$image_article_id.'"
-                                        style="'.$singleImage['styles'].'"
-                                        loading="lazy"
-                                    >
-                                </div>
-                            </div>';
-                    }
-                    echo '</div>';
-                    echo '<div class="article-gallery-counter"><span class="current">1</span>/<span class="total">'.count($image_article).'</span></div>';
-                    echo '</div>';
+                    echo ohnous_render_article_gallery((int)$article['id'], (string)$article['slug'], 'detail', '', $image_article);
                 ?>
             </div>
             <!-- details -->

@@ -69,7 +69,6 @@
             $verif_welcome_email = select_bdd($bdd, "bienvenue_email", 'client_unique_id = "'.$boutique['unique_id'].'"', null, 0, null, false);
             if(count($verif_welcome_email)==0)
             {
-                welcome($email = $boutique['adresse_email']);
                 $insert_data = [
                     "client_unique_id" => $boutique['unique_id']
                 ];
@@ -107,7 +106,8 @@
     let home_page = true;
     window.storeArticlesConfig = {
         storeId: <?= (int)$boutique['id'] ?>,
-        query: <?= json_encode($storeQuery, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>
+        query: <?= json_encode($storeQuery, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
+        isOwner: <?= $isOwner ? 'true' : 'false' ?>
     };
 </script>
 
@@ -257,6 +257,9 @@
             <p class="shop-results-head__eyebrow">Boutique</p>
             <h2 class="shop-results-head__title"><?= $storeQuery !== '' ? 'Résultats pour “'.htmlspecialchars($storeQuery, ENT_QUOTES, 'UTF-8').'”' : 'Articles de la boutique' ?></h2>
         </div>
+        <?php if($isOwner): ?>
+            <div class="shop-results-head__owner-note">Vous pouvez maintenant modifier ou supprimer vos articles directement ici.</div>
+        <?php endif; ?>
     </div>
 
     <?php if(!$isActiveStore): ?>

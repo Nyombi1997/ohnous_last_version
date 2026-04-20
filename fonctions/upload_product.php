@@ -42,13 +42,33 @@
     $product_types = html_entity_decode(filter_var($_POST['product_types'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $product_tailles = html_entity_decode(filter_var($_POST['product_tailles'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $product_description = html_entity_decode(filter_var($_POST['product_description'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+    $promo_actif = (int)html_entity_decode(filter_var($_POST['promo_actif'] ?? 0, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+    $promo_prix = html_entity_decode(filter_var($_POST['promo_prix'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $product_images_json = $_POST['product_images'] ?? '';
 
     if(trim($product_name) === '' || trim($product_price) === '' || (int)$product_category <= 0)
     {
         echo json_encode([
             "result" => "error",
-            "msg" => "Les informations principales de l'article sont incomplètes."
+            "msg" => "Le nom, le prix et la catégorie sont obligatoires."
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
+
+    if($promo_actif === 1 && trim((string)$promo_prix) === '')
+    {
+        echo json_encode([
+            "result" => "error",
+            "msg" => "Entrez le prix promotionnel de l'article."
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
+
+    if($promo_actif === 1 && trim((string)$promo_prix) !== '' && (float)$promo_prix >= (float)$product_price)
+    {
+        echo json_encode([
+            "result" => "error",
+            "msg" => "Le prix promotionnel doit être inférieur au prix normal."
         ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         exit;
     }
@@ -86,8 +106,21 @@
         "slug" => $slug,
         "prix" => $product_price,
         "description" => $product_description,
+        "reserve" => 1,
         "boutique" => (int)$boutique['id'],
     ];
+
+    /* garder le flux compatible avec une base déjà en production */
+    if(ohnous_column_exists('articles', 'promo_actif'))
+    {
+        $insert_data['promo_actif'] = $promo_actif === 1 ? 1 : 0;
+    }
+
+    if(ohnous_column_exists('articles', 'promo_prix'))
+    {
+        $insert_data['promo_prix'] = $promo_actif === 1 ? $promo_prix : null;
+    }
+
     insert_bdd($bdd, "articles", $insert_data);
 
     $article = only_select("articles", "unique_id = '".$unique_id."'", null, null);
@@ -143,6 +176,16 @@
         if(ohnous_column_exists('image_articles', 'fileId'))
         {
             $insert['fileId'] = $image['fileId'] ?? '';
+        }
+
+        if(ohnous_column_exists('image_articles', 'display_order'))
+        {
+            $insert['display_order'] = $index + 1;
+        }
+
+        if(ohnous_column_exists('image_articles', 'is_primary'))
+        {
+            $insert['is_primary'] = $index === 0 ? 1 : 0;
         }
 
         insert_bdd($bdd, "image_articles", $insert);

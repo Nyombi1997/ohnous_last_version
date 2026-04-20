@@ -1,23 +1,22 @@
 <?php
     /* affiche produit */
-    function affiche_produit($donnee=null , $return = false) {
+    function affiche_produit($donnee=null , $return = false, $options = []) {
         global $bdd;
-        /* si une donnée est envoyé */
+        /* si une donnÃ©e est envoyÃ© */
         if($donnee)
         {
-            if(!ohnous_is_article_visible($donnee))
+            $allowHiddenForOwner = !empty($options['allow_hidden_for_owner']) && ohnous_can_manage_article($donnee);
+            $showOwnerActions = !empty($options['show_owner_actions']);
+            if(!ohnous_is_article_visible($donnee) && !$allowHiddenForOwner)
             {
                 return '';
             }
 
-            $img = select_bdd($bdd, "image_articles", $where = "article = '".$donnee['id']."'", $limit = null, $offset = 0, $order = null, $random = false);
+            $img = ohnous_get_article_images((int)$donnee['id']);
             if(empty($img))
             {
                 return '';
             }
-            $liquid_image = ohnous_prepare_liquid_image($img[0]['img']);
-            $imgId = 'img_produit_'.$img[0]['id'];
-            $divImgId = 'div_img_produit_'.$img[0]['id'];
             $imgBackground = $img[0]['background'];
             $imgStyles = $img[0]['styles'];
             $pricing = ohnous_get_article_pricing($donnee);
@@ -34,6 +33,11 @@
             {
                 $badge .= '
                     <span class="info_affiche_produit promo">Promotion -'.$pricing['reduction'].'%</span>';
+            }
+            if($allowHiddenForOwner && (int)($donnee['reserve'] ?? 1) !== 1)
+            {
+                $badge .= '
+                    <span class="info_affiche_produit reserve">Masqué</span>';
             }
             /* tailles */
             $tailles = fetch_tailles($donnee['id']);
@@ -69,26 +73,11 @@
                 <div class="div_affiche_produit">
                     <div class="affiche_produit">
                         <!-- image -->				
-                        <div class="div_img_affiche_produit" id="'.$divImgId.'" style="background: '.$imgBackground.';">
-                            <a href="/article/'.$donnee['slug'].'">
-                                <img 
-                                    crossorigin="anonymous"
-                                    src="'.$liquid_image['placeholder'].'"
-                                    alt="'.$donnee['slug'].'" 
-                                    class="img_affiche blur-up js-liquid-image"
-                                    data-img ="'.$img[0]['img'].'"
-                                    data-image-base="'.$liquid_image['base'].'"
-                                    data-image-fallback="'.$liquid_image['fallback'].'"
-                                    data-image-high="'.$liquid_image['high'].'"
-                                    data-image-srcset="'.$liquid_image['srcset'].'"
-                                    data-image-sizes="'.$liquid_image['sizes'].'"
-                                    id="'.$imgId.'"
-                                    style="'.$imgStyles.'"
-                                    loading="lazy"
-                                >
-                            </a>
+                        <div class="div_img_affiche_produit">
+                            '.ohnous_render_article_gallery((int)$donnee['id'], (string)$donnee['slug'], 'card', '/article/'.$donnee['slug'], $img).'
                             '.$badge.'
                             '.ohnous_render_article_admin_edit_link($donnee['id'], 'card').'
+                            '.($showOwnerActions ? ohnous_render_store_article_manage_actions($donnee, 'card') : '').'
                             <!-- like -->
                             '.ohnous_render_like_button($donnee['id'], 'card').'
                         </div>

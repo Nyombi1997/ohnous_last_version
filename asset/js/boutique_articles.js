@@ -33,6 +33,10 @@
         }
     }
 
+    function getEndpoint() {
+        return config.isOwner ? '/fonctions/store_articles_fetch.php' : '/fonctions/filtre_article.php';
+    }
+
     function requestArticles(reset) {
         if (!isPageReady() || state.loading || (!state.hasMore && !reset)) {
             return;
@@ -47,7 +51,7 @@
 
         setLoading(true);
 
-        $.post('/fonctions/filtre_article.php', {
+        $.post(getEndpoint(), {
             categorie: 0,
             types: 0,
             taille: 0,
@@ -106,6 +110,68 @@
         }
     }
 
+    function bindOwnerActions() {
+        if (!config.isOwner || !els.results) {
+            return;
+        }
+
+        $(els.results).off('click.storeDelete').on('click.storeDelete', '.js-store-delete-article', function () {
+            var $button = $(this);
+            var articleId = parseInt($button.data('article-id') || 0, 10);
+            var articleName = String($button.data('article-name') || 'cet article');
+
+            if (articleId <= 0) {
+                return;
+            }
+
+            Swal.fire({
+                icon: 'warning',
+                title: 'Supprimer l’article ?',
+                text: '“' + articleName + '” sera supprimé définitivement.',
+                showCancelButton: true,
+                confirmButtonText: 'Supprimer',
+                cancelButtonText: 'Annuler',
+                confirmButtonColor: '#d94b4b'
+            }).then(function (result) {
+                if (!result.isConfirmed) {
+                    return;
+                }
+
+                $button.prop('disabled', true);
+
+                $.post('/fonctions/store_article_actions.php', {
+                    action: 'delete_article',
+                    article_id: articleId
+                }, function (data) {
+                    if (!data || data.result !== 'ok') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: data && data.msg ? data.msg : "Impossible de supprimer l'article.",
+                            confirmButtonColor: '#6775d6'
+                        });
+                        $button.prop('disabled', false);
+                        return;
+                    }
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: data.msg || "L'article a été supprimé.",
+                        confirmButtonColor: '#6775d6'
+                    }).then(function () {
+                        requestArticles(true);
+                    });
+                }, 'json').fail(function () {
+                    Swal.fire({
+                        icon: 'error',
+                        title: "Impossible de supprimer l'article.",
+                        confirmButtonColor: '#6775d6'
+                    });
+                    $button.prop('disabled', false);
+                });
+            });
+        });
+    }
+
     $(document).ready(function () {
         cacheDom();
 
@@ -113,6 +179,7 @@
             return;
         }
 
+        bindOwnerActions();
         requestArticles(true);
         window.addEventListener('scroll', loadMoreIfNeeded);
         window.addEventListener('resize', loadMoreIfNeeded);

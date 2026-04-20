@@ -30,6 +30,7 @@
                             "boutiques" => ["controller" => 'Home', "method" => 'showStores'],
                             "editer-boutique" => ["controller" => 'Home', "method" => 'showEditStore'],
                             "editer-profile-boutique" => ["controller" => 'Home', "method" => 'showEditStoreProfile'],
+                            "editer-article" => ["controller" => 'Home', "method" => 'showEditArticle'],
                             "activer-boutique" => ["controller" => 'Home', "method" => 'showActiveStore'],
                             "articles-aimes" => ["controller" => 'Home', "method" => 'showLikedArticles'],
                             "admin-activation-boutique" => ["controller" => 'Home', "method" => 'showAdminStoreActivation'],

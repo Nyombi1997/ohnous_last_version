@@ -30,34 +30,6 @@ document.querySelectorAll(".js_titre_details_article").forEach(function(element,
 });
 
 document.addEventListener("DOMContentLoaded", function(){
-    const galleryElement = document.querySelector(".js-article-gallery-swiper");
-    if (galleryElement) {
-        const counterCurrent = galleryElement.querySelector(".article-gallery-counter .current");
-
-        new Swiper(".js-article-gallery-swiper", {
-            loop: true,
-            slidesPerView: 1,
-            spaceBetween: 0,
-            autoplay: {
-                delay: 2600,
-                disableOnInteraction: true,
-                pauseOnMouseEnter: true
-            },
-            on: {
-                init: function(){
-                    if (counterCurrent) {
-                        counterCurrent.textContent = "1";
-                    }
-                },
-                slideChange: function(){
-                    if (counterCurrent) {
-                        counterCurrent.textContent = String(this.realIndex + 1);
-                    }
-                }
-            }
-        });
-    }
-
     const shareButton = document.querySelector(".js-article-share-trigger");
     const shareConfig = window.articleShareConfig || null;
 

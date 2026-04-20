@@ -1,4 +1,4 @@
-<?php
+﻿<?php
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
@@ -28,6 +28,7 @@
     <link rel="stylesheet" href="<?= ASSET ?>css/sweetalert2.min.css?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/css/sweetalert2.min.css") ?>">
     <script src="<?= ASSET ?>js/sweetalert2.all.min.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/sweetalert2.all.min.js") ?>"></script>
     <script src="<?= ASSET ?>js/image_loader.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/image_loader.js") ?>" defer></script>
+    <script src="<?= ASSET ?>js/article_swipers.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/article_swipers.js") ?>" defer></script>
     <script src="<?= ASSET ?>js/account_interactions.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/account_interactions.js") ?>" defer></script>
     <!-- script panier -->
 	<script src="/asset/js/main_panier_produit.js?<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/asset/js/main_panier_produit.js') ?>" defer></script>
@@ -160,7 +161,7 @@
                                     continue;
                                 }
                                 if(in_array($detail_category['id'], $category_ids)) {
-                                    continue; // Passer ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  l'itÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©ration suivante si l'ID de catÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©gorie a dÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©jÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©tÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â© traitÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©
+                                    continue; // Passer à l'itération suivante si l'ID de catégorie a déjà été traité.
                                 }
                                 echo '
                                     <a href="/shop?categorie='.rawurlencode((string)$detail_category['slug']).'" class="swiper-slide">'.$detail_category['nom'].'</a>';
@@ -213,7 +214,7 @@
 				<input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="input_search_bar" id="input_search_bar_2" name="query" placeholder="Rechercher un article..." required oninput="rechercheArticles(this.value)" onfocus="rechercheArticles(this.value)" value=<?php if(isset($_GET['query'])){ echo json_encode($_GET['query']); } ?>>
 				<button type="submit" class="button_search_bar"><i class="fa fa-search"></i></button>
 			</form>
-            <!-- div des donnÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©s de recherche -->
+            <!-- div des données de recherche -->
             <div class="donnee_de_recherche null" id="donnee_de_recherche">
 
             </div>
@@ -222,7 +223,7 @@
 </body>
 </html>
 
-<!-- crÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©ation des tables slugs  -->
+<!-- création des tables slugs -->
 <?php
     /* ajouter dans types */
     $table = "types";
@@ -382,7 +383,7 @@
     }
 ?>
 
-<!-- crÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©er la table note article si nÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©cessaire -->
+<!-- créer la table note article si nécessaire -->
 <?php
     createTable('notes_article', [
         'id INT AUTO_INCREMENT PRIMARY KEY',
@@ -442,7 +443,7 @@
     ]);
 ?>
 
-<!-- crÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©ation des tables slugs, background  -->
+<!-- création des tables slugs, background -->
 <?php
     /* ajouter dans types */
     $table = "types";
@@ -1073,3 +1074,4 @@
     }
 
 ?>
+

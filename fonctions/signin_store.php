@@ -5,7 +5,7 @@
 
     $user_name = html_entity_decode(filter_var($_POST['user_name'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $email = html_entity_decode(filter_var($_POST['email'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-    $unique_id = uniqid('user_', true);
+    $unique_id = uniqid('store_', true);
     // Hachage du mot de passe
     $mdp = password_hash(
         html_entity_decode(filter_var($_POST['mdp'], FILTER_SANITIZE_FULL_SPECIAL_CHARS)),

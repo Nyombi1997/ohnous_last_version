@@ -8,6 +8,8 @@
     const categorySelect = document.getElementById('category_select');
     const typesContainer = document.getElementById('types_container');
     const taillesContainer = document.getElementById('tailles_container');
+    const promoPriceInput = document.getElementById('promo_prix_article');
+    const promoActiveInput = document.getElementById('promo_actif_article');
 
     if(!form){
         return;
@@ -470,8 +472,28 @@
                 uploadedImages.push(await uploadSingleImage(image));
             }
 
-            $.post('/fonctions/admin_article_actions.php', {
-                action: 'update_article',
+            if(promoActiveInput && promoActiveInput.checked && promoPriceInput && promoPriceInput.value.trim() === ''){
+                showError("Entrez le prix promotionnel de l'article.");
+                button.removeAttribute('disabled');
+                button.innerHTML = tempText;
+                return;
+            }
+
+            if(
+                promoActiveInput
+                && promoActiveInput.checked
+                && promoPriceInput
+                && promoPriceInput.value.trim() !== ''
+                && Number(promoPriceInput.value) >= Number(document.getElementById('prix_article').value)
+            ){
+                showError("Le prix promotionnel doit être inférieur au prix normal.");
+                button.removeAttribute('disabled');
+                button.innerHTML = tempText;
+                return;
+            }
+
+            $.post(config.submitUrl || '/fonctions/admin_article_actions.php', {
+                action: config.actionName || 'update_article',
                 article_id: config.articleId,
                 nom: document.getElementById('nom_article').value.trim(),
                 prix: document.getElementById('prix_article').value.trim(),
@@ -494,7 +516,7 @@
                     title: data.msg,
                     confirmButtonColor: '#6775d6'
                 }).then(function(){
-                    window.location = data.redirect || '/article/' + (config.articleSlug || '');
+                    window.location = data.redirect || config.redirectUrl || '/article/' + (config.articleSlug || '');
                 });
             }, 'json').always(function(){
                 button.removeAttribute('disabled');

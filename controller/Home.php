@@ -77,6 +77,12 @@
             $myView->render('Ohnous | MODIFIER BOUTIQUE OHNOUS !');
         }
 
+        public function showEditArticle ()
+        {
+            $myView = new View('edit-article');
+            $myView->render("Ohnous | MODIFICATION D'ARTICLE");
+        }
+
         public function showPassword ()
         {
             $myView = new View('changer-mot-de-passe');

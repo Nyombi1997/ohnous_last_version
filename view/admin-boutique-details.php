@@ -128,12 +128,12 @@
                 <?php foreach($articles as $article): ?>
                     <?php
                         $pricing = ohnous_get_article_pricing($article);
-                        $image = ohnous_get_article_primary_image((int)$article['id']);
+                        $images = ohnous_get_article_images((int)$article['id']);
                     ?>
                     <article class="admin-mini-article">
                         <div class="admin-mini-article__image">
-                            <?php if($image): ?>
-                                <img src="<?= htmlspecialchars($image['img'], ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars($article['nom'], ENT_QUOTES, 'UTF-8') ?>">
+                            <?php if(!empty($images)): ?>
+                                <?= ohnous_render_article_gallery((int)$article['id'], (string)$article['nom'], 'admin-mini', '/admin-editer-article?id='.(int)$article['id'], $images) ?>
                             <?php endif; ?>
                         </div>
                         <div class="admin-mini-article__content">

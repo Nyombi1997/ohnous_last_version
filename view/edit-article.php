@@ -1,12 +1,13 @@
 <?php
-    ohnous_require_admin_or_redirect();
+    ohnous_require_store_or_redirect();
 
+    $currentAccount = ohnous_get_current_account();
     $articleId = (int)($_GET['id'] ?? 0);
     $article = $articleId > 0 ? only_select('articles', 'id = '.$articleId, null, null) : null;
 
-    if(!$article)
+    if(!$article || (int)$article['boutique'] !== (int)$currentAccount['id'])
     {
-        header('Location:/admin-articles');
+        header('Location:/boutique');
         exit();
     }
 
@@ -44,13 +45,14 @@
     window.ohnousAdminEditProductConfig = {
         articleId: <?= (int)$article['id'] ?>,
         articleSlug: <?= json_encode((string)$article['slug']) ?>,
-        storeSlug: <?= json_encode((string)($boutique['slug'] ?? 'admin')) ?>,
+        storeSlug: <?= json_encode((string)($boutique['slug'] ?? 'boutique')) ?>,
         selectedCategory: <?= (int)($articleCategorie['categorie'] ?? 0) ?>,
         selectedType: <?= (int)($articleType['types'] ?? 0) ?>,
         selectedTailles: <?= json_encode(array_values($selectedTailles)) ?>,
         existingImages: <?= json_encode($existingImages, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
-        submitUrl: '/fonctions/admin_article_actions.php',
-        actionName: 'update_article'
+        submitUrl: '/fonctions/store_article_actions.php',
+        actionName: 'update_article',
+        redirectUrl: '/boutique'
     };
 </script>
 <div class="content_page">
@@ -58,12 +60,10 @@
         <div class="upload-product-panel__head">
             <div>
                 <h1>Modifier l’article</h1>
-                <p>Retrouvez votre logique d’édition : images, catégorie, type, tailles et promotion avec les champs déjà préremplis.</p>
+                <p>Retrouvez l’espace d’ajout avec vos images, vos options et la possibilité de remplacer ou supprimer une photo.</p>
             </div>
-            <a href="/admin-articles" class="btn_ohnous second">Retour aux articles</a>
+            <a href="/boutique" class="btn_ohnous second">Retour boutique</a>
         </div>
-
-        <?= ohnous_render_admin_nav('articles') ?>
 
         <form id="admin_edit_article_form" class="upload-product-form" enctype="multipart/form-data">
             <div class="upload-product-layout">

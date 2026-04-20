@@ -7,6 +7,8 @@
     const categorySelect = document.getElementById('category_select');
     const typesContainer = document.getElementById('types_container');
     const taillesContainer = document.getElementById('tailles_container');
+    const promoPriceInput = document.getElementById('promo_prix_article');
+    const promoActiveInput = document.getElementById('promo_actif_article');
 
     const images = [];
     let cropper = null;
@@ -345,6 +347,20 @@
             showError("Entrez le prix de l'article.");
             return;
         }
+        if(promoActiveInput && promoActiveInput.checked && promoPriceInput && promoPriceInput.value.trim() === ''){
+            showError("Entrez le prix promotionnel de l'article.");
+            return;
+        }
+        if(
+            promoActiveInput
+            && promoActiveInput.checked
+            && promoPriceInput
+            && promoPriceInput.value.trim() !== ''
+            && Number(promoPriceInput.value) >= Number(document.getElementById('prix_article').value)
+        ){
+            showError("Le prix promotionnel doit être inférieur au prix normal.");
+            return;
+        }
         if(Number(categorySelect.value) <= 0){
             showError("Choisissez une catégorie.");
             return;
@@ -369,6 +385,8 @@
                 product_types: selectedType,
                 product_tailles: selectedTailles.join(','),
                 product_description: document.getElementById('description_article').value.trim(),
+                promo_actif: promoActiveInput ? (promoActiveInput.checked ? 1 : 0) : 0,
+                promo_prix: promoPriceInput ? promoPriceInput.value.trim() : '',
                 product_images: JSON.stringify(uploadedImages)
             }, function(data){
                 if(data.result !== 'ok'){

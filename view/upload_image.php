@@ -67,6 +67,22 @@
                         <input type="number" id="prix_article" step="0.01" min="0" class="input_ajout_image" required>
                     </div>
 
+                    <?php if(ohnous_column_exists('articles', 'promo_prix')): ?>
+                        <div class="form_group_ajout_image">
+                            <label class="label_ajout_image">Prix promotionnel ($)</label>
+                            <input type="number" id="promo_prix_article" step="0.01" min="0" class="input_ajout_image">
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if(ohnous_column_exists('articles', 'promo_actif')): ?>
+                        <div class="admin-form-grid single">
+                            <label class="admin-switch-card">
+                                <input type="checkbox" id="promo_actif_article">
+                                <span>Mettre l’article en promotion</span>
+                            </label>
+                        </div>
+                    <?php endif; ?>
+
                     <div class="form_group_ajout_image">
                         <label class="label_ajout_image">Catégorie</label>
                         <select class="input_ajout_image" id="category_select">

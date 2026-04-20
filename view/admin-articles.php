@@ -49,12 +49,12 @@
                 <?php
                     $boutique = only_select('boutiques', 'id = '.(int)$article['boutique'], null, null);
                     $pricing = ohnous_get_article_pricing($article);
-                    $image = ohnous_get_article_primary_image((int)$article['id']);
+                    $images = ohnous_get_article_images((int)$article['id']);
                 ?>
                 <div class="admin-article-table__row">
                     <div class="admin-article-table__thumb">
-                        <?php if($image): ?>
-                            <img src="<?= htmlspecialchars($image['img'], ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars($article['nom'], ENT_QUOTES, 'UTF-8') ?>">
+                        <?php if(!empty($images)): ?>
+                            <?= ohnous_render_article_gallery((int)$article['id'], (string)$article['nom'], 'admin-thumb', '/admin-editer-article?id='.(int)$article['id'], $images) ?>
                         <?php else: ?>
                             <span><i class="fa-regular fa-image"></i></span>
                         <?php endif; ?>

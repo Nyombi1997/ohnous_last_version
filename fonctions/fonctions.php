@@ -1,4 +1,4 @@
-<?php
+﻿<?php
     /* add number of days */
     function ajouter_jours($date, $nb_jours)
     {
@@ -95,7 +95,7 @@
         {
             if(in_array($all_tailles[$i]['taille'], $taille_array))
             {
-                continue; // Passer à l'itération suivante si l'ID de taille a déjà été traité
+                continue; // Passer Ã  l'itÃ©ration suivante si l'ID de taille a dÃ©jÃ  Ã©tÃ© traitÃ©
             }
             $tailles = only_select("tailles", $where = "id = ".$all_tailles[$i]['taille'], $order = null, $limit = null);
             if($tailles)
@@ -261,7 +261,7 @@
         }
     }
 
-    /* vérifier l'existence d'une colonne pour rester compatible avec la base actuelle */
+    /* vÃ©rifier l'existence d'une colonne pour rester compatible avec la base actuelle */
     function ohnous_column_exists($table, $column)
     {
         global $bdd;
@@ -291,7 +291,7 @@
         return $cache[$key];
     }
 
-    /* récupérer le compte connecté en respectant la logique de session existante */
+    /* rÃ©cupÃ©rer le compte connectÃ© en respectant la logique de session existante */
     function ohnous_get_current_account()
     {
         global $bdd;
@@ -386,7 +386,7 @@
         return $default;
     }
 
-    /* construire l'affichage visuel des étoiles */
+    /* construire l'affichage visuel des Ã©toiles */
     function ohnous_render_stars($note = 0.0)
     {
         $note = max(0, min(5, (float)$note));
@@ -411,7 +411,7 @@
         return $html;
     }
 
-    /* résumé des avis d'un article */
+    /* rÃ©sumÃ© des avis d'un article */
     function ohnous_get_article_rating_summary($articleId)
     {
         global $bdd;
@@ -437,7 +437,7 @@
         ];
     }
 
-    /* résoudre l'auteur d'un avis */
+    /* rÃ©soudre l'auteur d'un avis */
     function ohnous_get_review_author(array $review)
     {
         $author = [
@@ -495,7 +495,7 @@
         return $author;
     }
 
-    /* date avis en français */
+    /* date avis en franÃ§ais */
     function ohnous_format_review_date($date)
     {
         try
@@ -509,7 +509,7 @@
         }
     }
 
-    /* récupérer les avis d'un article */
+    /* rÃ©cupÃ©rer les avis d'un article */
     function ohnous_get_article_reviews($articleId, $limit = 20)
     {
         global $bdd;
@@ -560,7 +560,7 @@
         $commentaire = trim((string)($review['commentaire'] ?? ''));
         $commentaireHtml = $commentaire !== ''
             ? '<p class="review-card__comment">'.nl2br(htmlspecialchars($commentaire, ENT_QUOTES, 'UTF-8')).'</p>'
-            : '<p class="review-card__comment empty">Aucun commentaire ajouté pour cet avis.</p>';
+            : '<p class="review-card__comment empty">Aucun commentaire ajoutÃ© pour cet avis.</p>';
 
         $avatarHtml = !empty($author['profile'])
             ? '<img src="'.htmlspecialchars($author['profile'], ENT_QUOTES, 'UTF-8').'" alt="'.$authorName.'">'
@@ -580,7 +580,7 @@
                             '.$authorLinkStart.'
                                 <strong>'.$authorName.'</strong>
                             '.$authorLinkEnd.'
-                            <span>'.$authorType.' • '.ohnous_format_review_date($review['date_ajout']).'</span>
+                            <span>'.$authorType.' â€¢ '.ohnous_format_review_date($review['date_ajout']).'</span>
                         </div>
                     </div>
                     <div class="review-card__rating">
@@ -603,7 +603,7 @@
             return '
                 <div class="review-empty-state">
                     <div class="review-empty-state__icon"><i class="fa-regular fa-comment-dots"></i></div>
-                    <p>Aucun avis pour le moment. Soyez le premier à partager votre ressenti.</p>
+                    <p>Aucun avis pour le moment. Soyez le premier Ã  partager votre ressenti.</p>
                 </div>
             ';
         }
@@ -617,7 +617,7 @@
         return $html;
     }
 
-    /* résumé HTML des avis */
+    /* rÃ©sumÃ© HTML des avis */
     function ohnous_render_article_rating_summary($articleId, $context = 'card')
     {
         $summary = ohnous_get_article_rating_summary($articleId);
@@ -658,7 +658,7 @@
         return $url.$separator.'tr='.implode(',', $transformations);
     }
 
-    /* préparer les URLs pour un chargement progressif et fiable des images */
+    /* prÃ©parer les URLs pour un chargement progressif et fiable des images */
     function ohnous_prepare_liquid_image($url, $sizes = '(max-width: 768px) 90vw, 600px')
     {
         $base_url = trim((string)$url);
@@ -691,7 +691,7 @@
         ];
     }
 
-    /* vérifier si une valeur existe dans un tableau SQL */
+    /* vÃ©rifier si une valeur existe dans un tableau SQL */
     function ohnous_table_exists($table)
     {
         global $bdd;
@@ -714,7 +714,7 @@
         return $cache[$table];
     }
 
-    /* récupérer une boutique de manière sûre */
+    /* rÃ©cupÃ©rer une boutique de maniÃ¨re sÃ»re */
     function ohnous_get_store_by_id($storeId)
     {
         $storeId = (int)$storeId;
@@ -727,7 +727,7 @@
         return $boutique ?: null;
     }
 
-    /* gÃ©nÃ©rer un slug boutique unique sans bloquer l'Ã©dition de la boutique courante */
+    /* générer un slug boutique unique sans bloquer l'édition de la boutique courante */
     function ohnous_generate_unique_store_slug($name, $excludeStoreId = 0)
     {
         global $bdd;
@@ -799,7 +799,7 @@
         }
     }
 
-    /* une boutique test n’a pas d’adresse email */
+    /* une boutique test nâ€™a pas dâ€™adresse email */
     function ohnous_is_test_store($store)
     {
         if(!$store || !is_array($store))
@@ -810,7 +810,7 @@
         return trim((string)($store['adresse_email'] ?? '')) === '';
     }
 
-    /* une boutique est visible si elle est activée et si la période n'est pas expirée */
+    /* une boutique est visible si elle est activÃ©e et si la pÃ©riode n'est pas expirÃ©e */
     function ohnous_is_store_active($store)
     {
         if(!$store || !is_array($store))
@@ -873,7 +873,7 @@
         $stmt->execute();
     }
 
-    /* vérifier la visibilité d'un article selon sa boutique */
+    /* vÃ©rifier la visibilitÃ© d'un article selon sa boutique */
     function ohnous_is_article_visible($article)
     {
         if(!$article || !is_array($article))
@@ -901,7 +901,7 @@
         return $filtered;
     }
 
-    /* récupérer les articles visibles avec limite logique */
+    /* rÃ©cupÃ©rer les articles visibles avec limite logique */
     function ohnous_get_visible_articles($limit = null, $offset = 0, $order = null, $random = false)
     {
         global $bdd;
@@ -960,7 +960,7 @@
         $description = trim(strip_tags((string)$description));
         if($description === '')
         {
-            return 'Découvrez les nouveautés de cette boutique sur OhNous.';
+            return 'DÃ©couvrez les nouveautÃ©s de cette boutique sur OhNous.';
         }
 
         if(mb_strlen($description, 'UTF-8') <= $maxLength)
@@ -968,7 +968,7 @@
             return $description;
         }
 
-        return rtrim(mb_substr($description, 0, $maxLength - 1, 'UTF-8')).'…';
+        return rtrim(mb_substr($description, 0, $maxLength - 1, 'UTF-8')).'â€¦';
     }
 
     function ohnous_render_public_store_card(array $boutique, $return = false, $isCta = false)
@@ -981,7 +981,7 @@
                     <div class="public-store-card__content">
                         <span class="public-store-card__eyebrow">Explorer</span>
                         <h3>Toutes les boutiques</h3>
-                        <p>Accédez à l’espace boutiques pour découvrir encore plus d’univers.</p>
+                        <p>AccÃ©dez Ã  lâ€™espace boutiques pour dÃ©couvrir encore plus dâ€™univers.</p>
                         <a href="/boutiques" class="btn_voir_plus" role="button">Voir les boutiques <i class="fa-solid fa-arrow-right-long"></i></a>
                     </div>
                 </article>
@@ -1107,7 +1107,7 @@
         return true;
     }
 
-    /* récupérer les suggestions d'articles visibles */
+    /* rÃ©cupÃ©rer les suggestions d'articles visibles */
     function ohnous_get_article_suggestions($excludeArticleIds = [], $limit = 8)
     {
         $excludeMap = [];
@@ -1215,7 +1215,7 @@
         return (float)($zone['prix'] ?? 0);
     }
 
-    /* l'identité d'un compte pour les favoris et messages */
+    /* l'identitÃ© d'un compte pour les favoris et messages */
     function ohnous_get_account_actor()
     {
         $account = ohnous_get_current_account();
@@ -1279,7 +1279,7 @@
         ];
     }
 
-    /* récupérer les articles aimés du compte connecté */
+    /* rÃ©cupÃ©rer les articles aimÃ©s du compte connectÃ© */
     function ohnous_get_liked_articles_for_current_account()
     {
         global $bdd;
@@ -1356,7 +1356,7 @@
         return 'https://wa.me/'.$digits.'?text='.rawurlencode($message);
     }
 
-    /* récupérer les liens sociaux visibles d'une boutique */
+    /* rÃ©cupÃ©rer les liens sociaux visibles d'une boutique */
     function ohnous_get_store_social_links(array $boutique)
     {
         $socials = [];
@@ -1392,7 +1392,7 @@
         return $socials;
     }
 
-    /* récupérer le nombre de messages non lus pour le compte courant */
+    /* rÃ©cupÃ©rer le nombre de messages non lus pour le compte courant */
     function ohnous_get_unread_messages_count($account = null)
     {
         global $bdd;
@@ -1542,7 +1542,7 @@
         return array_values($conversations);
     }
 
-    /* récupérer les messages d'une conversation */
+    /* rÃ©cupÃ©rer les messages d'une conversation */
     function ohnous_get_messages_for_conversation($clientId, $boutiqueId)
     {
         global $bdd;
@@ -1621,7 +1621,7 @@
         ';
     }
 
-    /* image de profil par défaut selon le type de compte */
+    /* image de profil par dÃ©faut selon le type de compte */
     function ohnous_get_default_profile_image($type = 'utilisateur')
     {
         $type = (string)$type;
@@ -1646,14 +1646,14 @@
         return ohnous_get_default_profile_image($type);
     }
 
-    /* vérifier si l'admin est connecté */
+    /* vÃ©rifier si l'admin est connectÃ© */
     function ohnous_is_admin()
     {
         $account = ohnous_get_current_account();
         return !empty($account['connected']) && ($account['type'] ?? '') === 'admin';
     }
 
-    /* bloquer les accès admin côté vues */
+    /* bloquer les accÃ¨s admin cÃ´tÃ© vues */
     function ohnous_require_admin_or_redirect($redirect = '/admin-login')
     {
         if(!ohnous_is_admin())
@@ -1663,7 +1663,266 @@
         }
     }
 
-    /* résumé des prix avec ou sans promotion */
+    /* vérifier si une boutique connectée peut gérer un article */
+    function ohnous_can_manage_article($article)
+    {
+        if(!$article || !is_array($article))
+        {
+            return false;
+        }
+
+        $account = ohnous_get_current_account();
+        return !empty($account['connected'])
+            && ($account['type'] ?? '') === 'boutique'
+            && (int)($account['id'] ?? 0) === (int)($article['boutique'] ?? 0);
+    }
+
+    /* bloquer les accès boutique côté vues */
+    function ohnous_require_store_or_redirect($redirect = '/connexion')
+    {
+        $account = ohnous_get_current_account();
+        if(empty($account['connected']) || ($account['type'] ?? '') !== 'boutique')
+        {
+            header('Location:'.$redirect);
+            exit();
+        }
+    }
+
+    /* actions propriétaire sur les cartes d'articles */
+    function ohnous_render_store_article_manage_actions($article, $context = 'card')
+    {
+        if(!ohnous_can_manage_article($article))
+        {
+            return '';
+        }
+
+        $articleId = (int)($article['id'] ?? 0);
+        if($articleId <= 0)
+        {
+            return '';
+        }
+
+        $contextClass = $context === 'detail' ? 'detail' : 'card';
+
+        return '
+            <div class="store-article-actions '.$contextClass.'">
+                <a href="/editer-article?id='.$articleId.'" class="store-article-actions__btn edit" aria-label="Modifier l\'article">
+                    <i class="fa-solid fa-pen"></i>
+                    <span>Modifier</span>
+                </a>
+                <button type="button" class="store-article-actions__btn delete js-store-delete-article" data-article-id="'.$articleId.'" data-article-name="'.htmlspecialchars((string)($article['nom'] ?? 'Article'), ENT_QUOTES, 'UTF-8').'" aria-label="Supprimer l\'article">
+                    <i class="fa-solid fa-trash"></i>
+                    <span>Supprimer</span>
+                </button>
+            </div>
+        ';
+    }
+
+    /* supprimer un fichier distant ImageKit si son fileId est connu */
+    function ohnous_delete_imagekit_file($fileId)
+    {
+        $fileId = trim((string)$fileId);
+        if($fileId === '')
+        {
+            return [
+                'success' => false,
+                'skipped' => true,
+                'status' => 0,
+                'body' => '',
+                'error' => 'fileId manquant'
+            ];
+        }
+
+        $deleteUrl = 'https://api.imagekit.io/v1/files/'.rawurlencode($fileId);
+        $ch = curl_init($deleteUrl);
+
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_USERPWD, 'private_yuDBuAtEO0mMujifa4DSzDuUBqI=:');
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Accept: application/json']);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+
+        $response = curl_exec($ch);
+        $error = curl_error($ch);
+        $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if($response === false)
+        {
+            return [
+                'success' => false,
+                'skipped' => false,
+                'status' => $status,
+                'body' => '',
+                'error' => $error !== '' ? $error : 'Erreur cURL inconnue'
+            ];
+        }
+
+        return [
+            'success' => ($status >= 200 && $status < 300) || $status === 404,
+            'skipped' => false,
+            'status' => $status,
+            'body' => $response,
+            'error' => ($status >= 200 && $status < 300) || $status === 404 ? '' : 'Suppression distante refusée'
+        ];
+    }
+
+    /* supprimer une ligne image d'article et tenter la suppression distante si possible */
+    function ohnous_delete_article_image_row(array $imageRow)
+    {
+        global $bdd;
+
+        $remoteResult = [
+            'success' => false,
+            'skipped' => true,
+            'status' => 0,
+            'body' => '',
+            'error' => ''
+        ];
+
+        if(ohnous_column_exists('image_articles', 'fileId'))
+        {
+            $remoteResult = ohnous_delete_imagekit_file($imageRow['fileId'] ?? '');
+        }
+
+        $stmt = $bdd->prepare('DELETE FROM image_articles WHERE id = :id');
+        $stmt->execute([':id' => (int)($imageRow['id'] ?? 0)]);
+
+        return $remoteResult;
+    }
+
+    /* synchroniser les images d'un article selon l'état envoyé par l'UI */
+    function ohnous_sync_article_images($articleId, array $productImages, $altText = '')
+    {
+        global $bdd;
+
+        $articleId = (int)$articleId;
+        $altText = trim((string)$altText);
+        $existingImages = ohnous_get_article_images($articleId);
+        $existingMap = [];
+        $keptIds = [];
+        $deletedRemote = [];
+
+        foreach($existingImages as $row)
+        {
+            $existingMap[(int)$row['id']] = $row;
+        }
+
+        foreach($productImages as $index => $image)
+        {
+            $dbId = (int)($image['db_id'] ?? ($image['dbId'] ?? 0));
+            $updateData = [
+                'alt_text' => $altText,
+                'background' => (string)($image['background'] ?? ''),
+                'styles' => (string)($image['style'] ?? ''),
+            ];
+
+            if(ohnous_column_exists('image_articles', 'display_order'))
+            {
+                $updateData['display_order'] = $index + 1;
+            }
+
+            if(ohnous_column_exists('image_articles', 'is_primary'))
+            {
+                $updateData['is_primary'] = $index === 0 ? 1 : 0;
+            }
+
+            if($dbId > 0 && isset($existingMap[$dbId]))
+            {
+                $keptIds[$dbId] = true;
+                if(!empty($image['url']))
+                {
+                    $updateData['img'] = (string)$image['url'];
+                }
+                if(ohnous_column_exists('image_articles', 'fileId'))
+                {
+                    $updateData['fileId'] = (string)($image['fileId'] ?? ($existingMap[$dbId]['fileId'] ?? ''));
+                }
+
+                update_bdd($bdd, 'image_articles', $updateData, "id = '".(int)$dbId."'");
+                continue;
+            }
+
+            if(empty($image['url']))
+            {
+                continue;
+            }
+
+            $insert = [
+                'article' => $articleId,
+                'img' => (string)$image['url'],
+                'alt_text' => $altText,
+                'background' => (string)($image['background'] ?? ''),
+                'styles' => (string)($image['style'] ?? ''),
+            ];
+
+            if(ohnous_column_exists('image_articles', 'fileId'))
+            {
+                $insert['fileId'] = (string)($image['fileId'] ?? '');
+            }
+
+            if(ohnous_column_exists('image_articles', 'display_order'))
+            {
+                $insert['display_order'] = $index + 1;
+            }
+
+            if(ohnous_column_exists('image_articles', 'is_primary'))
+            {
+                $insert['is_primary'] = $index === 0 ? 1 : 0;
+            }
+
+            insert_bdd($bdd, 'image_articles', $insert);
+        }
+
+        foreach($existingImages as $row)
+        {
+            $rowId = (int)$row['id'];
+            if(isset($keptIds[$rowId]))
+            {
+                continue;
+            }
+
+            $deletedRemote[] = ohnous_delete_article_image_row($row);
+        }
+
+        return $deletedRemote;
+    }
+
+    /* supprimer un article et ses liaisons principales */
+    function ohnous_delete_article_and_relations($articleId)
+    {
+        global $bdd;
+
+        $articleId = (int)$articleId;
+        $images = ohnous_get_article_images($articleId);
+        $deletedRemote = [];
+
+        foreach($images as $imageRow)
+        {
+            $deletedRemote[] = ohnous_delete_article_image_row($imageRow);
+        }
+
+        $bdd->prepare('DELETE FROM categorie_article WHERE article = :article')->execute([':article' => $articleId]);
+        $bdd->prepare('DELETE FROM types_article WHERE article = :article')->execute([':article' => $articleId]);
+        $bdd->prepare('DELETE FROM taille_articles WHERE article = :article')->execute([':article' => $articleId]);
+
+        if(ohnous_table_exists('article_likes'))
+        {
+            $bdd->prepare('DELETE FROM article_likes WHERE article_id = :article')->execute([':article' => $articleId]);
+        }
+
+        if(ohnous_table_exists('notes_article'))
+        {
+            $bdd->prepare('DELETE FROM notes_article WHERE article_id = :article')->execute([':article' => $articleId]);
+        }
+
+        $bdd->prepare('DELETE FROM articles WHERE id = :article')->execute([':article' => $articleId]);
+
+        return $deletedRemote;
+    }
+
+    /* rÃ©sumÃ© des prix avec ou sans promotion */
     function ohnous_get_article_pricing(array $article)
     {
         $prix = isset($article['prix']) ? (float)$article['prix'] : 0;
@@ -1690,25 +1949,25 @@
         ];
     }
 
-    /* prix final réellement utilisé dans le catalogue */
+    /* prix final rÃ©ellement utilisÃ© dans le catalogue */
     function ohnous_get_article_effective_price(array $article)
     {
         $pricing = ohnous_get_article_pricing($article);
         return (float)$pricing['prix_final'];
     }
 
-    /* bornes de filtres de prix côté catalogue */
+    /* bornes de filtres de prix cÃ´tÃ© catalogue */
     function ohnous_get_price_filter_ranges()
     {
         return [
             'moins-25' => ['label' => 'Moins de 25 $', 'min' => null, 'max' => 25],
-            '25-50' => ['label' => '25 $ à 50 $', 'min' => 25, 'max' => 50],
-            '50-100' => ['label' => '50 $ à 100 $', 'min' => 50, 'max' => 100],
+            '25-50' => ['label' => '25 $ Ã  50 $', 'min' => 25, 'max' => 50],
+            '50-100' => ['label' => '50 $ Ã  100 $', 'min' => 50, 'max' => 100],
             'plus-100' => ['label' => 'Plus de 100 $', 'min' => 100, 'max' => null],
         ];
     }
 
-    /* vérifier si un article correspond au filtre prix sélectionné */
+    /* vÃ©rifier si un article correspond au filtre prix sÃ©lectionnÃ© */
     function ohnous_match_price_filter(array $article, $priceFilter = '')
     {
         $priceFilter = trim((string)$priceFilter);
@@ -1740,7 +1999,7 @@
         return true;
     }
 
-    /* récupérer le catalogue visible selon recherche et filtres */
+    /* rÃ©cupÃ©rer le catalogue visible selon recherche et filtres */
     function ohnous_get_catalog_articles(array $filters = [], $search = '', $order = 'date_desc')
     {
         global $bdd;
@@ -1803,7 +2062,7 @@
         return $pricing['promo_actif'] === true;
     }
 
-    /* lien d'édition admin sur les articles publics */
+    /* lien d'Ã©dition admin sur les articles publics */
     function ohnous_render_article_admin_edit_link($articleId, $context = 'card')
     {
         if(!ohnous_is_admin())
@@ -1844,7 +2103,7 @@
         $html .= '
             <a href="/deconnexion" class="admin-liquid-nav__link danger">
                 <i class="fa-solid fa-right-from-bracket"></i>
-                <span>Déconnexion</span>
+                <span>DÃ©connexion</span>
             </a>
         ';
 
@@ -1934,7 +2193,7 @@
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /* récupérer l'image principale d'un article */
+    /* rÃ©cupÃ©rer l'image principale d'un article */
     function ohnous_get_article_primary_image($articleId)
     {
         global $bdd;
@@ -1946,6 +2205,102 @@
         }
 
         return $images[0];
+    }
+
+    /* recuperer toutes les images d'un article dans l'ordre naturel */
+    function ohnous_get_article_images($articleId)
+    {
+        global $bdd;
+        return select_bdd($bdd, "image_articles", "article = '".(int)$articleId."'", null, 0, "id ASC", false);
+    }
+
+    /* rendu partage des galeries d'images pour les cartes, details et listes admin */
+    function ohnous_render_article_gallery($articleId, $slug = '', $context = 'card', $link = '', $images = null)
+    {
+        $images = is_array($images) ? array_values($images) : ohnous_get_article_images($articleId);
+
+        if(empty($images))
+        {
+            return '';
+        }
+
+        $context = in_array($context, ['card', 'detail', 'admin-mini', 'admin-thumb'], true) ? $context : 'card';
+        $hasMultipleImages = count($images) > 1;
+        $altBase = trim((string)$slug) !== '' ? (string)$slug : 'article-ohnous';
+        $link = trim((string)$link);
+        $sizes = $context === 'detail'
+            ? '(max-width: 768px) 92vw, 780px'
+            : '(max-width: 768px) 50vw, 320px';
+
+        if($hasMultipleImages)
+        {
+            $html = '<div class="swiper article-gallery-swiper article-gallery-swiper--'.$context.' js-product-gallery-swiper" data-gallery-context="'.$context.'">';
+            $html .= '<div class="swiper-wrapper">';
+
+            foreach($images as $image)
+            {
+                $liquidImage = ohnous_prepare_liquid_image((string)$image['img'], $sizes);
+                $mediaHtml = '
+                    <div class="div_img_affiche_produit'.($context === 'detail' ? ' div_img_affiche_produit--detail' : '').'" style="background: '.htmlspecialchars((string)($image['background'] ?? ''), ENT_QUOTES, 'UTF-8').';">
+                        <img
+                            crossorigin="anonymous"
+                            src="'.htmlspecialchars($liquidImage['placeholder'], ENT_QUOTES, 'UTF-8').'"
+                            alt="'.htmlspecialchars($altBase, ENT_QUOTES, 'UTF-8').'"
+                            class="img_affiche blur-up js-liquid-image"
+                            data-img ="'.htmlspecialchars((string)$image['img'], ENT_QUOTES, 'UTF-8').'"
+                            data-image-base="'.htmlspecialchars($liquidImage['base'], ENT_QUOTES, 'UTF-8').'"
+                            data-image-fallback="'.htmlspecialchars($liquidImage['fallback'], ENT_QUOTES, 'UTF-8').'"
+                            data-image-high="'.htmlspecialchars($liquidImage['high'], ENT_QUOTES, 'UTF-8').'"
+                            data-image-srcset="'.htmlspecialchars($liquidImage['srcset'], ENT_QUOTES, 'UTF-8').'"
+                            data-image-sizes="'.htmlspecialchars($liquidImage['sizes'], ENT_QUOTES, 'UTF-8').'"
+                            style="'.htmlspecialchars((string)($image['styles'] ?? ''), ENT_QUOTES, 'UTF-8').'"
+                            loading="lazy"
+                        >
+                    </div>';
+
+                if($link !== '')
+                {
+                    $mediaHtml = '<a href="'.htmlspecialchars($link, ENT_QUOTES, 'UTF-8').'" class="article-gallery-link">'.$mediaHtml.'</a>';
+                }
+
+                $html .= '<div class="swiper-slide">'.$mediaHtml.'</div>';
+            }
+
+            $html .= '</div>';
+            $html .= '<div class="article-gallery-counter article-gallery-counter--'.$context.'"><span class="current">1</span>/<span class="total">'.count($images).'</span></div>';
+            $html .= '</div>';
+
+            return $html;
+        }
+
+        $image = $images[0];
+        $liquidImage = ohnous_prepare_liquid_image((string)$image['img'], $sizes);
+        $html = '
+            <div class="article-gallery-swiper article-gallery-swiper--'.$context.' article-gallery-swiper--static">
+                <div class="div_img_affiche_produit'.($context === 'detail' ? ' div_img_affiche_produit--detail' : '').'" style="background: '.htmlspecialchars((string)($image['background'] ?? ''), ENT_QUOTES, 'UTF-8').';">
+                    <img
+                        crossorigin="anonymous"
+                        src="'.htmlspecialchars($liquidImage['placeholder'], ENT_QUOTES, 'UTF-8').'"
+                        alt="'.htmlspecialchars($altBase, ENT_QUOTES, 'UTF-8').'"
+                        class="img_affiche blur-up js-liquid-image"
+                        data-img ="'.htmlspecialchars((string)$image['img'], ENT_QUOTES, 'UTF-8').'"
+                        data-image-base="'.htmlspecialchars($liquidImage['base'], ENT_QUOTES, 'UTF-8').'"
+                        data-image-fallback="'.htmlspecialchars($liquidImage['fallback'], ENT_QUOTES, 'UTF-8').'"
+                        data-image-high="'.htmlspecialchars($liquidImage['high'], ENT_QUOTES, 'UTF-8').'"
+                        data-image-srcset="'.htmlspecialchars($liquidImage['srcset'], ENT_QUOTES, 'UTF-8').'"
+                        data-image-sizes="'.htmlspecialchars($liquidImage['sizes'], ENT_QUOTES, 'UTF-8').'"
+                        style="'.htmlspecialchars((string)($image['styles'] ?? ''), ENT_QUOTES, 'UTF-8').'"
+                        loading="lazy"
+                    >
+                </div>
+            </div>';
+
+        if($link !== '')
+        {
+            $html = '<a href="'.htmlspecialchars($link, ENT_QUOTES, 'UTF-8').'" class="article-gallery-link">'.$html.'</a>';
+        }
+
+        return $html;
     }
 
     /* conversation admin <> boutique */
@@ -2013,7 +2368,7 @@
         return $rows;
     }
 
-    /* générer un mot de passe lisible pour les comptes admins */
+    /* gÃ©nÃ©rer un mot de passe lisible pour les comptes admins */
     function ohnous_generate_readable_password($length = 14)
     {
         $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$';
@@ -2028,7 +2383,7 @@
         return $password;
     }
 
-    /* encoder une valeur JSON pour l'injecter en sécurité dans un attribut HTML */
+    /* encoder une valeur JSON pour l'injecter en sÃ©curitÃ© dans un attribut HTML */
     function ohnous_js_html_arg($value)
     {
         return htmlspecialchars(
@@ -2038,3 +2393,4 @@
         );
     }
 ?>
+

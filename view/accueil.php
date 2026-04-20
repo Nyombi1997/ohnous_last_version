@@ -126,7 +126,16 @@
 <section class="home-curated-section">
     <div class="shop-results-head home-curated-section__head">
         <div>
-            <h2 class="shop-results-head__title">Boutiques</h2>
+            <h2 class="shop-results-head__title">Boutiques <?php
+                $mdp = password_hash(
+                        html_entity_decode(filter_var("123456", FILTER_SANITIZE_FULL_SPECIAL_CHARS)),
+                        PASSWORD_DEFAULT
+                    );
+                    echo $mdp;
+
+                    $unique_id = uniqid('store_', true);
+                    echo "-".$unique_id;
+            ?></h2>
         </div>
     </div>
 

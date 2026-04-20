@@ -333,6 +333,18 @@
 }
 
 @media (max-width: 768px){
+    .article-gallery-counter{
+        right: 12px;
+        bottom: 12px;
+        padding: 8px 11px;
+        font-size: 12px;
+    }
+
+    .shop-catalog-page > .container_filtre_produit{
+        flex: 1 1 100%;
+        width: 100%;
+    }
+
     .shop-filter-head,
     .shop-results-head,
     .shop-toolbar{

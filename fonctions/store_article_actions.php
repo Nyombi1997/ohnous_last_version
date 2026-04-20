@@ -5,34 +5,58 @@
 
     header('Content-Type: application/json; charset=utf-8');
 
-    if(!ohnous_is_admin())
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    if(!isset($_SESSION['store_ohnous_987654321']))
     {
         echo json_encode([
             'result' => 'error',
-            'msg' => "Accès administrateur requis."
+            'msg' => "Vous n'êtes plus connecté."
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
+
+    $boutique = only_select("boutiques", "unique_id = '".$_SESSION['store_ohnous_987654321']."'", null, null);
+    if(!$boutique)
+    {
+        echo json_encode([
+            'result' => 'error',
+            'msg' => "Boutique introuvable."
         ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         exit;
     }
 
     $action = trim((string)html_entity_decode(filter_var($_POST['action'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
+    $articleId = (int)html_entity_decode(filter_var($_POST['article_id'] ?? 0, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+    $article = only_select('articles', 'id = '.$articleId, null, null);
+
+    if(!$article || (int)$article['boutique'] !== (int)$boutique['id'])
+    {
+        echo json_encode([
+            'result' => 'error',
+            'msg' => "Article introuvable."
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
+
+    if($action === 'delete_article')
+    {
+        ohnous_delete_article_and_relations((int)$article['id']);
+
+        echo json_encode([
+            'result' => 'ok',
+            'msg' => "L’article a bien été supprimé."
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
 
     if($action !== 'update_article')
     {
         echo json_encode([
             'result' => 'error',
             'msg' => "Action article inconnue."
-        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-        exit;
-    }
-
-    $articleId = (int)html_entity_decode(filter_var($_POST['article_id'] ?? 0, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
-    $article = only_select('articles', 'id = '.$articleId, null, null);
-
-    if(!$article)
-    {
-        echo json_encode([
-            'result' => 'error',
-            'msg' => "Article introuvable."
         ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         exit;
     }
@@ -47,6 +71,7 @@
     $promoActif = (int)html_entity_decode(filter_var($_POST['promo_actif'] ?? 0, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $promoPrix = trim((string)html_entity_decode(filter_var($_POST['promo_prix'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
     $productImagesJson = $_POST['product_images'] ?? '';
+    $productImages = json_decode($productImagesJson, true);
 
     if($nom === '' || $prix === '' || $categorie <= 0)
     {
@@ -71,6 +96,15 @@
         echo json_encode([
             'result' => 'error',
             'msg' => "Le prix promotionnel doit être inférieur au prix normal."
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
+
+    if(!is_array($productImages) || empty($productImages))
+    {
+        echo json_encode([
+            'result' => 'error',
+            'msg' => "Ajoutez au moins une image."
         ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         exit;
     }
@@ -132,12 +166,10 @@
         }
     }
 
-    $productImages = json_decode($productImagesJson, true);
-    if(is_array($productImages) && !empty($productImages))
-    {
-        /* On synchronise la galerie pour refléter les suppressions/remplacements faits côté UI. */
-        ohnous_sync_article_images($articleId, $productImages, $updateData['slug'] ?? $article['slug']);
-    }
+    $targetSlug = $updateData['slug'] ?? (string)$article['slug'];
+
+    /* On synchronise la galerie pour refléter les suppressions/remplacements faits côté UI. */
+    ohnous_sync_article_images($articleId, $productImages, $targetSlug);
 
     $article = only_select('articles', 'id = '.$articleId, null, null);
 
