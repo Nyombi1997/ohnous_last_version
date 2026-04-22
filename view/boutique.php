@@ -65,7 +65,7 @@
                                 class="blur-up"
                             />';
             }
-
+            welcome($email = $boutique['adresse_email']);
             $verif_welcome_email = select_bdd($bdd, "bienvenue_email", 'client_unique_id = "'.$boutique['unique_id'].'"', null, 0, null, false);
             if(count($verif_welcome_email)==0)
             {
