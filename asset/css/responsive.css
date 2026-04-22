@@ -141,23 +141,43 @@
     }
     .public-store-grid
     {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: minmax(0, 1fr);
         gap: 12px;
+    }
+    .public-store-card__link
+    {
+        grid-template-columns: 84px minmax(0, 1fr);
+        gap: 14px;
+        min-height: 116px;
+        padding: 14px;
     }
     .public-store-card__visual
     {
-        min-height: 128px;
-        padding: 18px 18px 0;
+        min-height: 84px;
     }
     .public-store-card__avatar
     {
-        width: 82px;
-        height: 82px;
-        border-radius: 24px;
+        width: 72px;
+        height: 72px;
+        border-radius: 22px;
     }
     .public-store-card__content
     {
-        padding: 18px;
+        gap: 4px;
+    }
+    .public-store-card__content h3
+    {
+        font-size: 1.2rem;
+    }
+    .public-store-card__aside
+    {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+        padding-top: 4px;
+    }
+    .public-store-card__action
+    {
+        padding: 10px 14px;
     }
     .container_affiche_produit.vue_article
     {

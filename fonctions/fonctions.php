@@ -955,12 +955,12 @@
         return $stores;
     }
 
-    function ohnous_get_public_store_description($description, $maxLength = 120)
+    function ohnous_get_public_store_description($description, $maxLength = 92)
     {
         $description = trim(strip_tags((string)$description));
         if($description === '')
         {
-            return 'DÃ©couvrez les nouveautÃ©s de cette boutique sur OhNous.';
+            return 'Découvrez les nouveautés de cette boutique sur OhNous.';
         }
 
         if(mb_strlen($description, 'UTF-8') <= $maxLength)
@@ -968,7 +968,7 @@
             return $description;
         }
 
-        return rtrim(mb_substr($description, 0, $maxLength - 1, 'UTF-8')).'â€¦';
+        return rtrim(mb_substr($description, 0, max(0, $maxLength - 3), 'UTF-8')).'...';
     }
 
     function ohnous_render_public_store_card(array $boutique, $return = false, $isCta = false)
@@ -977,13 +977,22 @@
         {
             $html = '
                 <article class="public-store-card public-store-card--cta">
-                    <div class="public-store-card__orb"></div>
-                    <div class="public-store-card__content">
-                        <span class="public-store-card__eyebrow">Explorer</span>
-                        <h3>Toutes les boutiques</h3>
-                        <p>AccÃ©dez Ã  lâ€™espace boutiques pour dÃ©couvrir encore plus dâ€™univers.</p>
-                        <a href="/boutiques" class="btn_voir_plus" role="button">Voir les boutiques <i class="fa-solid fa-arrow-right-long"></i></a>
-                    </div>
+                    <a href="/boutiques" class="public-store-card__link">
+                        <div class="public-store-card__visual public-store-card__visual--cta">
+                            <div class="public-store-card__orb"></div>
+                            <div class="public-store-card__avatar public-store-card__avatar--cta">
+                                <i class="fa-solid fa-store"></i>
+                            </div>
+                        </div>
+                        <div class="public-store-card__content">
+                            <span class="public-store-card__eyebrow">Explorer</span>
+                            <h3>Toutes les boutiques</h3>
+                            <p>Accédez à l’espace boutiques pour découvrir encore plus d’univers.</p>
+                        </div>
+                        <div class="public-store-card__aside">
+                            <span class="public-store-card__action">Voir les boutiques <i class="fa-solid fa-arrow-right-long"></i></span>
+                        </div>
+                    </a>
                 </article>
             ';
 
@@ -1028,9 +1037,11 @@
                         </div>
                     </div>
                     <div class="public-store-card__content">
-                        <span class="public-store-card__eyebrow">Boutique</span>
+                        <span class="public-store-card__eyebrow">Univers</span>
                         <h3>'.$name.'</h3>
                         <p>'.$description.'</p>
+                    </div>
+                    <div class="public-store-card__aside">
                         <span class="public-store-card__action">Voir la boutique <i class="fa-solid fa-arrow-right-long"></i></span>
                     </div>
                 </a>
