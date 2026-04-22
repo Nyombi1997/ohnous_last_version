@@ -37,10 +37,13 @@ dans le readme si tu veux que je fasse des actions dans ma base sql écrit moi d
 Utilise mon design pour que les nouveaux design semblent pas venir d'ailleurs
 J'utilise le design liquid ou vitre pour un aspect un moderne n'utilise pas trop le design dégrader.
 IMPORTANT:
-Tous les fichiers texte du projet, y compris README.md, commentaires, fichiers PHP, JS, CSS, JSON et Markdown, doivent être enregistrés en UTF-8.
-N’utilise jamais d’encodage Latin1 ou ISO-8859-1.
-Tous les accents français doivent rester corrects, par exemple : nécessaire, déjà, édition, paramètres.
-Après chaque modification de fichier texte, vérifie qu’aucun texte corrompu du type "nÃ©cessaire", "dÃ©jÃ ", "paramÃ¨tres" n’est présent.
+Important: encoding safety rules.
+All files must be read and written strictly as UTF-8 without BOM.
+Never use PowerShell Get-Content, Set-Content, Out-File, -replace, or any shell command that may rewrite files with default Windows encoding.
+For file edits, use only apply_patch or Python with explicit encoding="utf-8" for both reading and writing.
+Never generate corrupted characters such as Ã©, Ã , â€™, â€œ, â€.
+If a file contains French text, preserve accents exactly as valid Unicode characters.
+Before saving, verify that strings like "é à è ç ’" remain unchanged.
 Si tu détectes du texte corrompu, corrige-le immédiatement.
 
 J'ai joins ma structure sql au besoin.

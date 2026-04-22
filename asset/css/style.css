@@ -704,6 +704,8 @@ a:active
 {
     width: 100%;
     padding-bottom: 2px;
+    height: 160px;
+    overflow: hidden;
 }
 .section_categorie
 .swiper-wrapper
@@ -893,6 +895,7 @@ p
     align-items: center;
     height: 400px;
     overflow: hidden;
+    border-radius: 10px 10px 0px 0px ,!important;
 }
 .div_img_affiche_produit
 a
@@ -909,6 +912,7 @@ a
     height: 100% !important;
     object-fit: cover;
     object-position: center;
+    border-radius: 10px 10px 0px 0px ,!important;
 }
 .info_affiche_produit,
 .like_affiche_produit
@@ -2700,6 +2704,10 @@ span
 /* ================================
    ADMIN + PROMOTIONS
 ================================ */
+.info_affiche_produit.promo
+{
+    top: 60px;
+}
 .info_affiche_produit.promo,
 .promo-inline-badge{
     background: rgba(255, 96, 126, 0.18);
