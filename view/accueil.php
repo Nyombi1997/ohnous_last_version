@@ -3,7 +3,7 @@
 
     $visibleArticles = ohnous_get_visible_articles(null, 0, "date_ajout DESC, id DESC", false);
     $visibleArticles = array_values($visibleArticles);
-    $visibleStores = ohnous_get_visible_stores(5, 0);
+    $visibleStores = ohnous_get_visible_stores(3, 0);
 
     $categoryCards = [];
     $all_categories = [];

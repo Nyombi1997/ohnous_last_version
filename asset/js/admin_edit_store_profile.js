@@ -10,7 +10,10 @@
     var imagePreview = document.getElementById('imagePreview');
     var validateButton = document.getElementById('valide_photo_profile');
     var openPickerButton = document.getElementById('open_store_profile_picker');
-    var cropper = null;
+    var croppieUploader = window.initCroppieUploader({
+        container: '#croppieCropImage',
+        mode: 'profile'
+    });
     var currentCropImage = null;
     var currentPreviewId = '';
     var currentCroppedDataUrl = '';
@@ -130,61 +133,41 @@
 
         document.body.classList.add('blocked_scroll');
         currentCropImage = imageRef;
-        document.getElementById('cropImage').src = imageUrl;
         document.getElementById('cropModal').style.display = 'flex';
 
         setTimeout(function(){
-            if(cropper){
-                cropper.destroy();
-            }
-
-            cropper = new Cropper(document.getElementById('cropImage'), {
-                aspectRatio: 1,
-                viewMode: 1,
-                autoCropArea: 0.8,
-                responsive: true,
-                preview: '.crop-preview',
-                cropBoxResizable: true,
-                movable: true,
-                zoomable: true,
-                scalable: true
-            });
+            croppieUploader.init(imageUrl);
         }, 100);
     }
 
     window.closeCrop = function() {
         document.getElementById('cropModal').style.display = 'none';
-        if(cropper){
-            cropper.destroy();
-            cropper = null;
-        }
+        croppieUploader.destroy();
         currentCropImage = null;
         document.body.classList.remove('blocked_scroll');
     };
 
     window.applyCrop = function() {
-        if(!cropper || !currentCropImage){
+        if(!croppieUploader.hasImage() || !currentCropImage){
             return;
         }
 
-        var canvas = cropper.getCroppedCanvas({
-            width: 1067,
-            height: 800
+        croppieUploader.result().then(function(dataUrl){
+            currentCroppedDataUrl = dataUrl;
+            var previewImg = document.querySelector('#' + currentCropImage + ' img');
+            if(previewImg){
+                previewImg.src = currentCroppedDataUrl;
+            }
+
+            getDominantColorFromDataUrl(currentCroppedDataUrl).then(function(color){
+                currentBackground = color;
+            });
+
+            validateButton.style.display = 'inline-flex';
+            validateButton.removeAttribute('disabled');
+            closeCrop();
+            showSuccess("Image recadrée.");
         });
-
-        currentCroppedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
-        var previewImg = document.querySelector('#' + currentCropImage + ' img');
-        if(previewImg){
-            previewImg.src = currentCroppedDataUrl;
-        }
-
-        getDominantColorFromDataUrl(currentCroppedDataUrl).then(function(color){
-            currentBackground = color;
-        });
-
-        validateButton.style.display = 'inline-flex';
-        validateButton.removeAttribute('disabled');
-        closeCrop();
     };
 
     function handleFiles(files) {
@@ -219,12 +202,6 @@
         return new Blob([ab], { type: mimeString });
     }
 
-    function deleteImage(fileId) {
-        $.post("/fonctions/delete.php", {
-            fileId: fileId
-        });
-    }
-
     uploadZone.addEventListener('dragover', function(e){
         e.preventDefault();
         uploadZone.classList.add('dragover');
@@ -241,18 +218,25 @@
     });
 
     uploadZone.addEventListener('click', function(){
+        fileInput.value = '';
         fileInput.click();
     });
 
     if(openPickerButton){
         openPickerButton.addEventListener('click', function(e){
             e.preventDefault();
+            e.stopPropagation();
+            fileInput.value = '';
             fileInput.click();
         });
     }
 
     fileInput.addEventListener('change', function(e){
+        if(!e.target.files || e.target.files.length === 0){
+            return;
+        }
         handleFiles(e.target.files);
+        e.target.value = '';
     });
 
     document.getElementById('productForm').addEventListener('submit', function(e){
@@ -342,9 +326,6 @@
                     }, function(data){
                         if(data.result === "ok")
                         {
-                            if(config.fileId){
-                                deleteImage(config.fileId);
-                            }
                             stopLoading("Succès", "La photo de profil a été changée avec succès.", "success");
                         }
                         else

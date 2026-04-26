@@ -47,6 +47,13 @@
     $promoActif = (int)html_entity_decode(filter_var($_POST['promo_actif'] ?? 0, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $promoPrix = trim((string)html_entity_decode(filter_var($_POST['promo_prix'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
     $productImagesJson = $_POST['product_images'] ?? '';
+    $deletedFileIdsJson = $_POST['deleted_fileIds'] ?? '[]';
+    $productImages = json_decode($productImagesJson, true);
+    $deletedFileIds = json_decode($deletedFileIdsJson, true);
+    if(!is_array($deletedFileIds))
+    {
+        $deletedFileIds = [];
+    }
 
     if($nom === '' || $prix === '' || $categorie <= 0)
     {
@@ -75,6 +82,15 @@
         exit;
     }
 
+    if(!is_array($productImages) || empty($productImages))
+    {
+        echo json_encode([
+            'result' => 'error',
+            'msg' => "Ajoutez au moins une image."
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
+
     $updateData = [
         'nom' => $nom,
         'prix' => $prix,
@@ -96,6 +112,8 @@
     {
         $updateData['promo_prix'] = $promoActif === 1 ? $promoPrix : null;
     }
+
+    $oldArticleFileIds = ohnous_get_article_image_file_ids($articleId);
 
     update_bdd($bdd, 'articles', $updateData, "id = '".(int)$articleId."'");
 
@@ -132,11 +150,22 @@
         }
     }
 
-    $productImages = json_decode($productImagesJson, true);
-    if(is_array($productImages) && !empty($productImages))
+    try
     {
-        /* On synchronise la galerie pour refléter les suppressions/remplacements faits côté UI. */
-        ohnous_sync_article_images($articleId, $productImages, $updateData['slug'] ?? $article['slug']);
+        /* DB d'abord, suppression ImageKit seulement après synchronisation réussie. */
+        $syncDeletedFileIds = ohnous_sync_article_images($articleId, $productImages, $updateData['slug'] ?? $article['slug']);
+        $currentFileIds = ohnous_get_article_image_file_ids($articleId);
+        $missingAfterSaveFileIds = ohnous_filter_deleted_imagekit_file_ids($oldArticleFileIds, $currentFileIds);
+        $deleteFileIds = ohnous_filter_deleted_imagekit_file_ids(array_merge($syncDeletedFileIds, $deletedFileIds, $missingAfterSaveFileIds), $currentFileIds);
+        $deleteResults = ohnous_delete_imagekit_file_ids($deleteFileIds);
+    }
+    catch(Throwable $e)
+    {
+        echo json_encode([
+            'result' => 'error',
+            'msg' => $e->getMessage()
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
     }
 
     $article = only_select('articles', 'id = '.$articleId, null, null);
@@ -144,6 +173,8 @@
     echo json_encode([
         'result' => 'ok',
         'msg' => "L’article a bien été mis à jour.",
-        'redirect' => '/article/'.$article['slug']
+        'redirect' => '/article/'.$article['slug'],
+        'imagekit_deleted_fileIds' => array_values($deleteFileIds ?? []),
+        'imagekit_delete_results' => $deleteResults ?? []
     ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 ?>

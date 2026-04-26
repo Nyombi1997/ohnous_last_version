@@ -19,6 +19,8 @@
             $product_image_url = html_entity_decode(filter_var($_POST['product_image_url'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             $fileId = html_entity_decode(filter_var($_POST['fileId'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
             $background = html_entity_decode(filter_var($_POST['background'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+            $hasFileIdColumn = ohnous_column_exists('boutiques', 'fileId');
+            $oldFileId = $hasFileIdColumn ? (string)($boutique['fileId'] ?? '') : '';
             $verif_boutique = select_bdd($bdd, "boutiques", $where = "id = '".$boutique['id']."'", $limit = null, $offset = 0, $order = null, $random = false);
             if(count($verif_boutique)==0)
             {
@@ -36,10 +38,27 @@
                 /* ajouter l'image */
                 $update_data = [
                     "profile" => $product_image_url,
-                    "fileId" => $fileId,
                     "backgrounds" => $background,
                 ];
-                update_bdd($bdd, "boutiques", $update_data, "id = '".$boutique['id']."'");
+                if($hasFileIdColumn)
+                {
+                    $update_data["fileId"] = $fileId;
+                }
+
+                $updated = update_bdd($bdd, "boutiques", $update_data, "id = '".$boutique['id']."'");
+                if(!$updated)
+                {
+                    echo json_encode([
+                        "result" => "error",
+                        "msg" => "Impossible de mettre à jour la photo."
+                    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+                    exit;
+                }
+
+                if($oldFileId !== '' && $fileId !== '' && $oldFileId !== $fileId)
+                {
+                    ohnous_delete_imagekit_file($oldFileId);
+                }
 
                 $results = [
                     "result" => "ok",

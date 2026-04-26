@@ -11,7 +11,10 @@
     const promoActiveInput = document.getElementById('promo_actif_article');
 
     const images = [];
-    let cropper = null;
+    let croppieUploader = window.initCroppieUploader({
+        container: '#croppieCropImage',
+        mode: 'article'
+    });
     let currentImageId = null;
     let selectedType = '';
     let selectedTailles = [];
@@ -29,62 +32,56 @@
         });
     }
 
+    function showSuccess(message){
+        Swal.fire({
+            icon: 'success',
+            title: message,
+            confirmButtonColor: '#6775d6',
+            timer: 1200,
+            showConfirmButton: false
+        });
+    }
+
     function openCrop(dataUrl, imageId){
         currentImageId = imageId;
         document.body.classList.add('blocked_scroll');
-        document.getElementById('cropImage').src = dataUrl;
         document.getElementById('cropModal').style.display = 'flex';
 
         setTimeout(function(){
-            if(cropper){
-                cropper.destroy();
-            }
-
-            cropper = new Cropper(document.getElementById('cropImage'), {
-                aspectRatio: NaN,
-                viewMode: 1,
-                autoCropArea: 0.9,
-                responsive: true,
-                preview: '.crop-preview'
-            });
+            croppieUploader.init(dataUrl);
         }, 100);
     }
 
     window.closeCrop = function(){
         document.getElementById('cropModal').style.display = 'none';
         document.body.classList.remove('blocked_scroll');
-        if(cropper){
-            cropper.destroy();
-            cropper = null;
-        }
+        croppieUploader.destroy();
         currentImageId = null;
     };
 
     window.applyCrop = function(){
-        if(!cropper || !currentImageId){
+        if(!croppieUploader.hasImage() || !currentImageId){
             return;
         }
 
-        const canvas = cropper.getCroppedCanvas({
-            width: 1067,
-            height: 800
+        croppieUploader.result().then(function(dataUrl){
+            const imageItem = images.find(function(item){ return item.id === currentImageId; });
+
+            if(imageItem){
+                imageItem.dataUrl = dataUrl;
+                imageItem.element.querySelector('img').src = dataUrl;
+                recalculateImageStyle(dataUrl).then(function(style){
+                    imageItem.style = style;
+                    imageItem.element.querySelector('img').setAttribute('style', style);
+                });
+                getDominantColorFromDataUrl(dataUrl).then(function(color){
+                    imageItem.background = 'rgb('+color.r+', '+color.g+', '+color.b+')';
+                });
+            }
+
+            closeCrop();
+            showSuccess("Image recadrée.");
         });
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-        const imageItem = images.find(function(item){ return item.id === currentImageId; });
-
-        if(imageItem){
-            imageItem.dataUrl = dataUrl;
-            imageItem.element.querySelector('img').src = dataUrl;
-            recalculateImageStyle(dataUrl).then(function(style){
-                imageItem.style = style;
-                imageItem.element.querySelector('img').setAttribute('style', style);
-            });
-            getDominantColorFromDataUrl(dataUrl).then(function(color){
-                imageItem.background = 'rgb('+color.r+', '+color.g+', '+color.b+')';
-            });
-        }
-
-        closeCrop();
     };
 
     function validateFile(file){
@@ -324,12 +321,19 @@
         handleFiles(e.dataTransfer.files);
     });
 
-    openFilePicker.addEventListener('click', function(){
+    openFilePicker.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        fileInput.value = '';
         fileInput.click();
     });
 
     fileInput.addEventListener('change', function(e){
+        if(!e.target.files || e.target.files.length === 0){
+            return;
+        }
         handleFiles(e.target.files);
+        e.target.value = '';
     });
 
     form.addEventListener('submit', async function(e){

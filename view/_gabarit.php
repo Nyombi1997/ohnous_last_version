@@ -1,4 +1,4 @@
-﻿<?php
+<?php
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
@@ -24,6 +24,10 @@
     <script src="https://unpkg.com/@imagekit/javascript@5.0.0/dist/imagekit.min.js"></script>
     <!-- jquery -->
     <script src="<?= ASSET ?>js/jquery-2.2.4.min.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/jquery-2.2.4.min.js") ?>"></script>
+    <!-- croppie js -->
+    <link rel="stylesheet" href="<?= ASSET ?>css/croppie.css?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/css/croppie.css") ?>">
+    <script src="<?= ASSET ?>js/croppie.min.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/croppie.min.js") ?>"></script>
+    <script src="<?= ASSET ?>js/croppie_uploader.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/croppie_uploader.js") ?>"></script>
     <!-- sweat alert -->
     <link rel="stylesheet" href="<?= ASSET ?>css/sweetalert2.min.css?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/css/sweetalert2.min.css") ?>">
     <script src="<?= ASSET ?>js/sweetalert2.all.min.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/sweetalert2.all.min.js") ?>"></script>
@@ -31,11 +35,11 @@
     <script src="<?= ASSET ?>js/article_swipers.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/article_swipers.js") ?>" defer></script>
     <script src="<?= ASSET ?>js/account_interactions.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/account_interactions.js") ?>" defer></script>
     <!-- script panier -->
-	<script src="/asset/js/main_panier_produit.js?<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/asset/js/main_panier_produit.js') ?>" defer></script>
+	<script src="<?= ASSET ?>js/main_panier_produit.js?<?= filemtime($_SERVER['DOCUMENT_ROOT'].'/asset/js/main_panier_produit.js') ?>" defer></script>
     <!-- script search bar -->
-	<script src="/asset/js/script_search_bar.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/script_search_bar.js") ?>" defer></script> 
+	<script src="<?= ASSET ?>js/script_search_bar.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/script_search_bar.js") ?>" defer></script> 
     <!-- script filtre produit -->
-	<script src="/asset/js/filtre_produit.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/filtre_produit.js") ?>" defer></script> 
+	<script src="<?= ASSET ?>js/filtre_produit.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/filtre_produit.js") ?>" defer></script> 
     <!-- fournir la route -->
     <script>
         const root_site = '<?=  $_SERVER['DOCUMENT_ROOT']  ?>';

@@ -55,14 +55,16 @@
     <title>Ajouter un produit</title>
     <link rel="stylesheet" href="<?=  ASSET ?>css/style_ajout_image.css?<?= filemtime("asset/css/style_ajout_image.css") ?>">
     <link rel="stylesheet" href="<?=  ASSET ?>css/style.css?<?= filemtime("asset/css/style.css") ?>">
-    <link rel="stylesheet" href="<?=  ASSET ?>css/cropper.min.css">
-    <script src="<?=  ASSET ?>js/cropper.min.js?<?= filemtime("asset/js/cropper.min.js") ?>"></script>
+    <script src="<?=  ASSET ?>js/jquery-2.2.4.min.js?<?= filemtime("asset/js/jquery-2.2.4.min.js") ?>"></script>
+    <link rel="stylesheet" href="<?=  ASSET ?>css/croppie.css?<?= filemtime("asset/css/croppie.css") ?>">
+    <script src="<?=  ASSET ?>js/croppie.min.js?<?= filemtime("asset/js/croppie.min.js") ?>"></script>
+    <script src="<?=  ASSET ?>js/croppie_uploader.js?<?= filemtime("asset/js/croppie_uploader.js") ?>"></script>
 
     <script src="https://unpkg.com/imagekit-javascript/dist/imagekit.min.js"></script>
     <!-- <script  src="https://unpkg.com/@imagekit/javascript@5.0.0/dist/imagekit.min.js"></script> -->
 </head>
 <body>
-    <span id="fileId" data-file="<?= $boutique['fileId'] ?>"></span>
+    <span id="fileId" data-file="<?= htmlspecialchars((string)($boutique['fileId'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"></span>
     <div class="container_ajout_image">
         <h1 class="titre_ajout_image">Modifier votre photo de profile</h1>
         <div class="div_profile_editer_profile">
@@ -82,7 +84,7 @@
                         <span class="upload-icon"><i class="fa-solid fa-folder-open"></i></span>
                         <p>Glissez-déposez votre image ici</p>
                         <p class="upload-subtext">ou</p>
-                        <button type="button" class="btn_ohnous btn-primary" onclick="document.getElementById('fileInput').click()">
+                        <button type="button" class="btn_ohnous btn-primary" id="open_profile_picker">
                             Choisir cliquez ici
                         </button>
                         <input type="file" id="fileInput" multiple accept="image/*" class="input_ajout_image" style="display: none;">
@@ -109,9 +111,8 @@
             </div>
             <div class="modal-body">
                 <div class="crop-container">
-                    <img id="cropImage" src="">
+                    <div id="croppieCropImage" class="croppie-crop-image"></div>
                 </div>
-                <div class="crop-preview"></div>
             </div>
             <div class="modal-footer">
                 <button class="btn_ohnous btn-secondary" onclick="closeCrop()">Annuler</button>
@@ -130,11 +131,15 @@
 
         const uploadZone = document.getElementById('uploadZone');
         const fileInput = document.getElementById('fileInput');
+        const openProfilePicker = document.getElementById('open_profile_picker');
         /* les images en cours */
         const images = [];
-        /* details du cropper */        
+        /* détails de Croppie */        
         let imageId = 'temp_' + Date.now();
-        let cropper = null;
+        let croppieUploader = initCroppieUploader({
+            container: '#croppieCropImage',
+            mode: 'profile'
+        });
         let currentCropImage = null;
         let aspectRatio = 4/3;
         let firstOpen = false;
@@ -162,13 +167,24 @@
         });
         // Click sur zone
         uploadZone.addEventListener('click', () => {
+            fileInput.value = '';
+            fileInput.click();
+        });
+        openProfilePicker.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            fileInput.value = '';
             fileInput.click();
         });
         /* clique pour charger l'image */
         fileInput.addEventListener('change', (e) => {
+            if(!e.target.files || e.target.files.length === 0){
+                return;
+            }
             /* si c'est la première fois que l'on ouvre l'image */
             firstOpen = true;
             handleFiles(e.target.files);
+            e.target.value = '';
         });
         /* ouvrir le crop */
         function openCrop(imageRef,imageId) {
@@ -179,26 +195,10 @@
         
             currentCropImage = imageRef;
 
-            document.getElementById('cropImage').src = imageId;
             document.getElementById('cropModal').style.display = 'flex';
             
-            // Initialiser cropper
             setTimeout(() => {
-                if (cropper) {
-                    cropper.destroy();
-                }
-                
-                cropper = new Cropper(document.getElementById('cropImage'), {
-                    aspectRatio: 1, // free crop
-                    viewMode: 1,
-                    autoCropArea: 0.8,
-                    responsive: true,
-                    preview: '.crop-preview',
-                    cropBoxResizable: true,
-                    movable: true,
-                    zoomable: true,
-                    scalable: true
-                });
+                croppieUploader.init(imageId);
             }, 100);
         }
         /* fermer le croppe */
@@ -211,10 +211,7 @@
                 firstOpen = false;
             }
             document.getElementById('cropModal').style.display = 'none';
-            if (cropper) {
-                cropper.destroy();
-                cropper = null;
-            }
+            croppieUploader.destroy();
             currentCropImage = null;
             /* débloquer le scroll du body */
             document.body.classList.remove('blocked_scroll');
@@ -350,37 +347,27 @@
 
 
         /* Appliquer le croppe */
-        function applyCrop() {
-            if (!cropper || !currentCropImage) return;
+        async function applyCrop() {
+            if (!croppieUploader.hasImage() || !currentCropImage) return;
 
-            const canvas = cropper.getCroppedCanvas({
-                width: 1067,
-                height: 800
-            });
+            const croppedDataUrl = await croppieUploader.result();
+                const imgId = currentCropImage;
+                const imgElement = document.querySelector("img#" + imgId);
+                if (imgElement) {
+                    imgElement.src = croppedDataUrl;
+                }
 
-            const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                getDominantColorFromDataUrl(croppedDataUrl).then(color => {
+                    rgb = 'rgb('+color.r+', '+color.g+', '+color.b+')';
+                });
 
-            // Sauvegarder l'id dans une variable locale pour le then
-            const imgId = currentCropImage;
+                if (firstOpen === true) {
+                    firstImage = '';
+                    firstOpen = false;
+                }
+                currentCropImage = null;
 
-            // Mettre à jour preview immédiatement
-            const imgElement = document.querySelector("img#" + imgId);
-            if (imgElement) {
-                imgElement.src = croppedDataUrl;
-            }
-            // Obtenir la couleur dominante
-            getDominantColorFromDataUrl(croppedDataUrl).then(color => {
-                rgb = 'rgb('+color.r+', '+color.g+', '+color.b+')';
-            });
-
-            // Reset pour le prochain crop
-            if (firstOpen === true) {
-                firstImage = '';
-                firstOpen = false;
-            }
-            currentCropImage = null;
-
-            closeCrop();
+                closeCrop();
             /* afficher chargement profile */
             let loadingActive = false;
             let loadingTimer;
@@ -486,15 +473,6 @@
                             }, function(data){
                                 if(data.result === "ok")
                                 {
-                                    let 
-                                    fileId = document.getElementById("fileId");
-                                    if(fileId!=undefined)
-                                    {
-                                        if(fileId.getAttribute("data-file")!='')
-                                        {
-                                            deleteImage(fileId.getAttribute("data-file"));
-                                        }
-                                    }
                                     stopLoading(title = "Succès", message = "La photo de profile a été changer avec succès !", type = "success", timer = 1500);
                                 }
                                 else
@@ -630,15 +608,6 @@
                             }, function(data){
                                 if(data.result === "ok")
                                 {
-                                    let 
-                                    fileId = document.getElementById("fileId");
-                                    if(fileId!=undefined)
-                                    {
-                                        if(fileId.getAttribute("data-file")!='')
-                                        {
-                                            deleteImage(fileId.getAttribute("data-file"));
-                                        }
-                                    }
                                     stopLoading(title = "Succès", message = "La photo de profile a été changer avec succès !", type = "success", timer = 1500);
                                 }
                                 else
@@ -675,17 +644,6 @@
                 resolve(new Blob([ab], { type: mimeString }));
             });
         }
-
-        function deleteImage(fileId) {
-            $.post("/fonctions/delete.php", {
-                fileId: fileId,
-            }, function(data){
-                if(data.success){
-                } else {
-                }
-            });
-        }
-
 
     </script>
 </body>

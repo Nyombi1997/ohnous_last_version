@@ -14,6 +14,7 @@ Pas d'explication sauf si demandé.
 Code complet sans commentaires.
 Pas de blabla.
 
+mon site fonctionne bien, franchement ne casse rien.
 suis ma logique de programmation
 Ne modifie pas model/bdd.php
 utilise correctement les sessions que tu trouveras dans fonctions/

@@ -157,9 +157,8 @@
         </div>
         <div class="modal-body">
             <div class="crop-container">
-                <img id="cropImage" src="">
+                <div id="croppieCropImage" class="croppie-crop-image"></div>
             </div>
-            <div class="crop-preview"></div>
         </div>
         <div class="modal-footer">
             <button class="btn_ohnous second" onclick="closeCrop()">Annuler</button>
@@ -169,7 +168,6 @@
 </div>
 
 <link rel="stylesheet" href="<?= ASSET ?>css/style_ajout_image.css?<?= filemtime("asset/css/style_ajout_image.css") ?>">
-<link rel="stylesheet" href="<?= ASSET ?>css/cropper.min.css?<?= filemtime("asset/css/cropper.min.css") ?>">
-<script src="<?= ASSET ?>js/cropper.min.js?<?= filemtime("asset/js/cropper.min.js") ?>"></script>
 <script src="https://unpkg.com/imagekit-javascript/dist/imagekit.min.js"></script>
+<script src="/asset/js/croppie_uploader.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/croppie_uploader.js") ?>"></script>
 <script src="/asset/js/admin_edit_article.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/admin_edit_article.js") ?>" defer></script>

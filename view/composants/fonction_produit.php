@@ -2,7 +2,7 @@
     /* affiche produit */
     function affiche_produit($donnee=null , $return = false, $options = []) {
         global $bdd;
-        /* si une donnÃ©e est envoyÃ© */
+        /* si une donnée est envoyée */
         if($donnee)
         {
             $allowHiddenForOwner = !empty($options['allow_hidden_for_owner']) && ohnous_can_manage_article($donnee);

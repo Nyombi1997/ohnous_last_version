@@ -151,6 +151,8 @@
         $profile = trim((string)html_entity_decode(filter_var($_POST['profile'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
         $background = trim((string)html_entity_decode(filter_var($_POST['background'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
         $fileId = trim((string)html_entity_decode(filter_var($_POST['fileId'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
+        $hasFileIdColumn = ohnous_column_exists('boutiques', 'fileId');
+        $oldFileId = $hasFileIdColumn ? trim((string)($boutique['fileId'] ?? '')) : '';
 
         if($nom === '')
         {
@@ -184,12 +186,25 @@
             $updateData['backgrounds'] = $background;
         }
 
-        if($fileId !== '' && ohnous_column_exists('boutiques', 'fileId'))
+        if($fileId !== '' && $hasFileIdColumn)
         {
             $updateData['fileId'] = $fileId;
         }
 
-        update_bdd($bdd, 'boutiques', $updateData, "id = '".(int)$storeId."'");
+        $updated = update_bdd($bdd, 'boutiques', $updateData, "id = '".(int)$storeId."'");
+        if(!$updated)
+        {
+            echo json_encode([
+                'result' => 'error',
+                'msg' => "Impossible de mettre à jour la boutique."
+            ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+            exit;
+        }
+
+        if($oldFileId !== '' && $fileId !== '' && $oldFileId !== $fileId)
+        {
+            ohnous_delete_imagekit_file($oldFileId);
+        }
 
         echo json_encode([
             'result' => 'ok',

@@ -16,10 +16,15 @@
     }
 
     const images = [];
-    let cropper = null;
+    const deletedFileIds = [];
+    let croppieUploader = window.initCroppieUploader({
+        container: '#croppieCropImage',
+        mode: 'article'
+    });
     let currentImageId = null;
     let selectedType = String(config.selectedType || '');
     let selectedTailles = Array.isArray(config.selectedTailles) ? config.selectedTailles.map(String) : [];
+    let initialSnapshot = '';
 
     const imagekit = new ImageKit({
         publicKey: "public_RBnOctCZRQjH0d5pMKWrl8jQ/zI=",
@@ -32,6 +37,62 @@
             title: message,
             confirmButtonColor: '#6775d6'
         });
+    }
+
+    function showSuccess(message){
+        Swal.fire({
+            icon: 'success',
+            title: message,
+            confirmButtonColor: '#6775d6',
+            timer: 1200,
+            showConfirmButton: false
+        });
+    }
+
+    function showInfo(message){
+        Swal.fire({
+            icon: 'info',
+            title: message,
+            confirmButtonColor: '#6775d6'
+        });
+    }
+
+    function getArticleSnapshot(){
+        return JSON.stringify({
+            nom: document.getElementById('nom_article').value.trim(),
+            prix: document.getElementById('prix_article').value.trim(),
+            categorie: String(categorySelect.value || ''),
+            types: String(selectedType || ''),
+            tailles: selectedTailles.slice().map(String).sort(),
+            reserve: document.getElementById('reserve_article').checked ? 1 : 0,
+            promo_actif: promoActiveInput ? (promoActiveInput.checked ? 1 : 0) : 0,
+            promo_prix: promoPriceInput ? promoPriceInput.value.trim() : '',
+            description: document.getElementById('description_article').value.trim(),
+            images: images.map(function(image, index){
+                return {
+                    dbId: Number(image.dbId || 0),
+                    url: image.dataUrl,
+                    fileId: image.fileId || '',
+                    oldFileId: image.oldFileId || '',
+                    style: image.style || '',
+                    background: image.background || '',
+                    needsUpload: image.needsUpload ? 1 : 0,
+                    order: index
+                };
+            }),
+            deletedFileIds: deletedFileIds.slice().sort()
+        });
+    }
+
+    function rememberDeletedFileId(fileId){
+        fileId = String(fileId || '').trim();
+        if(fileId !== '' && deletedFileIds.indexOf(fileId) === -1){
+            deletedFileIds.push(fileId);
+        }
+    }
+
+    function hasArticleChanges(){
+        return initialSnapshot !== '' && getArticleSnapshot() !== initialSnapshot;
     }
 
     function recalculateImageStyle(imgUrl){
@@ -94,63 +155,49 @@
     function openCrop(dataUrl, imageId){
         currentImageId = imageId;
         document.body.classList.add('blocked_scroll');
-        document.getElementById('cropImage').src = dataUrl;
         document.getElementById('cropModal').style.display = 'flex';
 
         setTimeout(function(){
-            if(cropper){
-                cropper.destroy();
-            }
-
-            cropper = new Cropper(document.getElementById('cropImage'), {
-                aspectRatio: NaN,
-                viewMode: 1,
-                autoCropArea: 0.9,
-                responsive: true,
-                preview: '.crop-preview'
-            });
+            croppieUploader.init(dataUrl);
         }, 100);
     }
 
     window.closeCrop = function(){
         document.getElementById('cropModal').style.display = 'none';
         document.body.classList.remove('blocked_scroll');
-        if(cropper){
-            cropper.destroy();
-            cropper = null;
-        }
+        croppieUploader.destroy();
         currentImageId = null;
     };
 
     window.applyCrop = function(){
-        if(!cropper || !currentImageId){
+        if(!croppieUploader.hasImage() || !currentImageId){
             return;
         }
 
         const imageItem = images.find(function(item){ return item.id === currentImageId; });
-        if(!imageItem || imageItem.isExisting){
+        if(!imageItem){
             closeCrop();
             return;
         }
 
-        const canvas = cropper.getCroppedCanvas({
-            width: 1067,
-            height: 800
-        });
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        croppieUploader.result().then(function(dataUrl){
+            imageItem.dataUrl = dataUrl;
+            imageItem.needsUpload = true;
+            imageItem.isExisting = false;
+            rememberDeletedFileId(imageItem.oldFileId || imageItem.fileId);
+            imageItem.element.querySelector('img').src = dataUrl;
 
-        imageItem.dataUrl = dataUrl;
-        imageItem.element.querySelector('img').src = dataUrl;
+            recalculateImageStyle(dataUrl).then(function(style){
+                imageItem.style = style;
+                imageItem.element.querySelector('img').setAttribute('style', style);
+            });
+            getDominantColorFromDataUrl(dataUrl).then(function(color){
+                imageItem.background = 'rgb('+color.r+', '+color.g+', '+color.b+')';
+            });
 
-        recalculateImageStyle(dataUrl).then(function(style){
-            imageItem.style = style;
-            imageItem.element.querySelector('img').setAttribute('style', style);
+            closeCrop();
+            showSuccess("Image recadrée.");
         });
-        getDominantColorFromDataUrl(dataUrl).then(function(color){
-            imageItem.background = 'rgb('+color.r+', '+color.g+', '+color.b+')';
-        });
-
-        closeCrop();
     };
 
     function renderImagePreview(item){
@@ -167,20 +214,13 @@
         `;
 
         element.querySelector('.btn-crop').addEventListener('click', function(){
-            if(item.isExisting){
-                Swal.fire({
-                    icon: 'info',
-                    title: "Ajoutez une nouvelle image si vous souhaitez la recadrer.",
-                    confirmButtonColor: '#6775d6'
-                });
-                return;
-            }
             openCrop(item.dataUrl, item.id);
         });
 
         element.querySelector('.btn-remove').addEventListener('click', function(){
             const index = images.findIndex(function(image){ return image.id === item.id; });
             if(index >= 0){
+                rememberDeletedFileId(images[index].oldFileId || images[index].fileId);
                 images.splice(index, 1);
                 element.remove();
                 syncPrimaryIndicators();
@@ -205,7 +245,9 @@
     }
 
     function handleFiles(files){
-        Array.from(files).forEach(function(file){
+        const selectedFiles = Array.from(files);
+
+        selectedFiles.forEach(function(file){
             if(!validateFile(file)){
                 return;
             }
@@ -221,6 +263,7 @@
                     fileId: '',
                     isPrimary: images.length === 0,
                     isExisting: false,
+                    needsUpload: true,
                     element: null
                 };
 
@@ -252,11 +295,17 @@
     }
 
     function uploadSingleImage(image){
-        if(image.isExisting){
+        if(!image.needsUpload){
+            console.log('[OhNous edit article] Image conservée sans upload ImageKit', {
+                dbId: image.dbId,
+                fileId: image.fileId,
+                oldFileId: image.oldFileId
+            });
             return Promise.resolve({
                 db_id: image.dbId,
                 url: image.dataUrl,
                 fileId: image.fileId,
+                old_fileId: image.oldFileId || image.fileId,
                 style: image.style,
                 background: image.background,
                 existing: true
@@ -264,9 +313,22 @@
         }
 
         return new Promise(function(resolve, reject){
+            console.log('[OhNous edit article] Upload ImageKit démarré', {
+                dbId: image.dbId || 0,
+                oldFileId: image.oldFileId || image.fileId || '',
+                needsUpload: image.needsUpload
+            });
+
             fetch('/fonctions/auth.php')
-                .then(function(res){ return res.json(); })
+                .then(function(res){
+                    console.log('[OhNous edit article] Réponse auth ImageKit', {
+                        status: res.status,
+                        ok: res.ok
+                    });
+                    return res.json();
+                })
                 .then(function(auth){
+                    console.log('[OhNous edit article] Auth ImageKit JSON', auth);
                     imagekit.upload({
                         file: dataURLToBlob(image.dataUrl),
                         fileName: `${config.storeSlug || 'admin'}_${Date.now()}.webp`,
@@ -276,14 +338,22 @@
                         expire: auth.expire
                     }, function(err, result){
                         if(err){
+                            console.log('[OhNous edit article] Erreur upload ImageKit', err);
                             reject(err);
                             return;
                         }
 
-                        resolve({
-                            db_id: 0,
+                        console.log('[OhNous edit article] Upload ImageKit OK', {
                             url: result.url,
                             fileId: result.fileId,
+                            oldFileId: image.oldFileId || image.fileId || ''
+                        });
+
+                        resolve({
+                            db_id: image.dbId || 0,
+                            url: result.url,
+                            fileId: result.fileId,
+                            old_fileId: image.oldFileId || image.fileId || '',
                             style: image.style,
                             background: image.background,
                             existing: false
@@ -303,8 +373,10 @@
                 style: item.style || '',
                 background: item.background || '',
                 fileId: item.fileId || '',
+                oldFileId: item.fileId || '',
                 isPrimary: !!item.isPrimary,
                 isExisting: true,
+                needsUpload: false,
                 element: null
             });
         });
@@ -355,7 +427,11 @@
             if(typeof callback === 'function'){
                 callback();
             }
-        }, 'json');
+            }, 'json');
+    }
+
+    function setInitialSnapshot(){
+        initialSnapshot = getArticleSnapshot();
     }
 
     function fetchTailles(typesId, callback){
@@ -423,12 +499,19 @@
         handleFiles(e.dataTransfer.files);
     });
 
-    openFilePicker.addEventListener('click', function(){
+    openFilePicker.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        fileInput.value = '';
         fileInput.click();
     });
 
     fileInput.addEventListener('change', function(e){
+        if(!e.target.files || e.target.files.length === 0){
+            return;
+        }
         handleFiles(e.target.files);
+        e.target.value = '';
     });
 
     preloadExistingImages();
@@ -436,9 +519,13 @@
     if(Number(config.selectedCategory || 0) > 0){
         fetchTypes(config.selectedCategory, function(){
             if(Number(selectedType || 0) > 0){
-                fetchTailles(selectedType);
+                fetchTailles(selectedType, setInitialSnapshot);
+            }else{
+                setInitialSnapshot();
             }
         });
+    }else{
+        setInitialSnapshot();
     }
 
     form.addEventListener('submit', async function(e){
@@ -460,6 +547,24 @@
             showError("Choisissez une catégorie.");
             return;
         }
+        if(promoActiveInput && promoActiveInput.checked && promoPriceInput && promoPriceInput.value.trim() === ''){
+            showError("Entrez le prix promotionnel de l'article.");
+            return;
+        }
+        if(
+            promoActiveInput
+            && promoActiveInput.checked
+            && promoPriceInput
+            && promoPriceInput.value.trim() !== ''
+            && Number(promoPriceInput.value) >= Number(document.getElementById('prix_article').value)
+        ){
+            showError("Le prix promotionnel doit être inférieur au prix normal.");
+            return;
+        }
+        if(!hasArticleChanges()){
+            showInfo("Aucune modification n'a été faite.");
+            return;
+        }
 
         const button = form.querySelector('button[type="submit"]');
         const tempText = button.innerHTML;
@@ -472,27 +577,7 @@
                 uploadedImages.push(await uploadSingleImage(image));
             }
 
-            if(promoActiveInput && promoActiveInput.checked && promoPriceInput && promoPriceInput.value.trim() === ''){
-                showError("Entrez le prix promotionnel de l'article.");
-                button.removeAttribute('disabled');
-                button.innerHTML = tempText;
-                return;
-            }
-
-            if(
-                promoActiveInput
-                && promoActiveInput.checked
-                && promoPriceInput
-                && promoPriceInput.value.trim() !== ''
-                && Number(promoPriceInput.value) >= Number(document.getElementById('prix_article').value)
-            ){
-                showError("Le prix promotionnel doit être inférieur au prix normal.");
-                button.removeAttribute('disabled');
-                button.innerHTML = tempText;
-                return;
-            }
-
-            $.post(config.submitUrl || '/fonctions/admin_article_actions.php', {
+            const ajaxPayload = {
                 action: config.actionName || 'update_article',
                 article_id: config.articleId,
                 nom: document.getElementById('nom_article').value.trim(),
@@ -504,8 +589,41 @@
                 promo_actif: document.getElementById('promo_actif_article') ? (document.getElementById('promo_actif_article').checked ? 1 : 0) : 0,
                 promo_prix: document.getElementById('promo_prix_article') ? document.getElementById('promo_prix_article').value.trim() : '',
                 description: document.getElementById('description_article').value.trim(),
-                product_images: JSON.stringify(uploadedImages)
-            }, function(data){
+                product_images: JSON.stringify(uploadedImages),
+                deleted_fileIds: JSON.stringify(deletedFileIds)
+            };
+
+            console.log('[OhNous edit article] Payload envoyé au serveur', {
+                url: config.submitUrl || '/fonctions/admin_article_actions.php',
+                images: uploadedImages,
+                deletedFileIds: deletedFileIds,
+                payload: ajaxPayload
+            });
+
+            $.ajax({
+                url: config.submitUrl || '/fonctions/admin_article_actions.php',
+                method: 'POST',
+                dataType: 'json',
+                data: ajaxPayload
+            }).done(function(data){
+                console.log('[OhNous edit article] Réponse serveur OK', data);
+                console.log('[OhNous edit article] Suppression ImageKit serveur', {
+                    deletedFileIds: data.imagekit_deleted_fileIds || [],
+                    results: data.imagekit_delete_results || {}
+                });
+                Object.keys(data.imagekit_delete_results || {}).forEach(function(fileId){
+                    const result = data.imagekit_delete_results[fileId];
+                    if(!result || result.success !== true){
+                        console.error('[OhNous edit article] Suppression ImageKit échouée', {
+                            fileId: fileId,
+                            result: result
+                        });
+                        console.error('[OhNous edit article] Détail suppression ImageKit', JSON.stringify({
+                            fileId: fileId,
+                            result: result
+                        }, null, 2));
+                    }
+                });
                 if(data.result !== 'ok'){
                     showError(data.msg || "Impossible de modifier l'article.");
                     return;
@@ -513,12 +631,26 @@
 
                 Swal.fire({
                     icon: 'success',
-                    title: data.msg,
-                    confirmButtonColor: '#6775d6'
+                    title: data.msg || "Modification enregistrée.",
+                    text: "Vos modifications ont été enregistrées.",
+                    confirmButtonColor: '#6775d6',
+                    allowOutsideClick: false
                 }).then(function(){
                     window.location = data.redirect || config.redirectUrl || '/article/' + (config.articleSlug || '');
                 });
-            }, 'json').always(function(){
+            }).fail(function(xhr){
+                var message = "L'enregistrement a échoué.";
+                console.log('[OhNous edit article] Échec AJAX', {
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                    responseJSON: xhr.responseJSON,
+                    responseText: xhr.responseText
+                });
+                if(xhr.responseJSON && xhr.responseJSON.msg){
+                    message = xhr.responseJSON.msg;
+                }
+                showError(message);
+            }).always(function(){
                 button.removeAttribute('disabled');
                 button.innerHTML = tempText;
             });

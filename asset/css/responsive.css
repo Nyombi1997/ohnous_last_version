@@ -141,43 +141,57 @@
     }
     .public-store-grid
     {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 12px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
     }
     .public-store-card__link
     {
-        grid-template-columns: 84px minmax(0, 1fr);
-        gap: 14px;
-        min-height: 116px;
-        padding: 14px;
+        gap: 6px;
+        padding: 7px;
     }
     .public-store-card__visual
     {
-        min-height: 84px;
+        min-height: 138px;
     }
     .public-store-card__avatar
     {
-        width: 72px;
-        height: 72px;
-        border-radius: 22px;
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
     }
     .public-store-card__content
     {
-        gap: 4px;
+        gap: 3px;
+        padding: 0 1px;
+    }
+    .public-store-card__eyebrow
+    {
+        display: none;
     }
     .public-store-card__content h3
     {
-        font-size: 1.2rem;
+        font-size: .88rem;
+        line-height: 1.05;
+    }
+    .public-store-card__content p
+    {
+        display: -webkit-box;
+        font-size: .68rem;
+        line-height: 1.22;
+        min-height: 1.7em;
+        -webkit-line-clamp: 2;
     }
     .public-store-card__aside
     {
-        grid-column: 1 / -1;
-        justify-content: flex-start;
-        padding-top: 4px;
+        margin-top: auto;
+        padding: 0 1px 1px;
     }
     .public-store-card__action
     {
-        padding: 10px 14px;
+        width: 100%;
+        justify-content: center;
+        padding: 8px 9px;
+        font-size: .66rem;
     }
     .container_affiche_produit.vue_article
     {
