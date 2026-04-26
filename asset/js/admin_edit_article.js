@@ -57,6 +57,33 @@
         });
     }
 
+    function showSavingLoading(hasImagekitDelete){
+        Swal.fire({
+            title: hasImagekitDelete ? "Enregistrement et suppression des anciennes images..." : "Enregistrement de l’article...",
+            text: "Merci de patienter.",
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: function(){
+                Swal.showLoading();
+            }
+        });
+    }
+
+    function getFailedImagekitDeletes(results){
+        const failed = [];
+        Object.keys(results || {}).forEach(function(fileId){
+            const result = results[fileId];
+            if(!result || result.success !== true){
+                failed.push({
+                    fileId: fileId,
+                    result: result
+                });
+            }
+        });
+        return failed;
+    }
+
     function getArticleSnapshot(){
         return JSON.stringify({
             nom: document.getElementById('nom_article').value.trim(),
@@ -570,6 +597,7 @@
         const tempText = button.innerHTML;
         button.setAttribute('disabled', '');
         button.innerHTML = `<i class="fa-solid fa-circle-notch rotate"></i>`;
+        showSavingLoading(deletedFileIds.length > 0);
 
         try{
             const uploadedImages = [];
@@ -611,21 +639,24 @@
                     deletedFileIds: data.imagekit_deleted_fileIds || [],
                     results: data.imagekit_delete_results || {}
                 });
-                Object.keys(data.imagekit_delete_results || {}).forEach(function(fileId){
-                    const result = data.imagekit_delete_results[fileId];
-                    if(!result || result.success !== true){
-                        console.error('[OhNous edit article] Suppression ImageKit échouée', {
-                            fileId: fileId,
-                            result: result
-                        });
-                        console.error('[OhNous edit article] Détail suppression ImageKit', JSON.stringify({
-                            fileId: fileId,
-                            result: result
-                        }, null, 2));
-                    }
+                const failedDeletes = getFailedImagekitDeletes(data.imagekit_delete_results || {});
+                failedDeletes.forEach(function(item){
+                    console.error('[OhNous edit article] Suppression ImageKit échouée', item);
+                    console.error('[OhNous edit article] Détail suppression ImageKit', JSON.stringify(item, null, 2));
                 });
                 if(data.result !== 'ok'){
                     showError(data.msg || "Impossible de modifier l'article.");
+                    return;
+                }
+
+                if(failedDeletes.length > 0){
+                    Swal.fire({
+                        icon: 'error',
+                        title: "Article enregistré, mais suppression ImageKit échouée.",
+                        text: "Vérifiez la console pour le détail ImageKit.",
+                        confirmButtonColor: '#6775d6',
+                        allowOutsideClick: false
+                    });
                     return;
                 }
 
@@ -649,7 +680,12 @@
                 if(xhr.responseJSON && xhr.responseJSON.msg){
                     message = xhr.responseJSON.msg;
                 }
-                showError(message);
+                Swal.fire({
+                    icon: 'error',
+                    title: message,
+                    confirmButtonColor: '#6775d6',
+                    allowOutsideClick: false
+                });
             }).always(function(){
                 button.removeAttribute('disabled');
                 button.innerHTML = tempText;
@@ -658,7 +694,12 @@
             console.error(error);
             button.removeAttribute('disabled');
             button.innerHTML = tempText;
-            showError("Une erreur est survenue pendant l'envoi des images.");
+            Swal.fire({
+                icon: 'error',
+                title: "Une erreur est survenue pendant l'envoi des images.",
+                confirmButtonColor: '#6775d6',
+                allowOutsideClick: false
+            });
         }
     });
 })(jQuery);

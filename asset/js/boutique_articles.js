@@ -138,6 +138,16 @@
                 }
 
                 $button.prop('disabled', true);
+                Swal.fire({
+                    title: "Suppression de l’article...",
+                    text: "Merci de patienter.",
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: function () {
+                        Swal.showLoading();
+                    }
+                });
 
                 $.post('/fonctions/store_article_actions.php', {
                     action: 'delete_article',

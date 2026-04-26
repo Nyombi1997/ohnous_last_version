@@ -9,10 +9,11 @@
 
     function getViewport(mode, boundaryWidth){
         if(mode === 'article'){
-            var width = Math.min(320, boundaryWidth - 20);
+            var width = Math.min(180, boundaryWidth - 40);
+            width = Math.max(150, width);
             return {
                 width: width,
-                height: Math.round(width * 9 / 16),
+                height: Math.round(width * 16 / 9),
                 type: 'square'
             };
         }
