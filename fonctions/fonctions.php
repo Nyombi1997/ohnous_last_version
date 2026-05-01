@@ -658,6 +658,74 @@
         return $url.$separator.'tr='.implode(',', $transformations);
     }
 
+    /* construire une URL absolue pour les aperçus de partage */
+    function ohnous_absolute_url($url)
+    {
+        $url = trim((string)$url);
+        if($url === '')
+        {
+            return '';
+        }
+
+        if(preg_match('/^https?:\/\//i', $url))
+        {
+            return $url;
+        }
+
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+
+        return $scheme.'://'.$host.'/'.ltrim($url, '/');
+    }
+
+    /* récupérer jusqu'à 4 images optimisées pour les cartes de partage */
+    function ohnous_get_article_share_images($articleId, $limit = 4)
+    {
+        $images = array_slice(ohnous_get_article_images((int)$articleId), 0, max(1, (int)$limit));
+        $shareImages = [];
+
+        foreach($images as $image)
+        {
+            $url = ohnous_absolute_url(ohnous_imagekit_url((string)($image['img'] ?? ''), ['w-1200', 'h-630', 'c-at_max', 'q-85']));
+            if($url !== '')
+            {
+                $shareImages[] = $url;
+            }
+        }
+
+        return $shareImages;
+    }
+
+    /* préparer les métadonnées sociales d'un article */
+    function ohnous_get_article_share_meta($article)
+    {
+        $article = is_array($article) ? $article : [];
+        $title = trim((string)($article['nom'] ?? 'Article OhNous'));
+        $description = trim(strip_tags((string)($article['description'] ?? '')));
+        $slug = trim((string)($article['slug'] ?? ''));
+
+        if($description === '')
+        {
+            $description = 'Découvrez cet article sur OhNous.';
+        }
+
+        if(function_exists('mb_substr'))
+        {
+            $description = mb_substr($description, 0, 180, 'UTF-8');
+        }
+        else
+        {
+            $description = substr($description, 0, 180);
+        }
+
+        return [
+            'title' => $title,
+            'description' => $description,
+            'url' => ohnous_absolute_url('/article/'.$slug),
+            'images' => ohnous_get_article_share_images((int)($article['id'] ?? 0), 4),
+        ];
+    }
+
     /* préparer les URLs pour un chargement progressif et fiable des images */
     function ohnous_prepare_liquid_image($url, $sizes = '(max-width: 768px) 90vw, 600px')
     {

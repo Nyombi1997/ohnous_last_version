@@ -510,4 +510,9 @@
     .share-network-grid{
         grid-template-columns:1fr;
     }
+
+    .share-preview-grid__item,
+    .share-preview-grid__item img{
+        min-height:96px;
+    }
 }

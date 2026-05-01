@@ -33,6 +33,15 @@ document.addEventListener("DOMContentLoaded", function(){
     const shareButton = document.querySelector(".js-article-share-trigger");
     const shareConfig = window.articleShareConfig || null;
 
+    function escapeHtml(value) {
+        return String(value || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     function openShareFallback() {
         if (!shareConfig) {
             return;
@@ -41,10 +50,17 @@ document.addEventListener("DOMContentLoaded", function(){
         const url = encodeURIComponent(shareConfig.url || window.location.href);
         const text = encodeURIComponent(shareConfig.text || shareConfig.title || document.title);
         const title = encodeURIComponent(shareConfig.title || document.title);
+        const images = Array.isArray(shareConfig.images) ? shareConfig.images.slice(0, 4) : [];
+        const previewHtml = images.length > 0
+            ? `<div class="share-preview-grid share-preview-grid--${images.length}">${images.map(function(image, index){
+                return `<div class="share-preview-grid__item"><img src="${escapeHtml(image)}" alt="${escapeHtml((shareConfig.title || document.title) + " " + (index + 1))}"></div>`;
+            }).join("")}</div>`
+            : "";
 
         Swal.fire({
             title: "Partager cet article",
             html: `
+                ${previewHtml}
                 <div class="share-network-grid">
                     <a class="share-network-link" href="https://www.facebook.com/sharer/sharer.php?u=${url}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook-f"></i><span>Facebook</span></a>
                     <a class="share-network-link" href="https://wa.me/?text=${text}%20${url}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-whatsapp"></i><span>WhatsApp</span></a>

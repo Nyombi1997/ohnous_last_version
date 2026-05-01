@@ -33,7 +33,7 @@
         <div class="upload-product-panel__head">
             <div>
                 <h1>Ajouter un article</h1>
-                <p>Ajoutez plusieurs images, préparez votre fiche produit et publiez-la dans votre boutique active.</p>
+                <p>Ajoutez plusieurs images, préparez votre fiche produit et publiez-la dans votre boutique.</p>
             </div>
             <a href="/boutique" class="btn_ohnous second">Retour boutique</a>
         </div>

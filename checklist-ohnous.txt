@@ -14,6 +14,7 @@ Pas d'explication sauf si demandé.
 Code complet sans commentaires.
 Pas de blabla.
 
+Fais presque strictement ce que je te demande de faire sans faire ce qui ne cadre pas avec ma demande, si tu veux faire quelque chose qui cadre avec ma demande tant mieux fais
 mon site fonctionne bien, franchement ne casse rien.
 suis ma logique de programmation
 Ne modifie pas model/bdd.php

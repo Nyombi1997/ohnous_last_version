@@ -145,7 +145,7 @@
         <div class="container_message_edit_social_media_boutique">
             <div class="div_edit_message_boutique">
                 <?php
-                    if($isOwner)
+                    if($isOwner && $isActiveStore)
                     {
                         echo '<a href="/editer-boutique" class="editer_boutique message">Éditer</a>';
                     }
@@ -160,28 +160,33 @@
                         echo '<a href="/ajouter-articles" class="editer_boutique message">Ajouter un article</a>';
                     }
 
-                    if($currentAccount['connected'])
+                    if($currentAccount['connected'] && (!$isOwner || $isActiveStore))
                     {
-                        echo '<a href="/articles-aimes" class="editer_boutique message">Articles aimés</a>';
+                        //echo '<a href="/articles-aimes" class="editer_boutique message">Articles aimés</a>';
                     }
 
-                    $messageLink = '/connexion';
-                    if($isOwner)
+                    if(!$isOwner || $isActiveStore)
                     {
-                        $messageLink = '/message';
-                    }
-                    elseif($currentAccount['connected'] && $currentAccount['type'] === 'utilisateur')
-                    {
-                        $messageLink = '/message?client='.(int)$currentAccount['id'].'&boutique='.(int)$boutique['id'];
+                        $messageLink = '/connexion';
+                        if($isOwner)
+                        {
+                            $messageLink = '/message';
+                        }
+                        elseif($currentAccount['connected'] && $currentAccount['type'] === 'utilisateur')
+                        {
+                            $messageLink = '/message?client='.(int)$currentAccount['id'].'&boutique='.(int)$boutique['id'];
+                        }
+                ?>
+                    <a href="<?= $messageLink ?>" class="editer_boutique message">Message <?php
+                        if($isOwner)
+                        {
+                            $messages = gestion_9_plus(ohnous_get_unread_messages_count($currentAccount));
+                            echo '<span>'.$messages.'</span>';
+                        }
+                    ?></a>
+                <?php
                     }
                 ?>
-                <a href="<?= $messageLink ?>" class="editer_boutique message">Message <?php
-                    if($isOwner)
-                    {
-                        $messages = gestion_9_plus(ohnous_get_unread_messages_count($currentAccount));
-                        echo '<span>'.$messages.'</span>';
-                    }
-                ?></a>
             </div>
             <div class="social_media_boutique">
                 <?php

@@ -16,13 +16,15 @@
     $reviewListHtml = ohnous_render_article_reviews_html($article['id'], 20);
     $likeSummary = ohnous_get_article_likes_summary($article['id']);
     $pricing = ohnous_get_article_pricing($article);
+    $articleShareMeta = ohnous_get_article_share_meta($article);
 ?>
 <script>
     let home_page = true;
     window.articleShareConfig = {
-        title: <?= json_encode($article['nom'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
-        text: <?= json_encode('Decouvrez cet article sur OhNous : '.$article['nom'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
-        url: <?= json_encode((((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http').'://'.($_SERVER['HTTP_HOST'] ?? 'localhost').($_SERVER['REQUEST_URI'] ?? '/article/'.$article['slug'])), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>
+        title: <?= json_encode($articleShareMeta['title'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
+        text: <?= json_encode('Découvrez cet article sur OhNous : '.$articleShareMeta['title'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
+        url: <?= json_encode($articleShareMeta['url'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
+        images: <?= json_encode($articleShareMeta['images'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>
     };
     window.articleReviewsConfig = {
         articleId: <?= (int)$article['id'] ?>,

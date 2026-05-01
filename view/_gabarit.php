@@ -9,6 +9,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $title_page; ?></title>
+    <?php
+        if(isset($GLOBALS['article']))
+        {
+            $articleShareMeta = ohnous_get_article_share_meta($GLOBALS['article']);
+            echo '<meta name="description" content="'.htmlspecialchars($articleShareMeta['description'], ENT_QUOTES, 'UTF-8').'">'."\n";
+            echo '    <meta property="og:type" content="product">'."\n";
+            echo '    <meta property="og:site_name" content="OhNous">'."\n";
+            echo '    <meta property="og:title" content="'.htmlspecialchars($articleShareMeta['title'], ENT_QUOTES, 'UTF-8').'">'."\n";
+            echo '    <meta property="og:description" content="'.htmlspecialchars($articleShareMeta['description'], ENT_QUOTES, 'UTF-8').'">'."\n";
+            echo '    <meta property="og:url" content="'.htmlspecialchars($articleShareMeta['url'], ENT_QUOTES, 'UTF-8').'">'."\n";
+            foreach($articleShareMeta['images'] as $articleShareImage)
+            {
+                echo '    <meta property="og:image" content="'.htmlspecialchars($articleShareImage, ENT_QUOTES, 'UTF-8').'">'."\n";
+                echo '    <meta property="og:image:secure_url" content="'.htmlspecialchars($articleShareImage, ENT_QUOTES, 'UTF-8').'">'."\n";
+                echo '    <meta property="og:image:width" content="1200">'."\n";
+                echo '    <meta property="og:image:height" content="630">'."\n";
+            }
+            echo '    <meta name="twitter:card" content="summary_large_image">'."\n";
+            echo '    <meta name="twitter:title" content="'.htmlspecialchars($articleShareMeta['title'], ENT_QUOTES, 'UTF-8').'">'."\n";
+            echo '    <meta name="twitter:description" content="'.htmlspecialchars($articleShareMeta['description'], ENT_QUOTES, 'UTF-8').'">'."\n";
+            if(!empty($articleShareMeta['images'][0]))
+            {
+                echo '    <meta name="twitter:image" content="'.htmlspecialchars($articleShareMeta['images'][0], ENT_QUOTES, 'UTF-8').'">'."\n";
+            }
+        }
+    ?>
     <!-- fav icone -->
     <link rel="icon" type="image/png" href="<?php echo ASSET; ?>images/icons/favicon-1.png"/>
     <!-- fontawesome -->
