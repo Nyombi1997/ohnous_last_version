@@ -192,7 +192,7 @@
                 <?php
                     foreach($storeSocials as $social)
                     {
-                        echo '<a href="'.htmlspecialchars($social['url'], ENT_QUOTES, 'UTF-8').'" target="_blank" rel="noopener"><i class="fa-brands '.$social['icon'].'"></i></a>';
+                        echo '<a href="'.htmlspecialchars($social['url'], ENT_QUOTES, 'UTF-8').'" class="editer_boutique message social_link_boutique" target="_blank" rel="noopener"><i class="fa-brands '.$social['icon'].'"></i> '.htmlspecialchars($social['label'], ENT_QUOTES, 'UTF-8').'</a>';
                     }
                 ?>
             </div>

@@ -323,6 +323,7 @@ let form_socials = document.getElementById("form_socials");
 if(form_socials){
     const socialsErrors = document.getElementById("store_socials_errors");
     const validSocials = document.getElementById("valid_socials");
+    const whatsappDialCode = document.getElementById("whatsapp_dial_code");
     const socialFields = {
         facebook: document.getElementById("facebook"),
         instagram: document.getElementById("instagram"),
@@ -338,8 +339,28 @@ if(form_socials){
         twitter: /^$|^(https?:\/\/)?(www\.)?(x\.com|twitter\.com)\/[A-Za-z0-9._\-/?=&%]+$/i,
         trends: /^$|^(https?:\/\/)?(www\.)?threads\.net\/@[A-Za-z0-9._\-/?=&%]+$/i,
         tiktok: /^$|^(https?:\/\/)?(www\.)?(tiktok\.com|vm\.tiktok\.com)\/[A-Za-z0-9._\-/?=&%]+$/i,
-        telephone_whatsapp: /^$|^\+?[0-9\s]{8,20}$/
+        telephone_whatsapp: /^$|^\+[1-9][0-9]{6,18}$/
     };
+    let whatsappIti = null;
+
+    if(socialFields.telephone_whatsapp && window.intlTelInput){
+        whatsappIti = window.intlTelInput(socialFields.telephone_whatsapp, {
+            initialCountry: "cd",
+            separateDialCode: true,
+            nationalMode: true,
+            countrySearch: true,
+            formatOnDisplay: true,
+            strictMode: true,
+            loadUtils: function(){
+                return import("/node_modules/intl-tel-input/dist/js/utils.js");
+            }
+        });
+
+        if(socialFields.telephone_whatsapp.value.trim().indexOf('+') === 0){
+            whatsappIti.setNumber(socialFields.telephone_whatsapp.value.trim());
+            showNationalWhatsAppNumber();
+        }
+    }
 
     function normalizeUrl(value){
         const trimmed = value.trim();
@@ -362,6 +383,103 @@ if(form_socials){
         }).join('');
     }
 
+    function normalizeWhatsAppWithDialCode(value, dialCode){
+        let cleanValue = value.trim().replace(/[^\d+]+/g, '');
+        let cleanDialCode = String(dialCode || '').replace(/\D+/g, '');
+        let digits = cleanValue.replace(/\D+/g, '');
+
+        if(digits === ''){
+            return '';
+        }
+
+        if(cleanValue.indexOf('+') === 0){
+            return '+' + digits;
+        }
+
+        if(digits.indexOf('00') === 0){
+            return '+' + digits.substring(2);
+        }
+
+        if(cleanDialCode !== '' && digits.indexOf(cleanDialCode) === 0){
+            return '+' + digits;
+        }
+
+        if(cleanDialCode !== ''){
+            return '+' + cleanDialCode + digits.replace(/^0+/, '');
+        }
+
+        return '+' + digits;
+    }
+
+    function showNationalWhatsAppNumber(){
+        const field = socialFields.telephone_whatsapp;
+        if(!field || !whatsappIti){
+            return;
+        }
+
+        const countryData = whatsappIti.getSelectedCountryData();
+        const dialCode = countryData && countryData.dialCode ? countryData.dialCode : "";
+        let value = field.value.trim();
+        let digits = value.replace(/\D+/g, '');
+
+        if(whatsappDialCode){
+            whatsappDialCode.value = dialCode;
+        }
+
+        if(dialCode === ''){
+            return;
+        }
+
+        if(value.indexOf('00') === 0){
+            digits = digits.substring(2);
+        }
+
+        if((value.indexOf('+') === 0 || value.indexOf('00') === 0) && digits.indexOf(dialCode) === 0){
+            field.value = digits.substring(dialCode.length).replace(/^0+/, '');
+        }
+    }
+
+    function updateWhatsAppCountryFromInput(){
+        const field = socialFields.telephone_whatsapp;
+        if(!field || !whatsappIti){
+            return;
+        }
+
+        const value = field.value.trim();
+        if((value.indexOf('+') === 0 || value.indexOf('00') === 0) && value.replace(/\D+/g, '').length >= 3){
+            whatsappIti.setNumber(value.indexOf('00') === 0 ? '+' + value.replace(/\D+/g, '').substring(2) : value);
+            const countryData = whatsappIti.getSelectedCountryData();
+            if(whatsappDialCode){
+                whatsappDialCode.value = countryData && countryData.dialCode ? countryData.dialCode : "";
+            }
+            showNationalWhatsAppNumber();
+        }
+    }
+
+    function getNormalizedWhatsApp(){
+        const field = socialFields.telephone_whatsapp;
+        if(!field || field.value.trim() === ''){
+            return '';
+        }
+
+        let dialCode = whatsappDialCode ? whatsappDialCode.value : '';
+
+        if(whatsappIti){
+            const countryData = whatsappIti.getSelectedCountryData();
+            dialCode = countryData && countryData.dialCode ? countryData.dialCode : dialCode;
+            if(whatsappDialCode){
+                whatsappDialCode.value = dialCode;
+            }
+
+            const intlNumber = whatsappIti.getNumber();
+            if(intlNumber && intlNumber.indexOf('+') === 0){
+                return intlNumber;
+            }
+        }
+
+        return normalizeWhatsAppWithDialCode(field.value, dialCode);
+    }
+
     function validateSocials(){
         const errors = [];
 
@@ -375,6 +493,9 @@ if(form_socials){
             if(key !== 'telephone_whatsapp'){
                 value = normalizeUrl(value);
                 field.value = value;
+            }else{
+                updateWhatsAppCountryFromInput();
+                value = getNormalizedWhatsApp();
             }
 
             if(!socialPatterns[key].test(value)){
@@ -399,9 +520,26 @@ if(form_socials){
 
     Object.keys(socialFields).forEach(function(key){
         if(socialFields[key]){
-            socialFields[key].addEventListener('input', validateSocials);
+            if(key === 'telephone_whatsapp'){
+                socialFields[key].addEventListener('input', function(){
+                    socialFields[key].classList.remove('is-invalid');
+                    updateWhatsAppCountryFromInput();
+                });
+                socialFields[key].addEventListener('blur', validateSocials);
+            }else{
+                socialFields[key].addEventListener('input', validateSocials);
+            }
         }
     });
+
+    if(socialFields.telephone_whatsapp){
+        socialFields.telephone_whatsapp.addEventListener('countrychange', function(){
+            if(whatsappIti && whatsappDialCode){
+                const countryData = whatsappIti.getSelectedCountryData();
+                whatsappDialCode.value = countryData && countryData.dialCode ? countryData.dialCode : "";
+            }
+        });
+    }
 
     form_socials.addEventListener("submit", function(e){
         e.preventDefault();
@@ -428,7 +566,8 @@ if(form_socials){
             twitter: socialFields.twitter.value.trim(),
             trends: socialFields.trends.value.trim(),
             tiktok: socialFields.tiktok.value.trim(),
-            telephone_whatsapp: socialFields.telephone_whatsapp.value.trim()
+            telephone_whatsapp: getNormalizedWhatsApp(),
+            whatsapp_dial_code: whatsappDialCode ? whatsappDialCode.value : ""
         }, function(data){
             if(data.result === "error"){
                 Swal.fire({

@@ -1426,10 +1426,16 @@
     /* lien direct WhatsApp */
     function ohnous_format_whatsapp_link($number, $message = 'Bonjour, je viens de OhNous.')
     {
-        $digits = preg_replace('/\D+/', '', (string)$number);
+        $raw = trim((string)$number);
+        $digits = preg_replace('/\D+/', '', $raw);
         if($digits === '')
         {
             return '';
+        }
+
+        if(strpos($digits, '00') === 0)
+        {
+            $digits = substr($digits, 2);
         }
 
         return 'https://wa.me/'.$digits.'?text='.rawurlencode($message);
@@ -1462,7 +1468,10 @@
         if(!empty($boutique['telephone_whatsapp']))
         {
             $socials[] = [
-                'url' => ohnous_format_whatsapp_link($boutique['telephone_whatsapp']),
+                'url' => ohnous_format_whatsapp_link(
+                    $boutique['telephone_whatsapp'],
+                    'Bonjour, je viens de votre boutique "'.($boutique['nom'] ?? '').'" sur OhNous.store.'
+                ),
                 'icon' => 'fa-square-whatsapp',
                 'label' => 'WhatsApp'
             ];

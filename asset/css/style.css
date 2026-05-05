@@ -1432,21 +1432,16 @@ span
 }
 .social_media_boutique
 {
-    width: 50%;
+    width: 100%;
     height: auto;
 }
 .social_media_boutique
 a
 {
-    display: inline-block;
-    text-decoration: none;
-    background: var(--base_2_couleur);
-    color: var(--noir);
-    padding: 5px;
-    border-radius: 10px;
-    margin-right: 10px;
-    margin-top: 10px;
-    font-size: 20px;
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    font-size: 16px;
 }
 
 
@@ -2713,6 +2708,88 @@ span
 
 .form_ohnous input.is-invalid {
     border-color: #db5a82;
+}
+
+.form_ohnous.phone_intl {
+    padding-left: 0;
+    overflow: visible;
+    z-index: 5;
+}
+
+.form_ohnous.phone_intl .iti {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+}
+
+.form_ohnous.phone_intl .iti__dropdown-content {
+    z-index: 1000;
+    min-width: min(420px, calc(100vw - 32px));
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+}
+
+.form_ohnous.phone_intl .iti__country-container {
+    left: 6px;
+    top: 4px;
+    bottom: 4px;
+    width: 108px;
+}
+
+.form_ohnous.phone_intl .iti__selected-country {
+    height: 100%;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+}
+
+.form_ohnous.phone_intl .iti__selected-country-primary {
+    background: transparent;
+}
+
+.form_ohnous.phone_intl .iti__search-input {
+    width: 100%;
+    min-height: 46px;
+    padding: 12px 14px;
+    font-size: 16px;
+    border: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    outline: none;
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+.form_ohnous.phone_intl .iti__country {
+    min-height: 40px;
+    padding: 10px 14px;
+    font-size: 16px;
+    background: rgba(255, 255, 255, 0.55);
+}
+
+.form_ohnous.phone_intl .iti__country:hover,
+.form_ohnous.phone_intl .iti__country.iti__highlight {
+    background: rgba(255, 255, 255, 0.85);
+}
+
+.form_ohnous.phone_intl input[type="text"] {
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    width: 100%;
+    height: 100%;
+    padding-left: 132px;
+}
+
+.form_ohnous.phone_intl input[type="hidden"] {
+    display: none;
 }
 /* ================================
    ADMIN + PROMOTIONS
