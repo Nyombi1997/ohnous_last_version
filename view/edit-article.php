@@ -86,7 +86,8 @@
                 <div class="upload-product-side">
                     <div class="form_group_ajout_image">
                         <label class="label_ajout_image">Nom</label>
-                        <input type="text" id="nom_article" class="input_ajout_image" value="<?= htmlspecialchars((string)$article['nom'], ENT_QUOTES, 'UTF-8') ?>" required>
+                        <input type="text" id="nom_article" class="input_ajout_image" value="<?= htmlspecialchars((string)$article['nom'], ENT_QUOTES, 'UTF-8') ?>" maxlength="150" required>
+                        <small class="article-name-limit-hint" id="article_name_limit_hint"></small>
                     </div>
 
                     <div class="form_group_ajout_image">
@@ -103,8 +104,8 @@
 
                     <div class="admin-form-grid single">
                         <label class="admin-switch-card">
-                            <input type="checkbox" id="reserve_article" <?= ((int)$article['reserve'] === 1) ? 'checked' : '' ?>>
-                            <span>Article visible dans le site</span>
+                            <input type="checkbox" id="reserve_article" <?= ohnous_is_article_reserved($article) ? 'checked' : '' ?>>
+                            <span>Article réservé</span>
                         </label>
                         <?php if(ohnous_column_exists('articles', 'promo_actif')): ?>
                             <label class="admin-switch-card">

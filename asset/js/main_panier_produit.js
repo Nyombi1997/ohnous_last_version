@@ -142,6 +142,12 @@ function removeCartItemElement(cartKey) {
 
 function setCartButtonState(produitId, isActive) {
     document.querySelectorAll("#btn_panier_" + produitId).forEach(function(element){
+        if (element.dataset.hasMultipleSizes === "1") {
+            element.innerHTML = '<span class="icon-panier_plus"></span>';
+            element.classList.remove("active");
+            return;
+        }
+
         element.innerHTML = isActive ? '<span class="icon-panier_moins"></span>' : '<span class="icon-panier_plus"></span>';
         element.classList.toggle("active", isActive);
     });
@@ -182,6 +188,87 @@ function editIconAjouterPanier(produitId = null, ajouter = true, retire = false,
     setCartButtonState(produitId, true);
 }
 
+function normalizeProductSizes(produitTailles, produitTaille) {
+    if (Array.isArray(produitTailles)) {
+        return produitTailles
+            .map(function(item){
+                return String(typeof item === "object" ? (item.nom || item.name || item.label || "") : item).trim();
+            })
+            .filter(function(item, index, list){
+                return item !== "" && list.indexOf(item) === index;
+            });
+    }
+
+    return String(produitTaille || "")
+        .split(",")
+        .map(function(item){
+            return item.trim();
+        })
+        .filter(function(item, index, list){
+            return item !== "" && list.indexOf(item) === index;
+        });
+}
+
+function buildSizeChooserHtml(produitId, tailles) {
+    let html = '<div class="cart-size-popup"><p>Choisissez la taille à ajouter au panier.</p><div class="cart-size-popup__grid">';
+    let firstAvailableIndex = tailles.findIndex(function(taille){
+        return !getCartItemElement(getCartKey(produitId, taille));
+    });
+
+    tailles.forEach(function(taille, index){
+        let cartKey = getCartKey(produitId, taille);
+        let alreadyInCart = !!getCartItemElement(cartKey);
+        html += `
+            <label class="cart-size-popup__choice ${alreadyInCart ? "is-in-cart" : ""} ${index === firstAvailableIndex ? "is-selected" : ""}">
+                <input type="radio" name="cart_size_choice" value="${escapeHtml(taille)}" ${index === firstAvailableIndex ? "checked" : ""} ${alreadyInCart ? "disabled" : ""}>
+                <span>${escapeHtml(taille)}</span>
+                ${alreadyInCart ? '<small>Déjà au panier</small>' : ""}
+            </label>`;
+    });
+
+    html += '</div></div>';
+    return html;
+}
+
+function ajouterTailleAuPanier(imgSrc, produitId, produitNom, produitSlug, produitTaille, produitPrix, produitStyle, produitBackground) {
+    let corps_detail_panier = document.getElementById("corps_detail_panier");
+    let cartKey = getCartKey(produitId, produitTaille);
+
+    if (getCartItemElement(cartKey)) {
+        Swal.fire({
+            title: "Taille déjà au panier",
+            text: "Choisissez une autre taille pour ce même article.",
+            icon: "info",
+            confirmButtonColor: "#6775d6",
+            timer: 1600
+        });
+        return;
+    }
+
+    Swal.fire({
+        title: "Produit ajouté au panier !",
+        text: "Vous pouvez consulter votre panier pour finaliser votre achat.",
+        icon: "success",
+        confirmButtonColor: "#6775d6",
+        timer: 1500
+    });
+
+    if (corps_detail_panier) {
+        if (document.querySelectorAll(".detail_panier[data-cart-key]").length === 0) {
+            corps_detail_panier.innerHTML = "";
+        }
+        corps_detail_panier.insertAdjacentHTML("beforeend", buildCartItemMarkup(imgSrc, produitId, produitNom, produitSlug, produitTaille, produitPrix, produitStyle, produitBackground, cartKey));
+    }
+
+    indiceNombreArticlePanier();
+    calculPrixTotalPanier();
+    onImageLoad();
+    if (typeof window.initLiquidImages === "function") {
+        window.initLiquidImages();
+    }
+    editIconAjouterPanier(produitId, true, false, imgSrc, produitNom, produitSlug, produitTaille, produitPrix, produitStyle, produitBackground);
+}
+
 function buildCartItemMarkup(imgSrc, produitId, produitNom, produitSlug, produitTaille, produitPrix, produitStyle, produitBackground, cartKey) {
     let liquidImage = buildLiquidImagePayload(imgSrc, "(max-width: 768px) 35vw, 180px");
 
@@ -219,10 +306,51 @@ function buildCartItemMarkup(imgSrc, produitId, produitNom, produitSlug, produit
         </div>`;
 }
 
-function ajouterAuPanier(imgSrc = null, produitId = null, produitNom = null, produitSlug = null, produitTaille = null, produitPrix = null, produitStyle = null, produitBackground = null) {
+function ajouterAuPanier(imgSrc = null, produitId = null, produitNom = null, produitSlug = null, produitTaille = null, produitPrix = null, produitStyle = null, produitBackground = null, produitTailles = null) {
     let corps_detail_panier = document.getElementById("corps_detail_panier");
     let cartKey = getCartKey(produitId, produitTaille);
+    let tailles = normalizeProductSizes(produitTailles, produitTaille);
     let shouldRemove = false;
+
+    if (tailles.length > 1) {
+        Swal.fire({
+            title: "Choisir une taille",
+            html: buildSizeChooserHtml(produitId, tailles),
+            showCancelButton: true,
+            confirmButtonText: "Ajouter",
+            cancelButtonText: "Annuler",
+            confirmButtonColor: "#6775d6",
+            cancelButtonColor: "#1f2640",
+            customClass: {
+                popup: "cart-size-popup-shell"
+            },
+            didOpen: function(){
+                document.querySelectorAll('input[name="cart_size_choice"]').forEach(function(input){
+                    input.addEventListener("change", function(){
+                        document.querySelectorAll(".cart-size-popup__choice").forEach(function(label){
+                            label.classList.remove("is-selected");
+                        });
+                        if (input.checked && input.closest(".cart-size-popup__choice")) {
+                            input.closest(".cart-size-popup__choice").classList.add("is-selected");
+                        }
+                    });
+                });
+            },
+            preConfirm: function(){
+                let checked = document.querySelector('input[name="cart_size_choice"]:checked');
+                if (!checked) {
+                    Swal.showValidationMessage("Choisissez une taille disponible.");
+                    return false;
+                }
+                return checked.value;
+            }
+        }).then(function(result){
+            if (result.isConfirmed) {
+                ajouterTailleAuPanier(imgSrc, produitId, produitNom, produitSlug, result.value, produitPrix, produitStyle, produitBackground);
+            }
+        });
+        return;
+    }
 
     document.querySelectorAll("#btn_panier_" + produitId).forEach(function(element){
         if (element.classList.contains("active")) {

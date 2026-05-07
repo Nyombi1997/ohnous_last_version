@@ -269,53 +269,7 @@ https://ohnous.store/paiement-verifier?reference=FP-XXXX
 
 ## SQL à coller dans phpMyAdmin
 
-```sql
-ALTER TABLE `admins`
-  ADD COLUMN `nom` VARCHAR(190) NULL AFTER `email`,
-  ADD COLUMN `profile` TEXT NULL AFTER `nom`,
-  ADD COLUMN `created_by` INT NOT NULL DEFAULT 0 AFTER `profile`;
 
-UPDATE `admins`
-SET `profile` = '/asset/images/icons/favicon-1.png'
-WHERE `profile` IS NULL OR TRIM(`profile`) = '';
-
-CREATE TABLE IF NOT EXISTS `admin_access_tokens` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `admin_id` INT NOT NULL,
-  `token` VARCHAR(190) NOT NULL,
-  `redirect_path` VARCHAR(255) NULL,
-  `expire_at` DATETIME NOT NULL,
-  `used_at` DATETIME NULL,
-  `date_ajout` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `idx_admin_access_admin_id` (`admin_id`),
-  UNIQUE KEY `uniq_admin_access_token` (`token`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE TABLE IF NOT EXISTS `payment_transactions` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `order_id` INT NOT NULL,
-  `provider` VARCHAR(50) NOT NULL,
-  `payment_method` VARCHAR(50) NOT NULL,
-  `reference` VARCHAR(120) NOT NULL,
-  `freshpay_transaction_id` VARCHAR(190) NULL,
-  `financial_institution_id` VARCHAR(190) NULL,
-  `customer_number` VARCHAR(80) NULL,
-  `amount` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
-  `currency` VARCHAR(10) NOT NULL DEFAULT 'USD',
-  `request_payload` LONGTEXT NULL,
-  `response_payload` LONGTEXT NULL,
-  `callback_payload` LONGTEXT NULL,
-  `status` VARCHAR(50) NOT NULL DEFAULT 'initiated',
-  `trans_status` VARCHAR(50) NOT NULL DEFAULT 'pending',
-  `trans_status_description` TEXT NULL,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uniq_payment_reference` (`reference`),
-  KEY `idx_payment_order_id` (`order_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-```
 
 ## Vérifications avant production
 

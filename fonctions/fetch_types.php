@@ -14,21 +14,13 @@
     }
     else
     {
-        $tables = '';
-        $tables_ = "";
-        for($i = 0, $e = 0; $i < count($all_types); $i++, $e++)
+        $types_list = [];
+        for($i = 0; $i < count($all_types); $i++)
         {
             $types = only_select("types", $where = "id = ".$all_types[$i]['types'], $order = null, $limit = null);
             if($types)
             {
-                $tables_ .= '<td class="choix_type" id="'.$types['id'].'" onclick="choixTypes(\''.$types['id'].'\')">'.$types['nom'].'</td>';
-                
-                if($e == 2 || $i == count($all_types)-1)
-                {
-                    $tables .= "<tr>$tables_</tr>";
-                    $tables_ = "";
-                    $e = -1;
-                }
+                $types_list[] = $types;
             }
             else
             {
@@ -36,6 +28,24 @@
                     "result" => "error",
                     "msg" => "Aucun type trouvé"
                 ];
+            }
+        }
+        usort($types_list, function($a, $b){
+            return strnatcasecmp((string)$a['nom'], (string)$b['nom']);
+        });
+
+        $tables = '';
+        $tables_ = "";
+        for($i = 0, $e = 0; $i < count($types_list); $i++, $e++)
+        {
+            $types = $types_list[$i];
+            $tables_ .= '<td class="choix_type" id="'.$types['id'].'" onclick="choixTypes(\''.$types['id'].'\')">'.$types['nom'].'</td>';
+
+            if($e == 2 || $i == count($types_list)-1)
+            {
+                $tables .= "<tr>$tables_</tr>";
+                $tables_ = "";
+                $e = -1;
             }
         }
         $tables = "<table class=\"table-grid\"><tbody>$tables</tbody></table>";

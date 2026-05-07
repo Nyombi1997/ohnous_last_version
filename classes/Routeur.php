@@ -138,7 +138,7 @@
                     $stmt = $bdd->prepare("SELECT * FROM articles WHERE slug = ?");
                     $stmt->execute([$params['article']]);
                     if ($article = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                        if(!ohnous_is_article_visible($article))
+                        if(!ohnous_can_view_article_details($article))
                         {
                             http_response_code(404);
                             echo 'Article introuvable.';
@@ -172,6 +172,19 @@
                         $GLOBALS['boutique'] = $boutique;
                         $titre_page[] = $boutique['nom'];
                         $view = new View('boutique.php');
+                        $titre_page = implode(' | ', $titre_page);
+                        $view->render($titre_page. ' | OhNous');
+                    }
+                }
+                /* si c'est un utilisateur */
+                else if(!empty($params['utilisateur']))
+                {
+                    $stmt = $bdd->prepare("SELECT * FROM utilisateur WHERE slug = ?");
+                    $stmt->execute([$params['utilisateur']]);
+                    if ($user = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                        $GLOBALS['user'] = $user;
+                        $titre_page[] = $user['nom'];
+                        $view = new View('user.php');
                         $titre_page = implode(' | ', $titre_page);
                         $view->render($titre_page. ' | OhNous');
                     }

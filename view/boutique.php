@@ -145,7 +145,7 @@
         <div class="container_message_edit_social_media_boutique">
             <div class="div_edit_message_boutique">
                 <?php
-                    if($isOwner && $isActiveStore)
+                    if($isOwner)
                     {
                         echo '<a href="/editer-boutique" class="editer_boutique message">Éditer</a>';
                     }
@@ -155,7 +155,7 @@
                         echo '<a href="/activer-boutique" class="editer_boutique message">Activer boutique <i class="fa-solid fa-triangle-exclamation"></i></a>';
                     }
 
-                    if($isOwner && $isActiveStore)
+                    if($isOwner)
                     {
                         echo '<a href="/ajouter-articles" class="editer_boutique message">Ajouter un article</a>';
                     }
@@ -207,6 +207,11 @@
                         foreach ($categories as $category) {
                             $detail_category = only_select("categorie", "id = '".$category['id']."'", null, null);
                             $category = only_select("categorie_article", "categorie = '".$category['id']."'", null, null);
+                            $categoryArticle = $category ? only_select("articles", "id = '".(int)$category['article']."'", null, null) : null;
+                            if(!$categoryArticle || (!ohnous_is_article_visible($categoryArticle) && !$isOwner))
+                            {
+                                continue;
+                            }
                             $detail_article = select_bdd($bdd, "image_articles", "article = '".$category['article']."'", null, 0, null, true);
                             if(empty($detail_article))
                             {
@@ -267,7 +272,7 @@
         <?php endif; ?>
     </div>
 
-    <?php if(!$isActiveStore): ?>
+    <?php if(!$isActiveStore && !$isOwner): ?>
         <div class="empty-liquid-state">
             <div class="empty-liquid-state__icon"><i class="fa-solid fa-store-slash"></i></div>
             <p>Cette boutique n’est pas encore visible sur le site. Dès l’activation, ses articles apparaîtront ici.</p>
@@ -290,6 +295,6 @@
     <?php endif; ?>
 </section>
 
-<?php if($isActiveStore): ?>
+<?php if($isActiveStore || $isOwner): ?>
     <script src="/asset/js/boutique_articles.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/boutique_articles.js") ?>" defer></script>
 <?php endif; ?>

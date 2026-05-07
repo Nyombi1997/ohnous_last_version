@@ -59,18 +59,19 @@
                 <div class="upload-product-side">
                     <div class="form_group_ajout_image">
                         <label class="label_ajout_image">Nom</label>
-                        <input type="text" id="nom_article" class="input_ajout_image" required>
+                        <input type="text" id="nom_article" class="input_ajout_image" maxlength="150" required>
+                        <small class="article-name-limit-hint" id="article_name_limit_hint"></small>
                     </div>
 
                     <div class="form_group_ajout_image">
                         <label class="label_ajout_image">Prix ($)</label>
-                        <input type="number" id="prix_article" step="0.01" min="0" class="input_ajout_image" required>
+                        <input type="text" id="prix_article" inputmode="decimal" class="input_ajout_image js-price-input" required>
                     </div>
 
                     <?php if(ohnous_column_exists('articles', 'promo_prix')): ?>
                         <div class="form_group_ajout_image">
                             <label class="label_ajout_image">Prix promotionnel ($)</label>
-                            <input type="number" id="promo_prix_article" step="0.01" min="0" class="input_ajout_image">
+                            <input type="text" id="promo_prix_article" inputmode="decimal" class="input_ajout_image js-price-input">
                         </div>
                     <?php endif; ?>
 
@@ -82,6 +83,13 @@
                             </label>
                         </div>
                     <?php endif; ?>
+
+                    <div class="admin-form-grid single">
+                        <label class="admin-switch-card">
+                            <input type="checkbox" id="reserve_article">
+                            <span>Article réservé</span>
+                        </label>
+                    </div>
 
                     <div class="form_group_ajout_image">
                         <label class="label_ajout_image">Catégorie</label>

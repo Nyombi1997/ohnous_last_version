@@ -17,6 +17,14 @@
     $likeSummary = ohnous_get_article_likes_summary($article['id']);
     $pricing = ohnous_get_article_pricing($article);
     $articleShareMeta = ohnous_get_article_share_meta($article);
+    $primaryImageForDirectCheckout = ohnous_get_article_primary_image((int)$article['id']);
+    $articleTaillesList = fetch_tailles_list($article['id']);
+    $articleTaillesJson = array_map(function($item){
+        return (string)$item['nom'];
+    }, $articleTaillesList);
+    $articleTaillesLabel = fetch_tailles($article['id']);
+    $isReservedCheckoutLink = ohnous_is_article_reserved($article) && isset($_GET['commande']) && (string)$_GET['commande'] === '1';
+    $shareButtonLabel = (ohnous_can_manage_article($article) && ohnous_is_article_reserved($article)) ? 'Partager la commande direct' : 'Partager';
 ?>
 <script>
     let home_page = true;
@@ -34,6 +42,16 @@
         signupUrl: '/choix-compte',
         currentPath: <?= json_encode($_SERVER['REQUEST_URI'] ?? '/article/'.$article['slug']) ?>
     };
+    window.articleDirectCheckoutConfig = <?= ($isReservedCheckoutLink && $primaryImageForDirectCheckout) ? json_encode([
+        'image' => (string)($primaryImageForDirectCheckout['img'] ?? ''),
+        'id' => (int)$article['id'],
+        'name' => (string)$article['nom'],
+        'slug' => (string)$article['slug'],
+        'size' => (string)$articleTaillesLabel,
+        'price' => (string)$pricing['prix_final'],
+        'style' => (string)($primaryImageForDirectCheckout['styles'] ?? ''),
+        'background' => (string)($primaryImageForDirectCheckout['background'] ?? '')
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : 'null' ?>;
 </script>
 <!-- content page -->
 <div class="content_page">
@@ -75,18 +93,12 @@
                 <div class="taille">
                     <?php
                         /* afficher les tailles */
-                        $tailles = select_bdd($bdd, "taille_articles", $where = "article = '".$article['id']."'", $limit = null, $offset = 0, $order = null, $random = false);
-                        foreach($tailles as $taille)
+                        foreach($articleTaillesList as $taille)
                         {
-                            $nom_taille_vu_article = only_select("tailles", $where = "id = '".$taille['taille']."'", $order = null, $limit = null);
                             echo '
-                                <span>'.$nom_taille_vu_article['nom'].'</span>';
+                                <span>'.$taille['nom'].'</span>';
                         }
-                        $tailles = fetch_tailles($article['id']);
-                        if(empty($tailles))
-                        {
-                            $tailles = "";
-                        }
+                        $tailles = $articleTaillesLabel;
                     ?>
                 </div>
                 <div class="action_panier">
@@ -95,12 +107,12 @@
                         $panier = '';
                         $icone = 'icon-panier_plus';
                         $cartItems = ohnous_get_cart_items();
-                        if (isset($cartItems[$key])) {
+                        if (count($articleTaillesJson) <= 1 && isset($cartItems[$key])) {
                             $panier = 'active';
                             $icone = 'icon-panier_moins';
                         }
                         echo '
-                            <button class="panier '.$panier.'" id="btn_panier_'.$article['id'].'" onclick="ajouterAuPanier('.ohnous_js_html_arg($mainImage['img']).','.(int)$article['id'].','.ohnous_js_html_arg($article['nom']).','.ohnous_js_html_arg($article['slug']).','.ohnous_js_html_arg($tailles).','.ohnous_js_html_arg((string)$pricing['prix_final']).','.ohnous_js_html_arg($image_article_style).','.ohnous_js_html_arg($image_article_background).')"><span class="'.$icone.'"></span></button>';
+                            <button class="panier '.$panier.'" id="btn_panier_'.$article['id'].'" data-has-multiple-sizes="'.(count($articleTaillesJson) > 1 ? '1' : '0').'" onclick="ajouterAuPanier('.ohnous_js_html_arg($mainImage['img']).','.(int)$article['id'].','.ohnous_js_html_arg($article['nom']).','.ohnous_js_html_arg($article['slug']).','.ohnous_js_html_arg($tailles).','.ohnous_js_html_arg((string)$pricing['prix_final']).','.ohnous_js_html_arg($image_article_style).','.ohnous_js_html_arg($image_article_background).','.ohnous_js_html_arg($articleTaillesJson).')"><span class="'.$icone.'"></span></button>';
                     ?>
                     <button
                         type="button"
@@ -109,9 +121,28 @@
                     >Commander maintenant</button>
                     <button type="button" class="partager_article js-article-share-trigger">
                         <i class="fa-solid fa-share-nodes"></i>
-                        <span>Partager</span>
+                        <span><?= htmlspecialchars($shareButtonLabel, ENT_QUOTES, 'UTF-8') ?></span>
+                    </button>
+                    <button type="button" class="signaler_article js-article-report-open" data-article-id="<?= (int)$article['id'] ?>">
+                        <i class="fa-regular fa-flag"></i>
+                        <span>Signaler</span>
                     </button>
                 </div>
+                <form class="article-report-form liquid-panel" id="article_report_form">
+                    <input type="hidden" name="article_id" value="<?= (int)$article['id'] ?>">
+                    <div class="article-report-form__head">
+                        <strong>Signaler cet article</strong>
+                        <button type="button" class="js-article-report-close" aria-label="Fermer"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <select name="motif" required>
+                        <option value="">Choisir le problème</option>
+                        <?php foreach(ohnous_get_article_report_reasons() as $key => $label): ?>
+                            <option value="<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <textarea name="message" placeholder="Expliquez ce qui ne va pas..." maxlength="1200" required></textarea>
+                    <button type="submit" class="btn_ohnous">Envoyer le signalement</button>
+                </form>
                 <div class="plus_details">
                     <?php
                         /* boutique */
@@ -256,7 +287,6 @@
 
                         <textarea id="comment-text" placeholder="Dites ce que vous avez aim&eacute;, la qualit&eacute;, la taille, la livraison, ou ce qui pourrait &ecirc;tre am&eacute;lior&eacute;."></textarea>
                         <div class="review-editor__actions">
-                            <span class="review-editor__hint">Un seul avis par compte. Si vous republiez, votre avis sera mis &agrave; jour.</span>
                             <button id="submit-rating" class="btn_ohnous">Publier mon avis</button>
                         </div>
                     </div>
@@ -289,3 +319,4 @@
 
 <!-- script filtre produit -->
 <script src="/asset/js/article_article.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/article_article.js") ?>"></script>
+<script src="/asset/js/article_reports.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/article_reports.js") ?>" defer></script>

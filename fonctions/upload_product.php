@@ -44,13 +44,48 @@
     $product_description = html_entity_decode(filter_var($_POST['product_description'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $promo_actif = (int)html_entity_decode(filter_var($_POST['promo_actif'] ?? 0, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $promo_prix = html_entity_decode(filter_var($_POST['promo_prix'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+    $reserve = (int)html_entity_decode(filter_var($_POST['reserve'] ?? 1, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $product_images_json = $_POST['product_images'] ?? '';
+
+    $sanitize_price = function($value) {
+        $value = preg_replace('/[^\d,.]/', '', (string)$value);
+        if($value === '' || preg_replace('/\D/', '', $value) === '')
+        {
+            return '';
+        }
+
+        $separator = strcspn($value, '.,');
+        if($separator < strlen($value))
+        {
+            $integer = preg_replace('/\D/', '', substr($value, 0, $separator));
+            $decimal = preg_replace('/\D/', '', substr($value, $separator + 1));
+            $integer = ltrim($integer, '0');
+            return ($integer === '' ? '0' : $integer).'.'.$decimal;
+        }
+
+        $value = str_replace(',', '.', $value);
+
+        $value = ltrim($value, '0');
+        return $value === '' ? '0' : $value;
+    };
+
+    $product_price = $sanitize_price($product_price);
+    $promo_prix = trim((string)$promo_prix) === '' ? '' : $sanitize_price($promo_prix);
 
     if(trim($product_name) === '' || trim($product_price) === '' || (int)$product_category <= 0)
     {
         echo json_encode([
             "result" => "error",
             "msg" => "Le nom, le prix et la catégorie sont obligatoires."
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
+
+    if(mb_strlen(trim($product_name), 'UTF-8') > 150)
+    {
+        echo json_encode([
+            "result" => "error",
+            "msg" => "Le nom de l'article ne doit pas dépasser 150 caractères."
         ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         exit;
     }
@@ -106,7 +141,7 @@
         "slug" => $slug,
         "prix" => $product_price,
         "description" => $product_description,
-        "reserve" => 1,
+        "reserve" => $reserve === 0 ? 0 : 1,
         "boutique" => (int)$boutique['id'],
     ];
 

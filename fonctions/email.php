@@ -448,5 +448,87 @@ function ohnous_send_admin_invitation_email($email = "", $adminName = "", $magic
     return $mail->send();
 }
 
+/* email signalement article envoyé aux admins */
+function ohnous_send_article_report_admin_email(array $article, array $boutique, array $report)
+{
+    $mail = ohnous_build_mailer();
+    if ($mail === false) {
+        return false;
+    }
+
+    $articleUrl = 'https://ohnous.store/article/'.urlencode((string)$article['slug']);
+    $adminUrl = 'https://ohnous.store/admin-articles?search='.urlencode((string)$article['nom']);
+
+    $mail->isSMTP();
+    $mail->Host = 'smtp.hostinger.com';
+    $mail->SMTPAuth = true;
+    $mail->Username = 'contact@ohnous.store';
+    $mail->Password = 'Ohnous@2026';
+    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+    $mail->Port = 465;
+
+    $mail->setFrom('contact@ohnous.store', 'Ohnous');
+    $mail->addAddress('contact@ohnous.store');
+    $mail->addAddress('edosysteme@gmail.com');
+    $mail->isHTML(true);
+    $mail->Subject = 'Signalement article - '.$article['nom'];
+    $mail->Body = '
+        <html lang="fr">
+            <body style="font-family:Arial, Helvetica, sans-serif; background:#f5f7ff; padding:24px;">
+                <div style="max-width:680px; margin:0 auto; background:#ffffff; border-radius:24px; padding:32px; box-shadow:0 20px 60px rgba(46, 61, 104, 0.12);">
+                    <h1 style="margin-top:0;">Nouvel article signalé</h1>
+                    <p><strong>Article :</strong> '.htmlspecialchars((string)$article['nom'], ENT_QUOTES, 'UTF-8').'</p>
+                    <p><strong>Boutique :</strong> '.htmlspecialchars((string)($boutique['nom'] ?? 'Boutique inconnue'), ENT_QUOTES, 'UTF-8').'</p>
+                    <p><strong>Motif :</strong> '.htmlspecialchars((string)$report['motif'], ENT_QUOTES, 'UTF-8').'</p>
+                    <p><strong>Signalé par :</strong> '.htmlspecialchars((string)$report['client_nom'], ENT_QUOTES, 'UTF-8').'</p>
+                    <blockquote style="margin:16px 0; padding:16px 18px; background:#f6f8ff; border-radius:18px; color:#44506d;">'.nl2br(htmlspecialchars((string)$report['message'], ENT_QUOTES, 'UTF-8')).'</blockquote>
+                    <a href="'.htmlspecialchars($adminUrl, ENT_QUOTES, 'UTF-8').'" style="display:inline-block; background:#6775d6; color:#ffffff; text-decoration:none; padding:14px 22px; border-radius:999px; font-weight:bold;">Investiguer dans l’admin</a>
+                    <a href="'.htmlspecialchars($articleUrl, ENT_QUOTES, 'UTF-8').'" style="display:inline-block; margin-left:8px; color:#6775d6; text-decoration:none; font-weight:bold;">Voir l’article</a>
+                </div>
+            </body>
+        </html>
+    ';
+
+    return $mail->send();
+}
+
+/* email envoyé à la boutique après suppression d'un article signalé */
+function ohnous_send_article_deleted_store_email(array $boutique, array $article, $reason = "")
+{
+    $mail = ohnous_build_mailer();
+    $email = trim((string)($boutique['adresse_email'] ?? ''));
+    if ($mail === false || $email === '') {
+        return false;
+    }
+
+    $mail->isSMTP();
+    $mail->Host = 'smtp.hostinger.com';
+    $mail->SMTPAuth = true;
+    $mail->Username = 'contact@ohnous.store';
+    $mail->Password = 'Ohnous@2026';
+    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+    $mail->Port = 465;
+
+    $mail->setFrom('contact@ohnous.store', 'Ohnous');
+    $mail->addAddress($email);
+    $mail->isHTML(true);
+    $mail->Subject = 'Article supprimé sur OhNous';
+    $mail->Body = '
+        <html lang="fr">
+            <body style="font-family:Arial, Helvetica, sans-serif; background:#f5f7ff; padding:24px;">
+                <div style="max-width:680px; margin:0 auto; background:#ffffff; border-radius:24px; padding:32px; box-shadow:0 20px 60px rgba(46, 61, 104, 0.12);">
+                    <h1 style="margin-top:0;">Article supprimé</h1>
+                    <p>Bonjour '.htmlspecialchars((string)($boutique['nom'] ?? 'Boutique OhNous'), ENT_QUOTES, 'UTF-8').',</p>
+                    <p>L’article <strong>'.htmlspecialchars((string)$article['nom'], ENT_QUOTES, 'UTF-8').'</strong> a été supprimé par l’administration OhNous après vérification.</p>
+                    <p><strong>Raison :</strong></p>
+                    <blockquote style="margin:16px 0; padding:16px 18px; background:#f6f8ff; border-radius:18px; color:#44506d;">'.nl2br(htmlspecialchars((string)$reason, ENT_QUOTES, 'UTF-8')).'</blockquote>
+                </div>
+            </body>
+        </html>
+    ';
+
+    return $mail->send();
+}
+
 
 ?>

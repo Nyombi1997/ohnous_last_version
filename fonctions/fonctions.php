@@ -87,28 +87,46 @@
     /* trouver les tailles */
     function fetch_tailles($produitId)
     {
-        global $bdd;
-        $all_tailles = select_bdd($bdd, "taille_articles", $where = "article = $produitId", $limit = null, $offset = 0, $order = null, $random = false);
+        $all_tailles = fetch_tailles_list($produitId);
         $taille = "";
-        $taille_array = array();
-        for($i = 0; $i < count($all_tailles); $i++)
+        foreach($all_tailles as $item)
         {
-            if(in_array($all_tailles[$i]['taille'], $taille_array))
+            if(!empty($taille))
             {
-                continue; // Passer à l'itération suivante si l'ID de taille a déjà été traité
+                $taille .= ", ";
             }
-            $tailles = only_select("tailles", $where = "id = ".$all_tailles[$i]['taille'], $order = null, $limit = null);
-            if($tailles)
-            {
-                if(!empty($taille))
-                {
-                    $taille .= ", ";
-                }
-                $taille .= $tailles['nom'];
-                $taille_array[] = $all_tailles[$i]['taille'];
-            }
+            $taille .= $item['nom'];
         }
         return $taille;
+    }
+    /* trouver les tailles en liste pour les choix panier */
+    function fetch_tailles_list($produitId)
+    {
+        global $bdd;
+        $all_tailles = select_bdd($bdd, "taille_articles", $where = "article = '".(int)$produitId."'", $limit = null, $offset = 0, $order = null, $random = false);
+        $taille_array = array();
+        $result = array();
+
+        for($i = 0; $i < count($all_tailles); $i++)
+        {
+            $tailleId = (int)$all_tailles[$i]['taille'];
+            if(in_array($tailleId, $taille_array, true))
+            {
+                continue;
+            }
+
+            $tailles = only_select("tailles", $where = "id = ".$tailleId, $order = null, $limit = null);
+            if($tailles)
+            {
+                $result[] = [
+                    'id' => $tailleId,
+                    'nom' => $tailles['nom']
+                ];
+                $taille_array[] = $tailleId;
+            }
+        }
+
+        return $result;
     }
     /* id pour le panier */
     function cartKey($id, $size) {
@@ -287,8 +305,12 @@
             ':column' => $column
         ]);
 
-        $cache[$key] = ((int)$stmt->fetchColumn()) > 0;
-        return $cache[$key];
+        $exists = ((int)$stmt->fetchColumn()) > 0;
+        if($exists)
+        {
+            $cache[$key] = true;
+        }
+        return $exists;
     }
 
     /* récupérer le compte connecté en respectant la logique de session existante */
@@ -718,10 +740,16 @@
             $description = substr($description, 0, 180);
         }
 
+        $shareUrl = '/article/'.$slug;
+        if(ohnous_is_article_reserved($article))
+        {
+            $shareUrl .= '?commande=1';
+        }
+
         return [
             'title' => $title,
             'description' => $description,
-            'url' => ohnous_absolute_url('/article/'.$slug),
+            'url' => ohnous_absolute_url($shareUrl),
             'images' => ohnous_get_article_share_images((int)($article['id'] ?? 0), 4),
         ];
     }
@@ -941,7 +969,18 @@
         $stmt->execute();
     }
 
-    /* vérifier la visibilité d'un article selon sa boutique */
+    /* vérifier si un article est réservé */
+    function ohnous_is_article_reserved($article)
+    {
+        if(!$article || !is_array($article))
+        {
+            return false;
+        }
+
+        return isset($article['reserve']) && (int)$article['reserve'] !== 1;
+    }
+
+    /* vérifier la visibilité publique d'un article selon sa boutique et sa réservation */
     function ohnous_is_article_visible($article)
     {
         if(!$article || !is_array($article))
@@ -949,8 +988,30 @@
             return false;
         }
 
+        if(ohnous_is_article_reserved($article))
+        {
+            return false;
+        }
+
         $store = ohnous_get_store_by_id($article['boutique'] ?? 0);
         return ohnous_is_store_active($store);
+    }
+
+    /* vérifier si la page détail d'un article peut être ouverte */
+    function ohnous_can_view_article_details($article)
+    {
+        if(ohnous_is_article_visible($article) || ohnous_is_admin() || ohnous_can_manage_article($article))
+        {
+            return true;
+        }
+
+        if(ohnous_is_article_reserved($article) && isset($_GET['commande']) && (string)$_GET['commande'] === '1')
+        {
+            $store = ohnous_get_store_by_id($article['boutique'] ?? 0);
+            return ohnous_is_store_active($store);
+        }
+
+        return false;
     }
 
     /* filtrer une liste d'articles en ne gardant que les boutiques actives */
@@ -1481,6 +1542,67 @@
     }
 
     /* récupérer le nombre de messages non lus pour le compte courant */
+    function ohnous_ensure_messages_chat_columns()
+    {
+        global $bdd;
+        static $done = false;
+
+        if($done)
+        {
+            return;
+        }
+
+        $tableStmt = $bdd->prepare("
+            SELECT COUNT(*)
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_SCHEMA = DATABASE()
+            AND TABLE_NAME = 'messages'
+        ");
+        $tableStmt->execute();
+
+        if((int)$tableStmt->fetchColumn() === 0)
+        {
+            return;
+        }
+
+        $columns = [
+            'conversation_type' => "ALTER TABLE messages ADD conversation_type VARCHAR(30) NOT NULL DEFAULT 'boutique'",
+            'client_type' => "ALTER TABLE messages ADD client_type VARCHAR(30) NOT NULL DEFAULT 'utilisateur'",
+            'from_type' => "ALTER TABLE messages ADD from_type VARCHAR(30) NOT NULL DEFAULT 'utilisateur'"
+        ];
+
+        foreach($columns as $column => $sql)
+        {
+            $stmt = $bdd->prepare("
+                SELECT COUNT(*)
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE()
+                AND TABLE_NAME = 'messages'
+                AND COLUMN_NAME = :column
+            ");
+            $stmt->execute([':column' => $column]);
+
+            if((int)$stmt->fetchColumn() === 0)
+            {
+                $bdd->exec($sql);
+            }
+        }
+
+        $bdd->exec("
+            UPDATE messages
+            SET conversation_type = 'boutique',
+                client_type = 'utilisateur',
+                from_type = CASE
+                    WHEN from_id = boutique_id AND boutique_id > 0 THEN 'boutique'
+                    ELSE 'utilisateur'
+                END
+            WHERE conversation_type = 'boutique'
+            AND boutique_id > 0
+        ");
+
+        $done = true;
+    }
+
     function ohnous_get_unread_messages_count($account = null)
     {
         global $bdd;
@@ -1500,13 +1622,27 @@
             return 0;
         }
 
+        ohnous_ensure_messages_chat_columns();
+
         if($account['type'] === 'boutique')
         {
             $stmt = $bdd->prepare("
                 SELECT COUNT(*)
                 FROM messages
-                WHERE boutique_id = :id
-                AND from_id = client_id
+                WHERE lu = 0
+                AND (
+                    (boutique_id = :id AND conversation_type = 'boutique' AND from_type = 'utilisateur')
+                    OR (conversation_type = 'admin' AND client_type = 'boutique' AND client_id = :id AND from_type = 'admin')
+                )
+            ");
+        }
+        elseif($account['type'] === 'admin')
+        {
+            $stmt = $bdd->prepare("
+                SELECT COUNT(*)
+                FROM messages
+                WHERE conversation_type = 'admin'
+                AND from_type != 'admin'
                 AND lu = 0
             ");
         }
@@ -1515,14 +1651,50 @@
             $stmt = $bdd->prepare("
                 SELECT COUNT(*)
                 FROM messages
-                WHERE client_id = :id
-                AND from_id = boutique_id
-                AND lu = 0
+                WHERE lu = 0
+                AND (
+                    (client_id = :id AND conversation_type = 'boutique' AND from_type = 'boutique')
+                    OR (conversation_type = 'admin' AND client_type = 'utilisateur' AND client_id = :id AND from_type = 'admin')
+                )
             ");
         }
 
-        $stmt->execute([':id' => (int)$account['id']]);
+        $account['type'] === 'admin' ? $stmt->execute() : $stmt->execute([':id' => (int)$account['id']]);
         return (int)$stmt->fetchColumn();
+    }
+
+    /* préparer l'aperçu propre d'une conversation */
+    function ohnous_get_conversation_message_preview($messageText)
+    {
+        $messageText = (string)$messageText;
+        $articleIds = ohnous_get_message_article_ids($messageText);
+        $cleanText = trim(preg_replace('/\[\[article:\d+\]\]/', '', $messageText));
+        $articleName = '';
+
+        if(!empty($articleIds))
+        {
+            $article = only_select("articles", "id = ".(int)$articleIds[0], null, null);
+            $articleName = $article['nom'] ?? 'Article OhNous';
+        }
+
+        if($cleanText !== '' && $articleName !== '')
+        {
+            $preview = $cleanText.' · '.$articleName;
+        }
+        elseif($articleName !== '')
+        {
+            $preview = $articleName;
+        }
+        else
+        {
+            $preview = $cleanText;
+        }
+
+        return [
+            'text' => $preview,
+            'has_article' => !empty($articleIds),
+            'article_name' => $articleName
+        ];
     }
 
     /* construire les conversations pour la messagerie */
@@ -1536,12 +1708,24 @@
             return [];
         }
 
+        ohnous_ensure_messages_chat_columns();
+
         if($account['type'] === 'boutique')
         {
             $stmt = $bdd->prepare("
                 SELECT *
                 FROM messages
-                WHERE boutique_id = :id
+                WHERE (conversation_type = 'boutique' AND boutique_id = :id)
+                OR (conversation_type = 'admin' AND client_type = 'boutique' AND client_id = :id)
+                ORDER BY date_ajout DESC, id DESC
+            ");
+        }
+        elseif($account['type'] === 'admin')
+        {
+            $stmt = $bdd->prepare("
+                SELECT *
+                FROM messages
+                WHERE conversation_type = 'admin'
                 ORDER BY date_ajout DESC, id DESC
             ");
         }
@@ -1550,11 +1734,12 @@
             $stmt = $bdd->prepare("
                 SELECT *
                 FROM messages
-                WHERE client_id = :id
+                WHERE (conversation_type = 'boutique' AND client_id = :id)
+                OR (conversation_type = 'admin' AND client_type = 'utilisateur' AND client_id = :id)
                 ORDER BY date_ajout DESC, id DESC
             ");
         }
-        $stmt->execute([':id' => (int)$account['id']]);
+        $account['type'] === 'admin' ? $stmt->execute() : $stmt->execute([':id' => (int)$account['id']]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $conversations = [];
@@ -1563,15 +1748,30 @@
         {
             $clientId = (int)$row['client_id'];
             $boutiqueId = (int)$row['boutique_id'];
-            $conversationKey = $clientId.'-'.$boutiqueId;
+            $conversationType = (string)($row['conversation_type'] ?? 'boutique');
+            $clientType = (string)($row['client_type'] ?? 'utilisateur');
+            $conversationKey = $conversationType === 'admin'
+                ? 'admin-'.$clientType.'-'.$clientId
+                : $clientId.'-'.$boutiqueId;
 
             if(!isset($conversations[$conversationKey]))
             {
-                $boutique = only_select("boutiques", "id = ".$boutiqueId, null, null);
-                $utilisateur = only_select("utilisateur", "id = ".$clientId, null, null);
+                if($conversationType === 'admin')
+                {
+                    $source = $clientType === 'boutique'
+                        ? only_select("boutiques", "id = ".$clientId, null, null)
+                        : only_select("utilisateur", "id = ".$clientId, null, null);
+                    $other = $account['type'] === 'admin' ? $source : ['nom' => 'Admin OhNous', 'profile' => '/asset/images/icons/favicon-1.png', 'slug' => ''];
+                    $otherType = $account['type'] === 'admin' ? $clientType : 'admin';
+                }
+                else
+                {
+                    $boutique = only_select("boutiques", "id = ".$boutiqueId, null, null);
+                    $utilisateur = only_select("utilisateur", "id = ".$clientId, null, null);
+                    $other = $account['type'] === 'boutique' ? $utilisateur : $boutique;
+                    $otherType = $account['type'] === 'boutique' ? 'utilisateur' : 'boutique';
+                }
 
-                $other = $account['type'] === 'boutique' ? $utilisateur : $boutique;
-                $otherType = $account['type'] === 'boutique' ? 'utilisateur' : 'boutique';
                 $otherName = $other['nom'] ?? 'Compte OhNous';
                 $otherProfile = ohnous_get_profile_picture($other['profile'] ?? '', $otherType);
                 $otherSlug = $other['slug'] ?? '';
@@ -1581,13 +1781,15 @@
                 {
                     $otherLink = '/boutique/'.$otherSlug;
                 }
-                elseif($otherType === 'utilisateur')
+                elseif($otherType === 'utilisateur' && $otherSlug !== '')
                 {
-                    $otherLink = '/compte';
+                    $otherLink = '/utilisateur/'.$otherSlug;
                 }
 
                 $conversations[$conversationKey] = [
                     'conversation_key' => $conversationKey,
+                    'conversation_type' => $conversationType,
+                    'client_type' => $clientType,
                     'client_id' => $clientId,
                     'boutique_id' => $boutiqueId,
                     'other_type' => $otherType,
@@ -1603,16 +1805,28 @@
 
             if($conversations[$conversationKey]['last_message'] === '')
             {
+                $messagePreview = ohnous_get_conversation_message_preview($row['messages']);
                 $conversations[$conversationKey]['last_message'] = $row['messages'];
+                $conversations[$conversationKey]['last_message_preview'] = $messagePreview['text'];
+                $conversations[$conversationKey]['last_message_has_article'] = $messagePreview['has_article'];
+                $conversations[$conversationKey]['last_message_article_name'] = $messagePreview['article_name'];
                 $conversations[$conversationKey]['last_message_date'] = $row['date_ajout'];
             }
 
             $isUnreadForCurrent = false;
-            if($account['type'] === 'boutique' && (int)$row['from_id'] === $clientId && (int)$row['lu'] === 0)
+            if($account['type'] === 'admin' && $conversationType === 'admin' && ($row['from_type'] ?? '') !== 'admin' && (int)$row['lu'] === 0)
             {
                 $isUnreadForCurrent = true;
             }
-            if($account['type'] === 'utilisateur' && (int)$row['from_id'] === $boutiqueId && (int)$row['lu'] === 0)
+            if($account['type'] === 'boutique' && $conversationType === 'boutique' && ($row['from_type'] ?? '') === 'utilisateur' && (int)$row['lu'] === 0)
+            {
+                $isUnreadForCurrent = true;
+            }
+            if($account['type'] === 'utilisateur' && $conversationType === 'boutique' && ($row['from_type'] ?? '') === 'boutique' && (int)$row['lu'] === 0)
+            {
+                $isUnreadForCurrent = true;
+            }
+            if($account['type'] !== 'admin' && $conversationType === 'admin' && ($row['from_type'] ?? '') === 'admin' && (int)$row['lu'] === 0)
             {
                 $isUnreadForCurrent = true;
             }
@@ -1631,7 +1845,7 @@
     }
 
     /* récupérer les messages d'une conversation */
-    function ohnous_get_messages_for_conversation($clientId, $boutiqueId)
+    function ohnous_get_messages_for_conversation($clientId, $boutiqueId, $conversationType = 'boutique', $clientType = 'utilisateur')
     {
         global $bdd;
 
@@ -1640,29 +1854,357 @@
             return [];
         }
 
-        $stmt = $bdd->prepare("
-            SELECT *
-            FROM messages
-            WHERE client_id = :client_id
-            AND boutique_id = :boutique_id
-            ORDER BY date_ajout ASC, id ASC
-        ");
-        $stmt->execute([
-            ':client_id' => (int)$clientId,
-            ':boutique_id' => (int)$boutiqueId
-        ]);
+        ohnous_ensure_messages_chat_columns();
+
+        if($conversationType === 'admin')
+        {
+            $stmt = $bdd->prepare("
+                SELECT *
+                FROM messages
+                WHERE conversation_type = 'admin'
+                AND client_type = :client_type
+                AND client_id = :client_id
+                ORDER BY date_ajout ASC, id ASC
+            ");
+            $stmt->execute([
+                ':client_type' => $clientType,
+                ':client_id' => (int)$clientId
+            ]);
+        }
+        else
+        {
+            $stmt = $bdd->prepare("
+                SELECT *
+                FROM messages
+                WHERE conversation_type = 'boutique'
+                AND client_id = :client_id
+                AND boutique_id = :boutique_id
+                ORDER BY date_ajout ASC, id ASC
+            ");
+            $stmt->execute([
+                ':client_id' => (int)$clientId,
+                ':boutique_id' => (int)$boutiqueId
+            ]);
+        }
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /* extraire les articles tagués dans un message */
+    function ohnous_get_message_article_ids($messageText)
+    {
+        preg_match_all('/\[\[article:(\d+)\]\]/', (string)$messageText, $matches);
+        return array_values(array_unique(array_map('intval', $matches[1] ?? [])));
+    }
+
+    /* extraire les liens présents dans un message */
+    function ohnous_get_message_links($messageText)
+    {
+        preg_match_all('/https?:\/\/[^\s<>"\']+/i', (string)$messageText, $matches);
+        return array_values(array_unique($matches[0] ?? []));
+    }
+
+    /* récupérer les informations compactes d'un article pour le chat */
+    function ohnous_get_chat_article_card_data($articleId)
+    {
+        $articleId = (int)$articleId;
+        if($articleId <= 0)
+        {
+            return null;
+        }
+
+        $article = only_select("articles", "id = ".$articleId, null, null);
+        if(!$article)
+        {
+            return null;
+        }
+
+        $boutique = only_select("boutiques", "id = ".(int)$article['boutique'], null, null);
+        $image = ohnous_get_article_primary_image($articleId);
+        $pricing = ohnous_get_article_pricing($article);
+
+        return [
+            'id' => $articleId,
+            'nom' => (string)($article['nom'] ?? 'Article OhNous'),
+            'slug' => (string)($article['slug'] ?? ''),
+            'prix' => (float)$pricing['prix_final'],
+            'taille' => trim((string)fetch_tailles($articleId)),
+            'image' => (string)($image['img'] ?? ''),
+            'boutique_id' => (int)($article['boutique'] ?? 0),
+            'boutique_nom' => (string)($boutique['nom'] ?? 'Boutique OhNous'),
+            'boutique_slug' => (string)($boutique['slug'] ?? ''),
+        ];
+    }
+
+    /* carte article taguée dans un message */
+    function ohnous_render_chat_article_card(array $articleData, $currentBoutiqueId = 0)
+    {
+        $articleLink = $articleData['slug'] !== '' ? '/article/'.$articleData['slug'] : '#';
+        $storeLabel = ((int)$currentBoutiqueId > 0 && (int)$currentBoutiqueId === (int)$articleData['boutique_id'])
+            ? ''
+            : '<span>Boutique : '.htmlspecialchars($articleData['boutique_nom'], ENT_QUOTES, 'UTF-8').'</span>';
+        $image = trim((string)$articleData['image']) !== '' ? $articleData['image'] : '/asset/images/profile/default.jpg';
+        $taille = trim((string)$articleData['taille']) !== '' ? $articleData['taille'] : 'Non précisée';
+
+        return '
+            <a class="message-article-card" href="'.htmlspecialchars($articleLink, ENT_QUOTES, 'UTF-8').'">
+                <img src="'.htmlspecialchars($image, ENT_QUOTES, 'UTF-8').'" alt="'.htmlspecialchars($articleData['nom'], ENT_QUOTES, 'UTF-8').'">
+                <span class="message-article-card__body">
+                    <strong>'.htmlspecialchars($articleData['nom'], ENT_QUOTES, 'UTF-8').'</strong>
+                    <span>'.number_format((float)$articleData['prix'], 2, '.', ' ').' USD</span>
+                    <span>Taille : '.htmlspecialchars($taille, ENT_QUOTES, 'UTF-8').'</span>
+                    '.$storeLabel.'
+                </span>
+            </a>
+        ';
+    }
+
+    /* panneau droit de la conversation */
+    function ohnous_get_chat_report_html(array $messages, array $account, $selectedBoutiqueId = 0)
+    {
+        $articles = [];
+        $links = [];
+        $currentAccountId = (int)($account['id'] ?? 0);
+        $currentAccountType = (string)($account['type'] ?? '');
+
+        foreach($messages as $message)
+        {
+            $isMine = ($currentAccountType === 'boutique' && (int)$message['from_id'] === (int)$message['boutique_id'])
+                || ($currentAccountType === 'utilisateur' && (int)$message['from_id'] === (int)$message['client_id']);
+
+            if($isMine || $currentAccountId <= 0)
+            {
+                continue;
+            }
+
+            foreach(ohnous_get_message_article_ids($message['messages'] ?? '') as $articleId)
+            {
+                $articleData = ohnous_get_chat_article_card_data($articleId);
+                if($articleData)
+                {
+                    $articles[$articleId] = $articleData;
+                }
+            }
+
+            foreach(ohnous_get_message_links($message['messages'] ?? '') as $link)
+            {
+                $links[$link] = $link;
+            }
+        }
+
+        $html = '';
+
+        if(empty($articles) && empty($links))
+        {
+            return '<div class="empty-liquid-state compact"><div class="empty-liquid-state__icon"><i class="fa-regular fa-folder-open"></i></div><p>Aucun article ou lien reçu.</p></div>';
+        }
+
+        foreach($articles as $articleData)
+        {
+            $html .= ohnous_render_chat_article_card($articleData, $selectedBoutiqueId);
+        }
+
+        foreach($links as $link)
+        {
+            $host = parse_url($link, PHP_URL_HOST) ?: $link;
+            $html .= '
+                <a class="message-link-card" href="'.htmlspecialchars($link, ENT_QUOTES, 'UTF-8').'" target="_blank" rel="noopener">
+                    <i class="fa-solid fa-link"></i>
+                    <span>'.htmlspecialchars($host, ENT_QUOTES, 'UTF-8').'</span>
+                </a>
+            ';
+        }
+
+        return $html;
+    }
+
+    /* chercher des articles à taguer avec @ */
+    function ohnous_search_chat_articles($query, $selectedBoutiqueId = 0, $limit = 8)
+    {
+        global $bdd;
+
+        $query = trim((string)$query);
+        if($query === '')
+        {
+            return [];
+        }
+
+        $account = ohnous_get_current_account();
+        $params = [
+            ':query' => '%'.$query.'%',
+        ];
+        $where = "a.nom LIKE :query";
+
+        if(($account['type'] ?? '') === 'boutique')
+        {
+            $where .= " AND a.boutique = :boutique_id";
+            $params[':boutique_id'] = (int)$account['id'];
+        }
+        elseif((int)$selectedBoutiqueId > 0)
+        {
+            $where .= " AND a.boutique = :boutique_id";
+            $params[':boutique_id'] = (int)$selectedBoutiqueId;
+        }
+
+        $stmt = $bdd->prepare("
+            SELECT a.id
+            FROM articles a
+            INNER JOIN boutiques b ON b.id = a.boutique
+            WHERE ".$where."
+            ORDER BY a.date_ajout DESC, a.id DESC
+            LIMIT ".(int)$limit
+        );
+        $stmt->execute($params);
+
+        $items = [];
+        foreach($stmt->fetchAll(PDO::FETCH_COLUMN) as $articleId)
+        {
+            $articleData = ohnous_get_chat_article_card_data((int)$articleId);
+            if($articleData)
+            {
+                $items[] = $articleData;
+            }
+        }
+
+        return $items;
+    }
+
+    /* chercher une personne, boutique ou l'admin pour démarrer un chat */
+    function ohnous_search_chat_recipients($query, $limit = 10)
+    {
+        global $bdd;
+
+        $account = ohnous_get_current_account();
+        $query = trim((string)$query);
+        $items = [];
+
+        if(($account['type'] ?? '') !== 'admin')
+        {
+            $items[] = [
+                'label' => 'Admin OhNous',
+                'type' => 'admin',
+                'profile' => ohnous_get_profile_picture('/asset/images/icons/favicon-1.png', 'admin'),
+                'url' => '/message?admin=1'
+            ];
+        }
+
+        $like = $query === '' ? '%' : '%'.$query.'%';
+
+        if(($account['type'] ?? '') === 'utilisateur')
+        {
+            $stmt = $bdd->prepare("
+                SELECT id, nom, profile
+                FROM boutiques
+                WHERE nom LIKE :q
+                OR adresse_email LIKE :q
+                OR description LIKE :q
+                ORDER BY nom ASC
+                LIMIT ".(int)$limit
+            );
+            $stmt->execute([':q' => $like]);
+            foreach($stmt->fetchAll(PDO::FETCH_ASSOC) as $row)
+            {
+                $items[] = [
+                    'label' => (string)$row['nom'],
+                    'type' => 'boutique',
+                    'profile' => ohnous_get_profile_picture($row['profile'] ?? '', 'boutique'),
+                    'url' => '/message?client='.(int)$account['id'].'&boutique='.(int)$row['id']
+                ];
+            }
+        }
+        elseif(($account['type'] ?? '') === 'boutique')
+        {
+            $stmt = $bdd->prepare("
+                SELECT id, nom, profile
+                FROM utilisateur
+                WHERE nom LIKE :q
+                OR adresse_email LIKE :q
+                OR description LIKE :q
+                ORDER BY nom ASC
+                LIMIT ".(int)$limit
+            );
+            $stmt->execute([':q' => $like]);
+            foreach($stmt->fetchAll(PDO::FETCH_ASSOC) as $row)
+            {
+                $items[] = [
+                    'label' => (string)$row['nom'],
+                    'type' => 'utilisateur',
+                    'profile' => ohnous_get_profile_picture($row['profile'] ?? '', 'utilisateur'),
+                    'url' => '/message?client='.(int)$row['id'].'&boutique='.(int)$account['id']
+                ];
+            }
+        }
+        elseif(($account['type'] ?? '') === 'admin')
+        {
+            foreach(['utilisateur' => 'utilisateur', 'boutique' => 'boutiques'] as $type => $table)
+            {
+                $stmt = $bdd->prepare("
+                    SELECT id, nom, profile
+                    FROM ".$table."
+                    WHERE nom LIKE :q
+                    OR adresse_email LIKE :q
+                    OR description LIKE :q
+                    ORDER BY nom ASC
+                    LIMIT ".(int)$limit
+                );
+                $stmt->execute([':q' => $like]);
+                foreach($stmt->fetchAll(PDO::FETCH_ASSOC) as $row)
+                {
+                    $items[] = [
+                        'label' => (string)$row['nom'],
+                        'type' => $type,
+                        'profile' => ohnous_get_profile_picture($row['profile'] ?? '', $type),
+                        'url' => '/message?admin=1&client_type='.$type.'&client='.(int)$row['id']
+                    ];
+                }
+            }
+        }
+
+        return $items;
+    }
+
     /* rendre un message lu pour le compte courant */
-    function ohnous_mark_conversation_as_read($clientId, $boutiqueId)
+    function ohnous_mark_conversation_as_read($clientId, $boutiqueId, $conversationType = 'boutique', $clientType = 'utilisateur')
     {
         global $bdd;
 
         $account = ohnous_get_current_account();
         if(!$account['connected'] || !ohnous_table_exists('messages'))
         {
+            return;
+        }
+
+        ohnous_ensure_messages_chat_columns();
+
+        if($conversationType === 'admin')
+        {
+            if($account['type'] === 'admin')
+            {
+                $stmt = $bdd->prepare("
+                    UPDATE messages
+                    SET lu = 1
+                    WHERE conversation_type = 'admin'
+                    AND client_type = :client_type
+                    AND client_id = :client_id
+                    AND from_type != 'admin'
+                ");
+            }
+            else
+            {
+                $stmt = $bdd->prepare("
+                    UPDATE messages
+                    SET lu = 1
+                    WHERE conversation_type = 'admin'
+                    AND client_type = :client_type
+                    AND client_id = :client_id
+                    AND from_type = 'admin'
+                ");
+            }
+
+            $stmt->execute([
+                ':client_type' => $clientType,
+                ':client_id' => (int)$clientId
+            ]);
             return;
         }
 
@@ -1673,7 +2215,8 @@
                 SET lu = 1
                 WHERE client_id = :client_id
                 AND boutique_id = :boutique_id
-                AND from_id = client_id
+                AND conversation_type = 'boutique'
+                AND from_type = 'utilisateur'
             ");
         }
         else
@@ -1683,7 +2226,8 @@
                 SET lu = 1
                 WHERE client_id = :client_id
                 AND boutique_id = :boutique_id
-                AND from_id = boutique_id
+                AND conversation_type = 'boutique'
+                AND from_type = 'boutique'
             ");
         }
 
@@ -1696,14 +2240,29 @@
     /* construire la bulle HTML d'un message */
     function ohnous_render_message_bubble(array $message, array $account)
     {
-        $isMine = (int)$message['from_id'] === (int)$account['id'];
+        $isMine = ($message['from_type'] ?? '') === ($account['type'] ?? '')
+            && (int)$message['from_id'] === (int)($account['id'] ?? 0);
         $class = $isMine ? 'is-mine' : 'is-theirs';
         $date = ohnous_format_review_date($message['date_ajout']);
-        $content = nl2br(htmlspecialchars($message['messages'], ENT_QUOTES, 'UTF-8'));
+        $messageText = (string)$message['messages'];
+        $articleIds = ohnous_get_message_article_ids($messageText);
+        $cleanText = trim(preg_replace('/\[\[article:\d+\]\]/', '', $messageText));
+        $content = $cleanText !== '' ? nl2br(htmlspecialchars($cleanText, ENT_QUOTES, 'UTF-8')) : '';
+        $cards = '';
+
+        foreach($articleIds as $articleId)
+        {
+            $articleData = ohnous_get_chat_article_card_data($articleId);
+            if($articleData)
+            {
+                $cards .= ohnous_render_chat_article_card($articleData, (int)($message['boutique_id'] ?? 0));
+            }
+        }
 
         return '
             <article class="message-bubble '.$class.'" data-message-id="'.(int)$message['id'].'">
-                <div class="message-bubble__content">'.$content.'</div>
+                '.($content !== '' ? '<div class="message-bubble__content">'.$content.'</div>' : '').'
+                '.$cards.'
                 <span class="message-bubble__date">'.$date.'</span>
             </article>
         ';
@@ -2204,9 +2763,78 @@
             $bdd->prepare('DELETE FROM notes_article WHERE article_id = :article')->execute([':article' => $articleId]);
         }
 
+        if(ohnous_table_exists('article_reports'))
+        {
+            $bdd->prepare('DELETE FROM article_reports WHERE article_id = :article')->execute([':article' => $articleId]);
+        }
+
         $bdd->prepare('DELETE FROM articles WHERE id = :article')->execute([':article' => $articleId]);
 
         return ohnous_delete_imagekit_file_ids($deleteAfterDbFileIds);
+    }
+
+    /* table des signalements articles */
+    function ohnous_ensure_article_reports_table()
+    {
+        createTable('article_reports', [
+            'id INT AUTO_INCREMENT PRIMARY KEY',
+            'article_id INT NOT NULL',
+            'boutique_id INT NOT NULL DEFAULT 0',
+            'client_type VARCHAR(30) NULL',
+            'client_id INT NOT NULL DEFAULT 0',
+            'client_nom VARCHAR(190) NULL',
+            'motif VARCHAR(120) NOT NULL',
+            'message TEXT NOT NULL',
+            'statut VARCHAR(30) NOT NULL DEFAULT \'nouveau\'',
+            'admin_reason TEXT NULL',
+            'date_traitement DATETIME NULL',
+            'date_ajout DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP'
+        ]);
+    }
+
+    function ohnous_get_article_report_reasons()
+    {
+        return [
+            'contenu_inapproprie' => 'Contenu inapproprié',
+            'article_trompeur' => 'Article trompeur',
+            'contrefacon' => 'Contrefaçon',
+            'autre' => 'Autre problème'
+        ];
+    }
+
+    function ohnous_get_article_reports_count($articleId)
+    {
+        global $bdd;
+
+        if(!ohnous_table_exists('article_reports'))
+        {
+            return 0;
+        }
+
+        $stmt = $bdd->prepare("SELECT COUNT(*) FROM article_reports WHERE article_id = :article_id AND statut = 'nouveau'");
+        $stmt->execute([':article_id' => (int)$articleId]);
+        return (int)$stmt->fetchColumn();
+    }
+
+    function ohnous_get_article_latest_report($articleId)
+    {
+        global $bdd;
+
+        if(!ohnous_table_exists('article_reports'))
+        {
+            return null;
+        }
+
+        $stmt = $bdd->prepare("
+            SELECT *
+            FROM article_reports
+            WHERE article_id = :article_id
+            ORDER BY date_ajout DESC, id DESC
+            LIMIT 1
+        ");
+        $stmt->execute([':article_id' => (int)$articleId]);
+        $report = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $report ?: null;
     }
 
     /* résumé des prix avec ou sans promotion */
@@ -2243,14 +2871,54 @@
         return (float)$pricing['prix_final'];
     }
 
+    /* trier les tailles du plus grand au plus petit */
+    function ohnous_sort_size_rows_desc(array $rows)
+    {
+        usort($rows, function($a, $b){
+            $nameA = trim((string)($a['nom'] ?? ''));
+            $nameB = trim((string)($b['nom'] ?? ''));
+            $numA = preg_match('/^\d+(?:[.,]\d+)?$/', $nameA) ? (float)str_replace(',', '.', $nameA) : null;
+            $numB = preg_match('/^\d+(?:[.,]\d+)?$/', $nameB) ? (float)str_replace(',', '.', $nameB) : null;
+            $rankMap = [
+                'XXXXL' => 90,
+                'XXXL' => 80,
+                'XXL' => 70,
+                'XL' => 60,
+                'L' => 50,
+                'M' => 40,
+                'S' => 30,
+                'XS' => 20,
+                'XXS' => 10,
+            ];
+            $keyA = strtoupper(preg_replace('/\s+/', '', $nameA));
+            $keyB = strtoupper(preg_replace('/\s+/', '', $nameB));
+            $rankA = $rankMap[$keyA] ?? null;
+            $rankB = $rankMap[$keyB] ?? null;
+
+            if($numA !== null && $numB !== null)
+            {
+                return $numB <=> $numA;
+            }
+
+            if($rankA !== null && $rankB !== null)
+            {
+                return $rankB <=> $rankA;
+            }
+
+            return strnatcasecmp($nameB, $nameA);
+        });
+
+        return $rows;
+    }
+
     /* bornes de filtres de prix côté catalogue */
     function ohnous_get_price_filter_ranges()
     {
         return [
-            'moins-25' => ['label' => 'Moins de 25 $', 'min' => null, 'max' => 25],
-            '25-50' => ['label' => '25 $ à 50 $', 'min' => 25, 'max' => 50],
-            '50-100' => ['label' => '50 $ à 100 $', 'min' => 50, 'max' => 100],
             'plus-100' => ['label' => 'Plus de 100 $', 'min' => 100, 'max' => null],
+            '50-100' => ['label' => '50 $ à 100 $', 'min' => 50, 'max' => 100],
+            '25-50' => ['label' => '25 $ à 50 $', 'min' => 25, 'max' => 50],
+            'moins-25' => ['label' => 'Moins de 25 $', 'min' => null, 'max' => 25],
         ];
     }
 

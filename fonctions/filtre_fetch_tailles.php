@@ -69,7 +69,7 @@
             $stmt->execute();
         }
 
-        $tailles = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $tailles = ohnous_sort_size_rows_desc($stmt->fetchAll(PDO::FETCH_ASSOC));
 
         if (!$tailles) {
             echo json_encode([
@@ -120,7 +120,7 @@
         $stmt->bindValue(':type_id', $type_id, PDO::PARAM_INT);
         $stmt->execute();
 
-        $tailles = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $tailles = ohnous_sort_size_rows_desc($stmt->fetchAll(PDO::FETCH_ASSOC));
 
         if (!$tailles) {
             echo json_encode([

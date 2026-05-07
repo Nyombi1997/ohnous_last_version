@@ -10,6 +10,10 @@
     const taillesContainer = document.getElementById('tailles_container');
     const promoPriceInput = document.getElementById('promo_prix_article');
     const promoActiveInput = document.getElementById('promo_actif_article');
+    const articleNameMaxLength = 150;
+    const articleNameWarningLength = 130;
+    const articleNameInput = document.getElementById('nom_article');
+    const articleNameLimitHint = document.getElementById('article_name_limit_hint');
 
     if(!form){
         return;
@@ -70,6 +74,30 @@
         });
     }
 
+    function updateArticleNameLimitHint(){
+        if(!articleNameInput || !articleNameLimitHint){
+            return;
+        }
+
+        const length = articleNameInput.value.trim().length;
+        if(length < articleNameWarningLength){
+            articleNameLimitHint.textContent = '';
+            articleNameLimitHint.classList.remove('is-visible', 'is-limit');
+            return;
+        }
+
+        articleNameLimitHint.textContent = length >= articleNameMaxLength
+            ? "Limite atteinte : 150 caractères maximum."
+            : "Le nom de l'article est limité à 150 caractères. " + (articleNameMaxLength - length) + " restants.";
+        articleNameLimitHint.classList.add('is-visible');
+        articleNameLimitHint.classList.toggle('is-limit', length >= articleNameMaxLength);
+    }
+
+    if(articleNameInput){
+        articleNameInput.addEventListener('input', updateArticleNameLimitHint);
+        updateArticleNameLimitHint();
+    }
+
     function getFailedImagekitDeletes(results){
         const failed = [];
         Object.keys(results || {}).forEach(function(fileId){
@@ -91,7 +119,7 @@
             categorie: String(categorySelect.value || ''),
             types: String(selectedType || ''),
             tailles: selectedTailles.slice().map(String).sort(),
-            reserve: document.getElementById('reserve_article').checked ? 1 : 0,
+            reserve: document.getElementById('reserve_article').checked ? 0 : 1,
             promo_actif: promoActiveInput ? (promoActiveInput.checked ? 1 : 0) : 0,
             promo_prix: promoPriceInput ? promoPriceInput.value.trim() : '',
             description: document.getElementById('description_article').value.trim(),
@@ -562,8 +590,13 @@
             showError("Ajoutez au moins une image.");
             return;
         }
-        if(document.getElementById('nom_article').value.trim() === ''){
+        const articleName = document.getElementById('nom_article').value.trim();
+        if(articleName === ''){
             showError("Entrez le nom de l'article.");
+            return;
+        }
+        if(articleName.length > articleNameMaxLength){
+            showError("Le nom de l'article ne doit pas dépasser 150 caractères.");
             return;
         }
         if(document.getElementById('prix_article').value.trim() === ''){
@@ -608,12 +641,12 @@
             const ajaxPayload = {
                 action: config.actionName || 'update_article',
                 article_id: config.articleId,
-                nom: document.getElementById('nom_article').value.trim(),
+                nom: articleName,
                 prix: document.getElementById('prix_article').value.trim(),
                 categorie: categorySelect.value,
                 types: selectedType,
                 tailles: selectedTailles.join(','),
-                reserve: document.getElementById('reserve_article').checked ? 1 : 0,
+                reserve: document.getElementById('reserve_article').checked ? 0 : 1,
                 promo_actif: document.getElementById('promo_actif_article') ? (document.getElementById('promo_actif_article').checked ? 1 : 0) : 0,
                 promo_prix: document.getElementById('promo_prix_article') ? document.getElementById('promo_prix_article').value.trim() : '',
                 description: document.getElementById('description_article').value.trim(),

@@ -32,6 +32,20 @@ document.querySelectorAll(".js_titre_details_article").forEach(function(element,
 document.addEventListener("DOMContentLoaded", function(){
     const shareButton = document.querySelector(".js-article-share-trigger");
     const shareConfig = window.articleShareConfig || null;
+    const directCheckoutConfig = window.articleDirectCheckoutConfig || null;
+
+    if (directCheckoutConfig && typeof commanderDirectement === "function") {
+        commanderDirectement(
+            directCheckoutConfig.image,
+            directCheckoutConfig.id,
+            directCheckoutConfig.name,
+            directCheckoutConfig.slug,
+            directCheckoutConfig.size,
+            directCheckoutConfig.price,
+            directCheckoutConfig.style,
+            directCheckoutConfig.background
+        );
+    }
 
     function escapeHtml(value) {
         return String(value || "")

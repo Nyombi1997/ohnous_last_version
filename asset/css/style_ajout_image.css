@@ -38,6 +38,22 @@
     background: var(--blanc);
 }
 
+.article-name-limit-hint {
+    display: none;
+    margin-top: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #b66a00;
+}
+
+.article-name-limit-hint.is-visible {
+    display: block;
+}
+
+.article-name-limit-hint.is-limit {
+    color: #c0392b;
+}
+
 textarea.input_ajout_image {
     resize: vertical;
     min-height: 100px;

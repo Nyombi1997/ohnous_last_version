@@ -1,22 +1,13 @@
-Les tailles (en lettre) des produits dans l'ajout produits ne s'alignent pas correctement avec les autres numéros de taille
-ordre les types dans l'ajour produit afin qu'ils s'affichent par ordre alphabétique.
+Arranger le chat afin qu'il soit un peu plus moderne
+Fair en sorte que l'activation est toujours par default pour 1 mois mais si l'admin le veut il peut décider que ce soit pour plus longtemps
+mettre un commentaire sans forcément mettre son avis sur un article et pareille pour les avis
+
+
+Gestion des quantité des articles
 penser à une gestion des couleurs en fonction des couleurs principaux des articles.
-Forcer les prix en chiffre uniquement depuis le création de produit.
-Possibilité de plusieurs tailles dans les articles.
-Possibilité de plusieurs images dans la création articles
-Possibilité de supprimer l'image dans image kit
-Ajouter la possibilité de faire un text complet dans les commentaires
-que tout suive un ordre alphabétique et de nombre 
-Limiter la taille de du nom de l'article au moment de sa création
-Ajouter la possibilité de partager les articles sur les reseaux
-ajouter la possibilité de signaler un article
-Faire le choix des categories et autres par tableau aussi et par ordre alphabétique
-système de choix intelligente une fois que la personne écrit le nom du produit
-si quelqu'un utilise déjà le nom alors il faudra un système qui permet de faire vérifier les nom
 Ajouter les icons des réseaux sociaux sur l'email de OhNOus
 Ajouter la possibilité de charger des vidéos
-ajouter la possibilité de verifier l'email que ce soit à la connexion ou que ce soit au moment de changer d'email
-bloquer toutes boutiques et toute article et tout filtre et recherche ainsi que slug les concernant quand ils sont disable.
-ajouter les addresses des réseaux sociaux et la possibilité d'envoyer directement des messages whatsapp
-mettre le chargement dans tous les procédures pour le login
 option pour faire certifier le nom d'utilisateur pour les boutiques dont le nom d'utilisateur a été utiliser par un  autre
+pour les boutiques certifier si quelqu'un utilise déjà le nom alors il faudra un système qui permet de faire vérifier les nom
+ajouter la possibilité de verifier l'email que ce soit à la connexion ou que ce soit au moment de changer d'email
+mettre le chargement dans tous les procédures pour le login

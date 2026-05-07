@@ -5,15 +5,14 @@
     <div class="blob-bg"></div>
     <div class="intro-text">
         <h1><span id="changing-word-container"><span id="changing-word">Boutiques</span></span></h1>
-        <p class="directory-hero-subtitle">Explorez les univers actifs d’OhNous, du plus récent au plus ancien.</p>
+        <p class="directory-hero-subtitle">Explorez les univers actifs d’OhNous.</p>
     </div>
 </div>
 
 <section class="store-directory-shell liquid-panel" id="stores_directory_page">
     <div class="shop-results-head">
         <div>
-            <p class="shop-results-head__eyebrow">Sélection Ohnous</p>
-            <h2 class="shop-results-head__title">Boutiques à découvrir</h2>
+            <h2 class="shop-results-head__title">Boutiques</h2>
         </div>
     </div>
 

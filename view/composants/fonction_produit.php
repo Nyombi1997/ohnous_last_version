@@ -37,10 +37,15 @@
             if($allowHiddenForOwner && (int)($donnee['reserve'] ?? 1) !== 1)
             {
                 $badge .= '
-                    <span class="info_affiche_produit reserve">Masqué</span>';
+                    <span class="info_affiche_produit reserve"><i class="fa-solid fa-lock"></i> Réservé</span>';
             }
             /* tailles */
+            $taillesList = fetch_tailles_list($donnee['id']);
             $tailles = fetch_tailles($donnee['id']);
+            $taillesJson = array_map(function($item){
+                return (string)$item['nom'];
+            }, $taillesList);
+            $hasMultipleTailles = count($taillesJson) > 1;
             if(empty($tailles))
             {
                 $tailles = "";
@@ -52,7 +57,7 @@
             $key = cartKey($donnee['id'], $tailles);
             $panier = '';
             $icone = 'icon-panier_plus';
-            if (isset($_SESSION['cart-ohnous-123456789'][$key])) {
+            if (!$hasMultipleTailles && isset($_SESSION['cart-ohnous-123456789'][$key])) {
                 $panier = 'active'; 
                 $icone = 'icon-panier_moins';               
             }
@@ -84,12 +89,12 @@
                         <!-- details -->
                         <div class="div_details_affiche_produit">
                             <div class="nom">'.$donnee['nom'].'</div>
+                            '.($tailles !== '' ? '<div class="article-card-size-list"><i class="fa-solid fa-ruler-combined"></i> '.$tailles.'</div>' : '').'
                             '.ohnous_render_article_rating_summary($donnee['id'], 'card').'
                             <!-- panier prix tailles -->
                             <div class="details_affiche_produit">
                                 <a href="/boutique/'.$boutique_slug.'" class="boutique"><i class="fa-solid fa-store"></i> '.$boutique_nom.'</a>
                                 <div class="prix_taille">
-                                    <div class="taille">'.$tailles.'</div>
                                     <div class="prix '.($pricing['promo_actif'] ? 'promo' : '').'">
                                         '.($pricing['promo_actif']
                                             ? '<span class="old-price">$ '.number_format($pricing['prix_initial'], 2, '.', ' ').'</span><span class="new-price">$ '.number_format($pricing['prix_final'], 2, '.', ' ').'</span>'
@@ -98,7 +103,7 @@
                                     </div>
                                 </div>
                                 <div class="boutton_panier_affiche_produit">
-                                    <button type="button" class="'.$panier.'" id="btn_panier_'.$donnee['id'].'" onclick="ajouterAuPanier('.ohnous_js_html_arg($img[0]['img']).','.(int)$donnee['id'].','.ohnous_js_html_arg($donnee['nom']).','.ohnous_js_html_arg($donnee['slug']).','.ohnous_js_html_arg($tailles).','.ohnous_js_html_arg((string)$pricing['prix_final']).','.ohnous_js_html_arg($imgStyles).','.ohnous_js_html_arg($imgBackground).')"><span class="'.$icone.'"></span></button>
+                                    <button type="button" class="'.$panier.'" id="btn_panier_'.$donnee['id'].'" data-has-multiple-sizes="'.($hasMultipleTailles ? '1' : '0').'" onclick="ajouterAuPanier('.ohnous_js_html_arg($img[0]['img']).','.(int)$donnee['id'].','.ohnous_js_html_arg($donnee['nom']).','.ohnous_js_html_arg($donnee['slug']).','.ohnous_js_html_arg($tailles).','.ohnous_js_html_arg((string)$pricing['prix_final']).','.ohnous_js_html_arg($imgStyles).','.ohnous_js_html_arg($imgBackground).','.ohnous_js_html_arg($taillesJson).')"><span class="'.$icone.'"></span></button>
                                 </div>
                             </div>
                         </div>

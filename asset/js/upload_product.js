@@ -9,6 +9,11 @@
     const taillesContainer = document.getElementById('tailles_container');
     const promoPriceInput = document.getElementById('promo_prix_article');
     const promoActiveInput = document.getElementById('promo_actif_article');
+    const reserveInput = document.getElementById('reserve_article');
+    const articleNameMaxLength = 150;
+    const articleNameWarningLength = 130;
+    const articleNameInput = document.getElementById('nom_article');
+    const articleNameLimitHint = document.getElementById('article_name_limit_hint');
 
     const images = [];
     let croppieUploader = window.initCroppieUploader({
@@ -30,6 +35,60 @@
             title: message,
             confirmButtonColor: '#6775d6'
         });
+    }
+
+    function sanitizePriceValue(value){
+        value = String(value || '').replace(/[^\d,.]/g, '');
+        if(value.replace(/\D/g, '') === ''){
+            return '';
+        }
+
+        const firstSeparator = value.search(/[,.]/);
+
+        if(firstSeparator >= 0){
+            const integerPart = value.slice(0, firstSeparator).replace(/[,.]/g, '').replace(/^0+(?=\d)/, '');
+            const decimalPart = value.slice(firstSeparator + 1).replace(/[^\d]/g, '');
+            return (integerPart === '' ? '0' : integerPart) + value.charAt(firstSeparator) + decimalPart;
+        }
+
+        return value.replace(/^0+(?=\d)/, '');
+    }
+
+    function normalizePriceValue(value){
+        return sanitizePriceValue(value).replace(',', '.');
+    }
+
+    document.querySelectorAll('.js-price-input').forEach(function(input){
+        input.addEventListener('input', function(){
+            this.value = sanitizePriceValue(this.value);
+        });
+        input.addEventListener('blur', function(){
+            this.value = sanitizePriceValue(this.value);
+        });
+    });
+
+    function updateArticleNameLimitHint(){
+        if(!articleNameInput || !articleNameLimitHint){
+            return;
+        }
+
+        const length = articleNameInput.value.trim().length;
+        if(length < articleNameWarningLength){
+            articleNameLimitHint.textContent = '';
+            articleNameLimitHint.classList.remove('is-visible', 'is-limit');
+            return;
+        }
+
+        articleNameLimitHint.textContent = length >= articleNameMaxLength
+            ? "Limite atteinte : 150 caractères maximum."
+            : "Le nom de l'article est limité à 150 caractères. " + (articleNameMaxLength - length) + " restants.";
+        articleNameLimitHint.classList.add('is-visible');
+        articleNameLimitHint.classList.toggle('is-limit', length >= articleNameMaxLength);
+    }
+
+    if(articleNameInput){
+        articleNameInput.addEventListener('input', updateArticleNameLimitHint);
+        updateArticleNameLimitHint();
     }
 
     function showSuccess(message){
@@ -343,15 +402,28 @@
             showError("Ajoutez au moins une image.");
             return;
         }
-        if(document.getElementById('nom_article').value.trim() === ''){
+        const articleName = document.getElementById('nom_article').value.trim();
+        if(articleName === ''){
             showError("Entrez le nom de l'article.");
             return;
         }
-        if(document.getElementById('prix_article').value.trim() === ''){
+        if(articleName.length > articleNameMaxLength){
+            showError("Le nom de l'article ne doit pas dépasser 150 caractères.");
+            return;
+        }
+        const priceValue = normalizePriceValue(document.getElementById('prix_article').value);
+        const promoPriceValue = promoPriceInput ? normalizePriceValue(promoPriceInput.value) : '';
+
+        document.getElementById('prix_article').value = priceValue;
+        if(promoPriceInput){
+            promoPriceInput.value = promoPriceValue;
+        }
+
+        if(priceValue === ''){
             showError("Entrez le prix de l'article.");
             return;
         }
-        if(promoActiveInput && promoActiveInput.checked && promoPriceInput && promoPriceInput.value.trim() === ''){
+        if(promoActiveInput && promoActiveInput.checked && promoPriceInput && promoPriceValue === ''){
             showError("Entrez le prix promotionnel de l'article.");
             return;
         }
@@ -359,8 +431,8 @@
             promoActiveInput
             && promoActiveInput.checked
             && promoPriceInput
-            && promoPriceInput.value.trim() !== ''
-            && Number(promoPriceInput.value) >= Number(document.getElementById('prix_article').value)
+            && promoPriceValue !== ''
+            && Number(promoPriceValue) >= Number(priceValue)
         ){
             showError("Le prix promotionnel doit être inférieur au prix normal.");
             return;
@@ -383,14 +455,15 @@
             }
 
             $.post('/fonctions/upload_product.php', {
-                product_name: document.getElementById('nom_article').value.trim(),
-                product_price: document.getElementById('prix_article').value.trim(),
+                product_name: articleName,
+                product_price: priceValue,
                 product_category: categorySelect.value,
                 product_types: selectedType,
                 product_tailles: selectedTailles.join(','),
                 product_description: document.getElementById('description_article').value.trim(),
+                reserve: reserveInput && reserveInput.checked ? 0 : 1,
                 promo_actif: promoActiveInput ? (promoActiveInput.checked ? 1 : 0) : 0,
-                promo_prix: promoPriceInput ? promoPriceInput.value.trim() : '',
+                promo_prix: promoPriceValue,
                 product_images: JSON.stringify(uploadedImages)
             }, function(data){
                 if(data.result !== 'ok'){

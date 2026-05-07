@@ -1,0 +1,27 @@
+
+CREATE TABLE IF NOT EXISTS `article_reports` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `article_id` INT NOT NULL,
+  `boutique_id` INT NOT NULL DEFAULT 0,
+  `client_type` VARCHAR(30) DEFAULT NULL,
+  `client_id` INT NOT NULL DEFAULT 0,
+  `client_nom` VARCHAR(190) DEFAULT NULL,
+  `motif` VARCHAR(120) NOT NULL,
+  `message` TEXT NOT NULL,
+  `statut` VARCHAR(30) NOT NULL DEFAULT 'nouveau',
+  `admin_reason` TEXT DEFAULT NULL,
+  `date_traitement` DATETIME DEFAULT NULL,
+  `date_ajout` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_article_reports_article_id` (`article_id`),
+  KEY `idx_article_reports_statut` (`statut`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+UPDATE messages
+SET conversation_type = 'boutique',
+    client_type = 'utilisateur',
+    from_type = CASE
+        WHEN from_id = boutique_id AND boutique_id > 0 THEN 'boutique'
+        ELSE 'utilisateur'
+    END
+WHERE boutique_id > 0;

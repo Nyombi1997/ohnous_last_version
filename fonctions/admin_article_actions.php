@@ -2,6 +2,7 @@
     include_once "../model/bdd.php";
     include_once "../model/select.php";
     include_once "fonctions.php";
+    include_once "email.php";
 
     header('Content-Type: application/json; charset=utf-8');
 
@@ -15,6 +16,56 @@
     }
 
     $action = trim((string)html_entity_decode(filter_var($_POST['action'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
+
+    if($action === 'delete_reported_article')
+    {
+        $articleId = (int)html_entity_decode(filter_var($_POST['article_id'] ?? 0, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+        $reason = trim((string)html_entity_decode(filter_var($_POST['reason'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
+        $article = only_select('articles', 'id = '.$articleId, null, null);
+
+        if(!$article)
+        {
+            echo json_encode([
+                'result' => 'error',
+                'msg' => "Article introuvable."
+            ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+            exit;
+        }
+
+        if(mb_strlen($reason, 'UTF-8') < 8)
+        {
+            echo json_encode([
+                'result' => 'error',
+                'msg' => "Écrivez la raison de suppression."
+            ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+            exit;
+        }
+
+        $boutique = only_select('boutiques', 'id = '.(int)$article['boutique'], null, null);
+
+        if(ohnous_table_exists('article_reports'))
+        {
+            $stmt = $bdd->prepare("
+                UPDATE article_reports
+                SET statut = 'article_supprime', admin_reason = :reason, date_traitement = NOW()
+                WHERE article_id = :article_id
+            ");
+            $stmt->execute([
+                ':reason' => $reason,
+                ':article_id' => $articleId
+            ]);
+        }
+
+        ohnous_send_article_deleted_store_email($boutique ?: [], $article, $reason);
+        $deleteResults = ohnous_delete_article_and_relations($articleId);
+
+        echo json_encode([
+            'result' => 'ok',
+            'msg' => "L’article a été supprimé et la boutique a été notifiée.",
+            'imagekit_delete_results' => $deleteResults
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
 
     if($action !== 'update_article')
     {
@@ -41,6 +92,7 @@
     $prix = trim((string)html_entity_decode(filter_var($_POST['prix'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
     $description = trim((string)html_entity_decode(filter_var($_POST['description'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
     $reserve = (int)html_entity_decode(filter_var($_POST['reserve'] ?? 1, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
+    $reserve = $reserve === 0 ? 0 : 1;
     $categorie = (int)html_entity_decode(filter_var($_POST['categorie'] ?? 0, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $types = (int)html_entity_decode(filter_var($_POST['types'] ?? 0, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $tailles = trim((string)html_entity_decode(filter_var($_POST['tailles'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
@@ -78,6 +130,15 @@
         echo json_encode([
             'result' => 'error',
             'msg' => "Le prix promotionnel doit être inférieur au prix normal."
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
+
+    if(mb_strlen($nom, 'UTF-8') > 150)
+    {
+        echo json_encode([
+            'result' => 'error',
+            'msg' => "Le nom de l'article ne doit pas dépasser 150 caractères."
         ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         exit;
     }

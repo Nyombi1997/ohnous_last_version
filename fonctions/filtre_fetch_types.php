@@ -79,7 +79,7 @@
         $stmt_taille->bindValue(':types_id', $types_id, PDO::PARAM_INT);
         $stmt_taille->bindValue(':taille_id', $taille_id, PDO::PARAM_INT);
         $stmt_taille->execute();
-        $taille = $stmt_taille->fetchAll(PDO::FETCH_ASSOC);
+        $taille = ohnous_sort_size_rows_desc($stmt_taille->fetchAll(PDO::FETCH_ASSOC));
     }
     else if($types_id!=0)
     {
@@ -129,7 +129,7 @@
         $stmt_taille->bindValue(':category_id', $category_id, PDO::PARAM_INT);
         $stmt_taille->bindValue(':types_id', $types_id, PDO::PARAM_INT);
         $stmt_taille->execute();
-        $taille = $stmt_taille->fetchAll(PDO::FETCH_ASSOC);
+        $taille = ohnous_sort_size_rows_desc($stmt_taille->fetchAll(PDO::FETCH_ASSOC));
     }
     else
     {
