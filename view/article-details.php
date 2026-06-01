@@ -117,7 +117,7 @@
                     <button
                         type="button"
                         class="acheter_directement"
-                        onclick="commanderDirectement(<?= ohnous_js_html_arg($mainImage['img']) ?>, <?= (int)$article['id'] ?>, <?= ohnous_js_html_arg($article['nom']) ?>, <?= ohnous_js_html_arg($article['slug']) ?>, <?= ohnous_js_html_arg($tailles) ?>, <?= ohnous_js_html_arg((string)$pricing['prix_final']) ?>, <?= ohnous_js_html_arg($image_article_style) ?>, <?= ohnous_js_html_arg($image_article_background) ?>)"
+                        onclick="commanderDirectement(<?= ohnous_js_html_arg($mainImage['img']) ?>, <?= (int)$article['id'] ?>, <?= ohnous_js_html_arg($article['nom']) ?>, <?= ohnous_js_html_arg($article['slug']) ?>, <?= ohnous_js_html_arg($tailles) ?>, <?= ohnous_js_html_arg((string)$pricing['prix_final']) ?>, <?= ohnous_js_html_arg($image_article_style) ?>, <?= ohnous_js_html_arg($image_article_background) ?>, <?= ohnous_js_html_arg($articleTaillesJson) ?>)"
                     >Commander maintenant</button>
                     <button type="button" class="partager_article js-article-share-trigger">
                         <i class="fa-solid fa-share-nodes"></i>

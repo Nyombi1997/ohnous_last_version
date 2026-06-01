@@ -1,74 +1,201 @@
-Réponds de manière concise et directe.
-- Pas d'explication inutile
-- Pas de répétition
-- Pas de texte décoratif
-- Donne uniquement le résultat ou le code final fonctionnel
-- Si du code est demandé : complet, propre, sans commentaire inutile
-- Si une explication est nécessaire : maximum 3 lignes
+RÉPONSE UNIQUE. PAS D’EXPLICATIONS. PAS DE BLABLA.
 
-Priorité : efficacité, clarté, minimalisme.
+OBJECTIF :
+Exécuter uniquement la demande. Ne pas proposer de refonte, d’optimisation ou de fonctionnalités non demandées sauf si elles améliorent directement la demande sans modifier le comportement existant.
 
+RÈGLES DE RÉPONSE :
 
-Réponse courte uniquement.
-Pas d'explication sauf si demandé.
-Code complet sans commentaires.
-Pas de blabla.
+* Réponse courte.
+* Code final uniquement.
+* Pas d'explication sauf si indispensable.
+* Si une explication est nécessaire : maximum 3 lignes.
+* Pas de répétition.
+* Pas de texte décoratif.
+* Pas de résumé.
+* Pas de checklist finale.
+* Pas d'informations théoriques.
+* Un seul message de réponse.
 
-Fais presque strictement ce que je te demande de faire sans faire ce qui ne cadre pas avec ma demande, si tu veux faire quelque chose qui cadre avec ma demande tant mieux fais
-mon site fonctionne bien, franchement ne casse rien.
-suis ma logique de programmation
-Ne modifie pas model/bdd.php
-utilise correctement les sessions que tu trouveras dans fonctions/
-Utilise mon design css dans asset/css comme design de base, IMPORTANT : mon design est un design moderne LIQUID
-en cas de js met les dans asset/js
-en cas de besoin de voir les informations de login ou signin et la logique c'est dans /viewlogin & view/signin-....
-mon routeur est dans classes/Routeur.php
-mes méthodes sont dans controller/Home.php
-pour la création des fonctions c'est dans fonctions/
-pour les views c'est dans view/
-J'utilise ImageKit
-pour charger les images je les envoies à image kit, inspire toi de comment je fais sur view/upload_image.php mais si tu dois le faire fait le de manière plus organiser
-Utilise comment je communique avec sql et ne suppose aucune table ou colonne, si tu pense qu'il faut ajouter une table ou colonne, supprimer une table ou une colonne, ou faire tout autre modification, fait le moi savoir dans le fichier readme à la fin du fichier s'il existe déjà
-Utilise le sweatalert si besoin, c'est installer dans mon projet
-Utilise jQuery pour les envoies des requêtes
-Commente les parties importante pour m'aider à troubleshooter
-mes les accent et la ponctuation française quand tu mets des textes
-Tout le design toi être fait en responsive design
-Je suis en modèle MVC
-dans le readme si tu veux que je fasse des actions dans ma base sql écrit moi du code que je peux directement coller dans phpMyAdmin
-Utilise mon design pour que les nouveaux design semblent pas venir d'ailleurs
-J'utilise le design liquid ou vitre pour un aspect un moderne n'utilise pas trop le design dégrader.
-Que le site reste léger, fluide, SEO et respectant le UI.
-IMPORTANT:
-Important: encoding safety rules.
-All files must be read and written strictly as UTF-8 without BOM.
-Never use PowerShell Get-Content, Set-Content, Out-File, -replace, or any shell command that may rewrite files with default Windows encoding.
-For file edits, use only apply_patch or Python with explicit encoding="utf-8" for both reading and writing.
-Never generate corrupted characters such as Ã©, Ã , â€™, â€œ, â€.
-If a file contains French text, preserve accents exactly as valid Unicode characters.
-Before saving, verify that strings like "é à è ç ’" remain unchanged.
-Si tu détectes du texte corrompu, corrige-le immédiatement.
+RÈGLES DE DÉVELOPPEMENT :
 
-J'ai joins ma structure sql au besoin.
+* Préserver intégralement le fonctionnement actuel.
+* Ne rien casser.
+* Respecter strictement l'architecture existante.
+* Suivre ma logique de programmation.
+* Réutiliser les fonctions existantes avant d'en créer de nouvelles.
+* Ne jamais dupliquer une logique déjà présente.
+* Respecter le modèle MVC existant.
+* Respecter les conventions déjà utilisées dans le projet.
 
+STRUCTURE DU PROJET :
 
+* Routeur : classes/Routeur.php
+* Contrôleurs : controller/Home.php
+* Fonctions : fonctions/
+* Vues : view/
+* CSS : asset/css/
+* JS : asset/js/
+* Login : view/login*
+* Inscription : view/signin*
+* Base de données : model/
 
+BASE DE DONNÉES :
 
+* Ne jamais modifier model/bdd.php.
+* Ne jamais supposer l'existence d'une table.
+* Ne jamais supposer l'existence d'une colonne.
+* Vérifier avant utilisation.
+* Toute modification SQL nécessaire doit être ajoutée dans README.
+* Fournir du SQL directement exécutable dans phpMyAdmin.
 
-Petite précision que celui qui veut laisser un commentaire ou un avis doit se connecter ou s'inscrire via un pop up moderne avant de le faire
-Respect la façon dont j'ai fais les vérifications avant la connexion pour que le compte soit connecter sans comportement étranger du système
-Change automatiquement l'icone de connexion et le lien en fonction de la connexion faite
+SESSIONS ET AUTHENTIFICATION :
 
+* Utiliser les sessions déjà existantes.
+* Respecter exactement la logique actuelle de connexion.
+* Ne pas créer de système parallèle.
+* Ne pas contourner les vérifications existantes.
+* Les commentaires et avis nécessitent obligatoirement une connexion.
+* Si non connecté :
 
+  * ouvrir un popup moderne Login / Inscription.
+  * utiliser les formulaires existants.
+  * connecter l'utilisateur sans comportement étranger.
+* Après connexion :
 
+  * mettre automatiquement à jour les boutons, liens et icônes de connexion.
 
-repons sans explicdation et un seul message
+FRONTEND :
 
-Mon système d'ajout au pan,ier marche mais quand je veux supprimer quelque chose du panier ça ne fonctionne pas ça fait l'inverse. corrige ça stp
+* Utiliser jQuery pour toutes les requêtes AJAX.
+* Utiliser SweetAlert si nécessaire.
+* Réutiliser les composants existants.
+* Utiliser exclusivement le design actuel du projet.
+* Design moderne Liquid / Glass.
+* Pas de design extérieur au projet.
+* Éviter les dégradés excessifs.
+* Interface légère.
+* Interface fluide.
+* Interface responsive.
+* Respect UI/UX existante.
+* Respect SEO.
 
-Dans la vue de l'article, le bouton commander maintenant ne fonctionne pas complètement. je veux que si on passe par le checkout du panier qu'on ait accès ia tous les articles du panier dans le chekout mais que si la personne clique dans la vue article sur le bouton "commander maintenant" qu'il soit emmener vers le chekout avec l'article enquestion uniquement.
+IMAGES :
 
-Dans la vue d'images que ce soit à l'accueil ou à au shop ou dans la vue de la boutique ex: /boutique/fashion-exo-kin 
-je veux dans le design mobile que soit les images groupé par deux plus une seule image.
+* Utiliser ImageKit.
+* S'inspirer de view/upload_image.php.
+* Si amélioration :
 
-Que les boutiques soient visible à l'acceuil en swipe js "Slides per view" je ne veux pas de pagination, pas de flech de swipe, que à la fin on puisse avoir un slide qui propose d'aller dans la page pour voir toutes les boutiques. donc crée une page pour la vue des boutique avec leurs photos de profile et si y'en pas met le profile par defaut, qu'on puisse voir 4 boutiques par slides que ce soit juste après
+  * conserver la logique actuelle.
+  * rendre le code plus propre sans changer le comportement.
+
+JAVASCRIPT :
+
+* Tous les scripts dans asset/js.
+* Réutiliser les scripts existants avant d'en créer.
+
+CSS :
+
+* Tous les styles dans asset/css.
+* Réutiliser le design existant.
+* Aucun style qui semble provenir d'un autre template.
+
+COMMENTAIRES DANS LE CODE :
+
+* Commenter uniquement les parties critiques.
+* Commentaires utiles au troubleshooting.
+* Pas de commentaires inutiles.
+
+TEXTES :
+
+* Français correct.
+* Accents corrects.
+* Ponctuation française correcte.
+
+ENCODAGE :
+
+* UTF-8 strict sans BOM.
+* Ne jamais utiliser :
+
+  * Get-Content
+  * Set-Content
+  * Out-File
+  * -replace
+  * ou toute commande modifiant l'encodage Windows.
+* Utiliser uniquement :
+
+  * apply_patch
+  * Python avec encoding="utf-8"
+* Préserver :
+  é à è ù ç œ ’
+* Corriger immédiatement tout texte corrompu :
+
+  * Ã©
+  * Ã
+  * â€™
+  * â€œ
+  * â€
+  * etc.
+
+AVANT CHAQUE MODIFICATION :
+
+1. Identifier la logique existante.
+2. Réutiliser l'existant.
+3. Modifier le minimum nécessaire.
+4. Vérifier qu'aucune fonctionnalité existante n'est cassée.
+
+DEMANDE ACTUELLE :
+
+1. Corriger la suppression du panier.
+
+* Le bouton supprimer effectue actuellement l'opération inverse.
+* Corriger sans modifier le reste du système panier.
+
+2. Corriger "Commander maintenant".
+
+* Depuis la fiche produit :
+
+  * envoyer directement au checkout.
+  * avec uniquement le produit sélectionné.
+* Depuis le panier :
+
+  * conserver le comportement actuel.
+  * afficher tous les produits du panier dans le checkout.
+
+3. Mobile galerie images.
+
+* Accueil.
+* Shop.
+* Vue boutique.
+* Affichage mobile :
+
+  * 2 images groupées.
+  * puis 1 image seule.
+  * puis répétition du motif.
+
+4. Boutiques à l'accueil.
+
+* Ajouter une section swipe horizontale.
+* Utiliser Slides Per View.
+* Aucune pagination.
+* Aucune flèche.
+* Swipe tactile uniquement.
+* Dernière carte :
+
+  * "Voir toutes les boutiques".
+  * lien vers la liste complète.
+
+5. Créer une page liste des boutiques.
+
+* Afficher les boutiques.
+* Afficher photo profil.
+* Si absente :
+
+  * image par défaut.
+* Responsive.
+* Design identique au reste du site.
+
+IMPORTANT :
+Fais uniquement ce qui est demandé.
+Ne modifie rien d'autre.
+Ne crée aucune fonctionnalité non demandée.
+Si une modification SQL est nécessaire, ajoute-la dans README avec le SQL prêt à coller dans phpMyAdmin.

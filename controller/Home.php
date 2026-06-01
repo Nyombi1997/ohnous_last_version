@@ -203,6 +203,12 @@
             $myView->render('Ohnous | ZONES DE LIVRAISON');
         }
 
+        public function showAdminWhatsapp ()
+        {
+            $myView = new View('admin-whatsapp');
+            $myView->render('Ohnous | WHATSAPP ADMIN');
+        }
+
         public function showEditUser ()
         {
             $myView = new View('edit-user');

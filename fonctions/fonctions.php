@@ -1115,7 +1115,7 @@
                         </div>
                         <div class="public-store-card__content">
                             <span class="public-store-card__eyebrow">Explorer</span>
-                            <h3>Toutes les boutiques</h3>
+                            <h3>Voir toutes les boutiques</h3>
                             <p>Retrouvez plus de boutiques et accédez vite aux articles.</p>
                         </div>
                         <div class="public-store-card__aside">
@@ -3039,6 +3039,7 @@
             'boutiques' => ['label' => 'Boutiques', 'link' => '/admin-boutiques', 'icon' => 'fa-store'],
             'articles' => ['label' => 'Articles', 'link' => '/admin-articles', 'icon' => 'fa-tags'],
             'livraison' => ['label' => 'Livraison', 'link' => '/admin-zones-livraison', 'icon' => 'fa-truck-fast'],
+            'whatsapp' => ['label' => 'WhatsApp', 'link' => '/admin/whatsapp', 'icon' => 'fa-brands fa-whatsapp'],
             'admins' => ['label' => 'Admins', 'link' => '/admin-admins', 'icon' => 'fa-user-shield'],
         ];
 
@@ -3049,7 +3050,7 @@
             $activeClass = $key === $current ? 'is-active' : '';
             $html .= '
                 <a href="'.$item['link'].'" class="admin-liquid-nav__link '.$activeClass.'">
-                    <i class="fa-solid '.$item['icon'].'"></i>
+                    <i class="'.(strpos($item['icon'], 'fa-brands') === 0 ? $item['icon'] : 'fa-solid '.$item['icon']).'"></i>
                     <span>'.$item['label'].'</span>
                 </a>
             ';

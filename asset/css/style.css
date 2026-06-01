@@ -4019,6 +4019,18 @@ span
 .public-store-grid--home{
     grid-template-columns: repeat(4, minmax(0, 1fr));
 }
+.home-store-swiper{
+    width: 100%;
+    margin: 12px 0;
+    overflow: hidden;
+}
+.home-store-swiper .swiper-slide{
+    width: min(280px, 78vw);
+    height: auto;
+}
+.home-store-swiper .public-store-card{
+    height: 100%;
+}
 .public-store-card{
     position: relative;
     min-height: 100%;
@@ -4186,6 +4198,17 @@ span
 }
 .store-articles-shell{
     margin-top: 14px;
+}
+.store-articles-shell #store_articles_results.container_affiche_produit.vue_article{
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+    align-items: start;
+}
+.store-articles-shell #store_articles_results .div_affiche_produit{
+    width: 100%;
+    padding: 0;
 }
 .shop-results-head__owner-note{
     max-width: 360px;
@@ -4786,6 +4809,36 @@ span
     display: block;
     color: #2d3156;
     margin-bottom: 4px;
+}
+
+.admin-table-scroll{
+    width: 100%;
+    overflow-x: auto;
+}
+
+.admin-data-table{
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 860px;
+}
+
+.admin-data-table th,
+.admin-data-table td{
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    text-align: left;
+    vertical-align: top;
+    font-size: 14px;
+}
+
+.admin-data-table th{
+    color: #444;
+    font-weight: 700;
+    background: rgba(255,255,255,0.55);
+}
+
+.admin-data-table td{
+    color: #555;
 }
 
 .payment-return-panel{

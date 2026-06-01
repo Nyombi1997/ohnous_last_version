@@ -230,6 +230,21 @@ function buildSizeChooserHtml(produitId, tailles) {
     return html;
 }
 
+function buildDirectSizeChooserHtml(tailles) {
+    let html = '<div class="cart-size-popup"><p>Choisissez la taille à commander.</p><div class="cart-size-popup__grid">';
+
+    tailles.forEach(function(taille, index){
+        html += `
+            <label class="cart-size-popup__choice ${index === 0 ? "is-selected" : ""}">
+                <input type="radio" name="cart_size_choice" value="${escapeHtml(taille)}" ${index === 0 ? "checked" : ""}>
+                <span>${escapeHtml(taille)}</span>
+            </label>`;
+    });
+
+    html += '</div></div>';
+    return html;
+}
+
 function ajouterTailleAuPanier(imgSrc, produitId, produitNom, produitSlug, produitTaille, produitPrix, produitStyle, produitBackground) {
     let corps_detail_panier = document.getElementById("corps_detail_panier");
     let cartKey = getCartKey(produitId, produitTaille);
@@ -398,23 +413,44 @@ function ajouterAuPanier(imgSrc = null, produitId = null, produitNom = null, pro
 function retirerDuPanierDepuisVue(produitId = null, produitTaille = "", cartKey = null) {
     let resolvedCartKey = cartKey || getCartKey(produitId, produitTaille);
 
-    Swal.fire({
-        title: "Produit retir\u00e9 du panier !",
-        text: "Cet article a \u00e9t\u00e9 retir\u00e9 de votre panier.",
-        icon: "success",
-        confirmButtonColor: "#6775d6",
-        timer: 1500
-    });
+    $.post("/fonctions/panier.php", {
+        id: produitId,
+        size: produitTaille,
+        retire: "ok"
+    }, function(data){
+        if (!data || data.result !== "ok") {
+            Swal.fire({
+                icon: "error",
+                title: data && data.msg ? data.msg : "Impossible de retirer cet article.",
+                confirmButtonColor: "#6775d6"
+            });
+            return;
+        }
 
-    removeCartItemElement(resolvedCartKey);
-    editIconAjouterPanier(produitId, false, true, "", "", "", produitTaille, "", "", "");
+        removeCartItemElement(resolvedCartKey);
+        setCartButtonState(produitId, false);
+
+        Swal.fire({
+            title: "Produit retir\u00e9 du panier !",
+            text: "Cet article a \u00e9t\u00e9 retir\u00e9 de votre panier.",
+            icon: "success",
+            confirmButtonColor: "#6775d6",
+            timer: 1500
+        });
+    }, "json").fail(function(){
+        Swal.fire({
+            icon: "error",
+            title: "Impossible de retirer cet article.",
+            confirmButtonColor: "#6775d6"
+        });
+    });
 }
 
 $(document).on("click", ".js-remove-cart-item", function(){
     retirerDuPanierDepuisVue($(this).data("product-id"), $(this).data("product-size"), $(this).data("cart-key"));
 });
 
-function commanderDirectement(imgSrc = null, produitId = null, produitNom = null, produitSlug = null, produitTaille = null, produitPrix = null, produitStyle = null, produitBackground = null) {
+function envoyerCommandeDirecte(imgSrc = null, produitId = null, produitNom = null, produitSlug = null, produitTaille = null, produitPrix = null, produitStyle = null, produitBackground = null) {
     $.post("/fonctions/checkout_actions.php", {
         action: "prepare_direct_checkout",
         id: produitId,
@@ -443,6 +479,52 @@ function commanderDirectement(imgSrc = null, produitId = null, produitNom = null
             confirmButtonColor: "#6775d6"
         });
     });
+}
+
+function commanderDirectement(imgSrc = null, produitId = null, produitNom = null, produitSlug = null, produitTaille = null, produitPrix = null, produitStyle = null, produitBackground = null, produitTailles = null) {
+    let tailles = normalizeProductSizes(produitTailles, produitTaille);
+
+    if (tailles.length > 1) {
+        Swal.fire({
+            title: "Choisir une taille",
+            html: buildDirectSizeChooserHtml(tailles),
+            showCancelButton: true,
+            confirmButtonText: "Commander",
+            cancelButtonText: "Annuler",
+            confirmButtonColor: "#6775d6",
+            cancelButtonColor: "#1f2640",
+            customClass: {
+                popup: "cart-size-popup-shell"
+            },
+            didOpen: function(){
+                document.querySelectorAll('input[name="cart_size_choice"]').forEach(function(input){
+                    input.addEventListener("change", function(){
+                        document.querySelectorAll(".cart-size-popup__choice").forEach(function(label){
+                            label.classList.remove("is-selected");
+                        });
+                        if (input.checked && input.closest(".cart-size-popup__choice")) {
+                            input.closest(".cart-size-popup__choice").classList.add("is-selected");
+                        }
+                    });
+                });
+            },
+            preConfirm: function(){
+                let checked = document.querySelector('input[name="cart_size_choice"]:checked');
+                if (!checked) {
+                    Swal.showValidationMessage("Choisissez une taille.");
+                    return false;
+                }
+                return checked.value;
+            }
+        }).then(function(result){
+            if (result.isConfirmed) {
+                envoyerCommandeDirecte(imgSrc, produitId, produitNom, produitSlug, result.value, produitPrix, produitStyle, produitBackground);
+            }
+        });
+        return;
+    }
+
+    envoyerCommandeDirecte(imgSrc, produitId, produitNom, produitSlug, produitTaille, produitPrix, produitStyle, produitBackground);
 }
 
 /* recherche catalogue */

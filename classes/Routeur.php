@@ -47,6 +47,7 @@
                             "compte" => ["controller" => 'Home', "method" => 'showUserAccount'],
                             "checkout" => ["controller" => 'CheckoutController', "method" => 'showCheckout'],
                             "admin-zones-livraison" => ["controller" => 'Home', "method" => 'showAdminDeliveryZones'],
+                            "admin/whatsapp" => ["controller" => 'Home', "method" => 'showAdminWhatsapp'],
                             "admin-admins" => ["controller" => 'AdminController', "method" => 'showAdminAccounts'],
                             "admin-acces" => ["controller" => 'AdminController', "method" => 'consumeAccessToken'],
                             "paiement-demarrer" => ["controller" => 'PaymentController', "method" => 'startPayment'],

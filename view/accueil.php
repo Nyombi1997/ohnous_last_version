@@ -130,16 +130,26 @@
         </div>
     </div>
 
-    <div class="public-store-grid public-store-grid--home">
-        <?php
-            foreach($visibleStores as $store)
-            {
-                echo ohnous_render_public_store_card($store, true);
-            }
+    <div class="swiper home-store-swiper">
+        <div class="swiper-wrapper">
+            <?php
+                foreach($visibleStores as $store)
+                {
+                    echo '<div class="swiper-slide">'.ohnous_render_public_store_card($store, true).'</div>';
+                }
 
-            echo ohnous_render_public_store_card([], true, true);
-        ?>
+                echo '<div class="swiper-slide">'.ohnous_render_public_store_card([], true, true).'</div>';
+            ?>
+        </div>
     </div>
+
+    <script>
+        new Swiper('.home-store-swiper', {
+            slidesPerView: "auto",
+            spaceBetween: 10,
+            freeMode: true
+        });
+    </script>
 </section>
 
 <section class="home-curated-section">
