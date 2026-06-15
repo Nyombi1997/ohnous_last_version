@@ -15,3 +15,7 @@ if (!defined('WHATSAPP_PHONE_NUMBER_ID')) {
 if (!defined('WHATSAPP_API_VERSION')) {
     define('WHATSAPP_API_VERSION', 'v25.0');
 }
+
+if (!defined('WHATSAPP_AUTO_REPLY_ENABLED')) {
+    define('WHATSAPP_AUTO_REPLY_ENABLED', true);
+}
