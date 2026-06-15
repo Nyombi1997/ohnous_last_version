@@ -288,3 +288,20 @@ https://ohnous.store/paiement-verifier?reference=FP-XXXX
 - Les requêtes AJAX front continuent d’utiliser `jQuery`.
 - Les nouveaux textes ont été réécrits en UTF-8 côté fichiers modifiés.
 - Si ta base existante ne contient pas encore `payment_transactions` et `admin_access_tokens`, colle simplement le SQL ci-dessus dans phpMyAdmin.
+## WhatsApp Cloud API
+
+```sql
+CREATE TABLE IF NOT EXISTS whatsapp_messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    wa_message_id VARCHAR(255) UNIQUE NULL,
+    wa_id VARCHAR(50) NULL,
+    phone VARCHAR(50) NULL,
+    contact_name VARCHAR(255) NULL,
+    message_type VARCHAR(50) NULL,
+    message_body TEXT NULL,
+    raw_payload LONGTEXT NULL,
+    direction ENUM('in','out') DEFAULT 'in',
+    status VARCHAR(50) NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+```
