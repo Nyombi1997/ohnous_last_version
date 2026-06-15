@@ -9,7 +9,7 @@ if (!defined('WHATSAPP_ACCESS_TOKEN')) {
 }
 
 if (!defined('WHATSAPP_PHONE_NUMBER_ID')) {
-    define('WHATSAPP_PHONE_NUMBER_ID', '1111507425385748');
+    define('WHATSAPP_PHONE_NUMBER_ID', '1104776422722447');
 }
 
 if (!defined('WHATSAPP_API_VERSION')) {
