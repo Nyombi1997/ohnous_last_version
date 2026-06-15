@@ -29,6 +29,9 @@
 
         <div class="whatsapp-admin-chat">
             <div class="whatsapp-chat-head" id="whatsapp_chat_head">
+                <button type="button" class="whatsapp-admin-icon-btn whatsapp-chat-back" id="whatsapp_chat_back" title="Retour aux conversations">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
                 <div>
                     <strong>Sélectionnez une conversation</strong>
                     <span>Aucun message ouvert</span>

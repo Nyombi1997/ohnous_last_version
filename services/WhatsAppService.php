@@ -67,17 +67,32 @@ class WhatsAppService
 
     public static function log($message, array $context = [])
     {
-        $logDir = dirname(__DIR__) . '/logs';
-        if (!is_dir($logDir)) {
-            mkdir($logDir, 0775, true);
-        }
-
         $line = '[' . date('Y-m-d H:i:s') . '] ' . $message;
         if (!empty($context)) {
             $line .= ' ' . json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         }
 
-        file_put_contents($logDir . '/whatsapp.log', $line . PHP_EOL, FILE_APPEND | LOCK_EX);
+        self::writeLogFile('whatsapp.log', $line);
+    }
+
+    public static function logSend($message, array $context = [])
+    {
+        $line = '[' . date('Y-m-d H:i:s') . '] ' . $message;
+        if (!empty($context)) {
+            $line .= ' ' . json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
+
+        self::writeLogFile('whatsapp_send.log', $line);
+    }
+
+    private static function writeLogFile($fileName, $line)
+    {
+        $logDir = dirname(__DIR__) . '/logs';
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0775, true);
+        }
+
+        file_put_contents($logDir . '/' . $fileName, $line . PHP_EOL, FILE_APPEND | LOCK_EX);
     }
 
     public function sendTemplate($to, $templateName, $languageCode = 'en_US', $components = [])
@@ -136,7 +151,7 @@ class WhatsAppService
     private function sendMessage(array $payload, $phone, $type, $body)
     {
         $response = $this->request('POST', $this->messagesUrl(), $payload);
-        $status = !empty($response['success']) ? 'sent' : 'error';
+        $status = !empty($response['success']) ? 'sent' : 'failed';
         $messageId = $response['data']['messages'][0]['id'] ?? null;
 
         if ($this->pdo instanceof PDO) {
@@ -154,7 +169,10 @@ class WhatsAppService
                 ':wa_message_id' => $messageId,
                 ':message_type' => $type,
                 ':message_body' => $body,
-                ':raw_payload' => json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                ':raw_payload' => json_encode([
+                    'sent_payload' => $payload,
+                    'meta_response' => $response
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
                 ':status' => $status
             ]);
             self::touchConversation($this->pdo, $conversationId, date('Y-m-d H:i:s'));
@@ -165,6 +183,11 @@ class WhatsAppService
 
     private function request($method, $url, array $payload)
     {
+        self::logSend('Payload envoyé à Meta', [
+            'url' => $url,
+            'payload' => $payload
+        ]);
+
         $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_CUSTOMREQUEST => $method,
@@ -187,26 +210,36 @@ class WhatsAppService
 
         if ($errno) {
             self::log('WhatsApp cURL error', ['errno' => $errno, 'error' => $error]);
-            return [
+            $response = [
                 'success' => false,
                 'http_code' => $httpCode,
-                'error' => $error
+                'error' => $error,
+                'error_message' => $error
             ];
+            self::logSend('Réponse Meta complète', $response);
+            return $response;
         }
 
         $decoded = json_decode((string)$body, true);
         $success = $httpCode >= 200 && $httpCode < 300;
+        $errorMessage = is_array($decoded)
+            ? ($decoded['error']['message'] ?? $decoded['error']['error_user_msg'] ?? null)
+            : null;
 
         if (!$success) {
             self::log('WhatsApp API error', ['http_code' => $httpCode, 'body' => $decoded ?: $body]);
         }
 
-        return [
+        $response = [
             'success' => $success,
             'http_code' => $httpCode,
             'data' => is_array($decoded) ? $decoded : null,
-            'raw' => $body
+            'raw' => $body,
+            'error_message' => $errorMessage
         ];
+        self::logSend('Réponse Meta complète', $response);
+
+        return $response;
     }
 
     private function messagesUrl()

@@ -33,6 +33,7 @@ try {
         echo json_encode([
             'result' => 'ok',
             'messages' => ohnous_whatsapp_get_messages($bdd, $conversationId),
+            'conversation' => ohnous_whatsapp_get_conversation($bdd, $conversationId),
             'customer' => ohnous_whatsapp_get_customer_info($bdd, $conversationId)
         ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         exit;
@@ -70,8 +71,9 @@ try {
 
         echo json_encode([
             'result' => !empty($response['success']) ? 'ok' : 'error',
-            'msg' => !empty($response['success']) ? "Message envoyé." : "Échec de l'envoi WhatsApp.",
-            'http_code' => $response['http_code'] ?? null
+            'msg' => !empty($response['success']) ? "Message envoyé." : ohnous_whatsapp_get_meta_error($response),
+            'http_code' => $response['http_code'] ?? null,
+            'meta_error' => $response['error_message'] ?? null
         ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         exit;
     }
@@ -204,4 +206,25 @@ function ohnous_whatsapp_get_customer_info(PDO $bdd, $conversationId)
     }
 
     return $info;
+}
+
+function ohnous_whatsapp_get_meta_error(array $response)
+{
+    if (!empty($response['error_message'])) {
+        return (string)$response['error_message'];
+    }
+
+    if (!empty($response['data']['error']['message'])) {
+        return (string)$response['data']['error']['message'];
+    }
+
+    if (!empty($response['data']['error']['error_user_msg'])) {
+        return (string)$response['data']['error']['error_user_msg'];
+    }
+
+    if (!empty($response['error'])) {
+        return (string)$response['error'];
+    }
+
+    return "Échec de l'envoi WhatsApp.";
 }

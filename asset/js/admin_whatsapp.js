@@ -3,6 +3,7 @@
     var pollingDelay = 4000;
     var pollingTimer = null;
 
+    var $shell = $('.whatsapp-admin-shell');
     var $conversationList = $('#whatsapp_conversation_list');
     var $messageList = $('#whatsapp_message_list');
     var $chatHead = $('#whatsapp_chat_head');
@@ -53,9 +54,7 @@
 
             renderConversations(data.conversations || []);
 
-            if (!selectedConversationId && !keepSelection && data.conversations && data.conversations.length) {
-                openConversation(data.conversations[0].id);
-            } else if (selectedConversationId) {
+            if (selectedConversationId) {
                 markActiveConversation();
             }
         });
@@ -110,6 +109,7 @@
         $conversationInput.val(selectedConversationId);
         $messageInput.prop('disabled', false);
         $submitButton.prop('disabled', false);
+        $shell.addClass('has-open-chat');
         markActiveConversation();
 
         post('messages', { conversation_id: selectedConversationId }, function (data) {
@@ -117,25 +117,19 @@
                 return;
             }
 
-            renderMessages(data.messages || []);
+            renderMessages(data.messages || [], data.conversation || null, data.customer || null);
             renderCustomer(data.customer || null);
             loadConversations(true);
         });
     }
 
-    function renderMessages(messages) {
+    function renderMessages(messages, conversation, customer) {
+        renderChatHead(conversation, customer);
+
         if (!messages.length) {
             $messageList.html('<div class="empty-liquid-state"><p>Aucun message.</p></div>');
             return;
         }
-
-        var first = messages[0] || {};
-        $chatHead.html(
-            '<div>' +
-                '<strong>Conversation WhatsApp</strong>' +
-                '<span>' + escapeHtml(first.message_type || 'messages') + '</span>' +
-            '</div>'
-        );
 
         var html = messages.map(function (message) {
             var outgoing = message.direction === 'out';
@@ -152,6 +146,31 @@
 
         $messageList.html(html);
         $messageList.scrollTop($messageList[0].scrollHeight);
+    }
+
+    function renderChatHead(conversation, customer) {
+        var title = (customer && customer.nom) || (conversation && (conversation.contact_name || conversation.phone || conversation.wa_id)) || 'Client WhatsApp';
+        var phone = (customer && customer.telephone) || (conversation && (conversation.phone || conversation.wa_id)) || '';
+        var extra = '';
+
+        if (customer) {
+            if (customer.email) {
+                extra += ' · ' + customer.email;
+            }
+            if (customer.orders_count != null) {
+                extra += ' · ' + customer.orders_count + ' commande' + (parseInt(customer.orders_count, 10) > 1 ? 's' : '');
+            }
+        }
+
+        $chatHead.html(
+            '<button type="button" class="whatsapp-admin-icon-btn whatsapp-chat-back" id="whatsapp_chat_back" title="Retour aux conversations">' +
+                '<i class="fa-solid fa-arrow-left"></i>' +
+            '</button>' +
+            '<div>' +
+                '<strong>' + escapeHtml(title) + '</strong>' +
+                '<span>' + escapeHtml(phone + extra) + '</span>' +
+            '</div>'
+        );
     }
 
     function renderCustomer(customer) {
@@ -179,6 +198,10 @@
 
     $conversationList.on('click', '.whatsapp-conversation-item', function () {
         openConversation($(this).data('id'));
+    });
+
+    $(document).on('click', '#whatsapp_chat_back', function () {
+        $shell.removeClass('has-open-chat');
     });
 
     $('#whatsapp_refresh_btn').on('click', function () {
