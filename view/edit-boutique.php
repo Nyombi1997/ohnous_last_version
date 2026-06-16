@@ -154,10 +154,6 @@
                                     <i class="fa-brands fa-tiktok"></i>
                                     <input type="text" id="tiktok" autocomplete="off" placeholder="Lien TikTok" value="<?= htmlspecialchars((string)($boutique['tiktok'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                                 </div>
-                                <div class="form_ohnous phone_intl">
-                                    <input type="text" id="telephone_whatsapp" autocomplete="off" placeholder="Numéro WhatsApp" value="<?= htmlspecialchars((string)($boutique['telephone_whatsapp'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
-                                    <input type="hidden" id="whatsapp_dial_code" value="">
-                                </div>
                                 <div class="store-socials-errors" id="store_socials_errors"></div>
                                 <div class="form_ohnous submit">
                                     <button type="submit" class="btn_ohnous" id="valid_socials">Enregistrer les liens</button>
@@ -170,7 +166,5 @@
         </div>
 	</div>
 
-    <link rel="stylesheet" href="/node_modules/intl-tel-input/dist/css/intlTelInput.min.css?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/node_modules/intl-tel-input/dist/css/intlTelInput.min.css") ?>">
-    <script src="/node_modules/intl-tel-input/dist/js/intlTelInput.min.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/node_modules/intl-tel-input/dist/js/intlTelInput.min.js") ?>"></script>
     <!-- script edit boutique -->
 	<script src="/asset/js/edit_boutique.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/edit_boutique.js") ?>" defer></script> 

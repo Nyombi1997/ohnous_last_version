@@ -1484,24 +1484,6 @@
         ';*/
     }
 
-    /* lien direct WhatsApp */
-    function ohnous_format_whatsapp_link($number, $message = 'Bonjour, je viens de OhNous.')
-    {
-        $raw = trim((string)$number);
-        $digits = preg_replace('/\D+/', '', $raw);
-        if($digits === '')
-        {
-            return '';
-        }
-
-        if(strpos($digits, '00') === 0)
-        {
-            $digits = substr($digits, 2);
-        }
-
-        return 'https://wa.me/'.$digits.'?text='.rawurlencode($message);
-    }
-
     /* récupérer les liens sociaux visibles d'une boutique */
     function ohnous_get_store_social_links(array $boutique)
     {
@@ -1524,18 +1506,6 @@
                     'label' => $meta['label']
                 ];
             }
-        }
-
-        if(!empty($boutique['telephone_whatsapp']))
-        {
-            $socials[] = [
-                'url' => ohnous_format_whatsapp_link(
-                    $boutique['telephone_whatsapp'],
-                    'Bonjour, je viens de votre boutique "'.($boutique['nom'] ?? '').'" sur OhNous.store.'
-                ),
-                'icon' => 'fa-square-whatsapp',
-                'label' => 'WhatsApp'
-            ];
         }
 
         return $socials;
@@ -3039,7 +3009,6 @@
             'boutiques' => ['label' => 'Boutiques', 'link' => '/admin-boutiques', 'icon' => 'fa-store'],
             'articles' => ['label' => 'Articles', 'link' => '/admin-articles', 'icon' => 'fa-tags'],
             'livraison' => ['label' => 'Livraison', 'link' => '/admin-zones-livraison', 'icon' => 'fa-truck-fast'],
-            'whatsapp' => ['label' => 'WhatsApp', 'link' => '/admin/whatsapp', 'icon' => 'fa-brands fa-whatsapp'],
             'admins' => ['label' => 'Admins', 'link' => '/admin-admins', 'icon' => 'fa-user-shield'],
         ];
 

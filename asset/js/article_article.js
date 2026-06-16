@@ -77,7 +77,6 @@ document.addEventListener("DOMContentLoaded", function(){
                 ${previewHtml}
                 <div class="share-network-grid">
                     <a class="share-network-link" href="https://www.facebook.com/sharer/sharer.php?u=${url}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook-f"></i><span>Facebook</span></a>
-                    <a class="share-network-link" href="https://wa.me/?text=${text}%20${url}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-whatsapp"></i><span>WhatsApp</span></a>
                     <a class="share-network-link" href="https://twitter.com/intent/tweet?text=${text}&url=${url}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-x-twitter"></i><span>X</span></a>
                     <a class="share-network-link" href="https://t.me/share/url?url=${url}&text=${text}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-telegram"></i><span>Telegram</span></a>
                     <a class="share-network-link" href="https://www.linkedin.com/sharing/share-offsite/?url=${url}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-linkedin-in"></i><span>LinkedIn</span></a>

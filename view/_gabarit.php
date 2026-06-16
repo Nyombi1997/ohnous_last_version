@@ -706,32 +706,6 @@
         ");
     }
 
-    /* ajouter whatsapp dans boutiques */
-    $table = "boutiques";
-    $column = "whatsapp";
-
-    $sql = "
-        SELECT COUNT(*) 
-        FROM INFORMATION_SCHEMA.COLUMNS 
-        WHERE TABLE_SCHEMA = DATABASE()
-        AND TABLE_NAME = :table
-        AND COLUMN_NAME = :column
-    ";
-
-    $stmt = $bdd->prepare($sql);
-    $stmt->execute([
-        ':table'  => $table,
-        ':column' => $column
-    ]);
-
-    $exists = $stmt->fetchColumn();
-    if ($exists == 0) {
-        $bdd->exec("
-            ALTER TABLE boutiques
-            ADD whatsapp TEXT NULL AFTER slug
-        ");
-    }
-
     /* ajouter tiktok dans boutiques */
     $table = "boutiques";
     $column = "tiktok";
@@ -973,24 +947,6 @@
         $bdd->exec("
             ALTER TABLE boutiques
             ADD date_activation_fin DATE NULL AFTER date_activation_debut
-        ");
-    }
-
-    /* ajouter telephone_whatsapp dans boutiques */
-    $table = "boutiques";
-    $column = "telephone_whatsapp";
-
-    $stmt = $bdd->prepare($sql);
-    $stmt->execute([
-        ':table'  => $table,
-        ':column' => $column
-    ]);
-
-    $exists = $stmt->fetchColumn();
-    if ($exists == 0) {
-        $bdd->exec("
-            ALTER TABLE boutiques
-            ADD telephone_whatsapp TEXT NULL AFTER whatsapp
         ");
     }
 
