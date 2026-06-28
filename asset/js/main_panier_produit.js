@@ -145,11 +145,13 @@ function setCartButtonState(produitId, isActive) {
         if (element.dataset.hasMultipleSizes === "1") {
             element.innerHTML = '<span class="icon-panier_plus"></span>';
             element.classList.remove("active");
+            element.dataset.cartAction = "add";
             return;
         }
 
         element.innerHTML = isActive ? '<span class="icon-panier_moins"></span>' : '<span class="icon-panier_plus"></span>';
         element.classList.toggle("active", isActive);
+        element.dataset.cartAction = isActive ? "remove" : "add";
     });
 }
 
@@ -368,7 +370,11 @@ function ajouterAuPanier(imgSrc = null, produitId = null, produitNom = null, pro
     }
 
     document.querySelectorAll("#btn_panier_" + produitId).forEach(function(element){
-        if (element.classList.contains("active")) {
+        if (element.dataset.hasMultipleSizes === "1") {
+            return;
+        }
+
+        if (element.dataset.cartAction === "remove") {
             shouldRemove = true;
         }
     });
@@ -446,7 +452,9 @@ function retirerDuPanierDepuisVue(produitId = null, produitTaille = "", cartKey 
     });
 }
 
-$(document).on("click", ".js-remove-cart-item", function(){
+$(document).on("click", ".js-remove-cart-item", function(event){
+    event.preventDefault();
+    event.stopPropagation();
     retirerDuPanierDepuisVue($(this).data("product-id"), $(this).data("product-size"), $(this).data("cart-key"));
 });
 

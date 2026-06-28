@@ -142,16 +142,16 @@
     .public-store-grid
     {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
+        gap: 12px;
     }
     .public-store-card__link
     {
-        gap: 6px;
-        padding: 7px;
+        gap: 9px;
+        padding: 8px;
     }
     .public-store-card__visual
     {
-        min-height: 138px;
+        min-height: 0;
     }
     .public-store-card__avatar
     {
@@ -161,8 +161,8 @@
     }
     .public-store-card__content
     {
-        gap: 3px;
-        padding: 0 1px;
+        gap: 5px;
+        padding: 0;
     }
     .public-store-card__eyebrow
     {
@@ -170,28 +170,28 @@
     }
     .public-store-card__content h3
     {
-        font-size: .88rem;
-        line-height: 1.05;
+        font-size: .9rem;
+        line-height: 1.18;
     }
     .public-store-card__content p
     {
         display: -webkit-box;
-        font-size: .68rem;
-        line-height: 1.22;
-        min-height: 1.7em;
+        font-size: .74rem;
+        line-height: 1.28;
+        min-height: 2em;
         -webkit-line-clamp: 2;
     }
     .public-store-card__aside
     {
         margin-top: auto;
-        padding: 0 1px 1px;
+        padding: 0;
     }
     .public-store-card__action
     {
         width: 100%;
         justify-content: center;
-        padding: 8px 9px;
-        font-size: .66rem;
+        padding: 9px 8px;
+        font-size: .72rem;
     }
     .container_affiche_produit.vue_article
     {
@@ -360,9 +360,12 @@
     .admin-list-grid,
     .admin-store-layout,
     .admin-test-store-form__grid,
-    .admin-mini-grid,
-    .admin-form-grid{
+    .admin-mini-grid{
         grid-template-columns: 1fr;
+    }
+
+    .admin-form-grid{
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .admin-article-table__head{
@@ -384,13 +387,87 @@
     }
 
     .shop-catalog-page > .container_filtre_produit{
-        width: 100%;
-        height: auto;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1002;
+        width: min(88vw, 360px);
+        height: 100dvh;
+        max-width: 100%;
+        margin: 0;
+        padding: 12px;
+        transform: translateX(-105%);
+        transition: transform .24s ease;
+        pointer-events: none;
+        overflow: hidden;
     }
 
     .shop-catalog-page{
         grid-template-columns: 1fr;
-        gap: 0;
+        gap: 14px;
+    }
+
+    .shop-filter-open .shop-catalog-page > .container_filtre_produit{
+        transform: translateX(0);
+        pointer-events: auto;
+    }
+
+    body.shop-filter-open{
+        overflow: hidden;
+    }
+
+    .shop-mobile-filter-bar{
+        display: flex;
+        width: 100%;
+        max-width: 100%;
+        padding: 0 10px;
+        margin: 0 0 12px;
+        box-sizing: border-box;
+    }
+
+    .shop-mobile-filter-toggle{
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 0;
+    }
+
+    .shop-filter-backdrop{
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 1001;
+        background: rgba(31, 38, 64, .28);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .24s ease;
+    }
+
+    .shop-filter-open .shop-filter-backdrop{
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .shop-filter-panel{
+        height: 100%;
+        max-height: 100%;
+        padding: 16px;
+        border-radius: 22px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    .shop-filter-close{
+        width: 38px;
+        height: 38px;
+        border: 0;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255,255,255,.78);
+        color: #2f3358;
+        flex: 0 0 auto;
     }
 
     .shop-filter-head,
@@ -412,16 +489,16 @@
         gap: 12px;
     }
 
-    .home-products-grid .div_affiche_produit:nth-child(3n),
-    .shop-results-shell #articles_results .div_affiche_produit:nth-child(3n),
-    .store-articles-shell #store_articles_results .div_affiche_produit:nth-child(3n){
+    .home-products-grid .div_affiche_produit:nth-child(3n + 3),
+    .shop-results-shell #articles_results .div_affiche_produit:nth-child(3n + 3),
+    .store-articles-shell #store_articles_results .div_affiche_produit:nth-child(3n + 3){
         width: 100%;
         grid-column: span 2;
     }
 
-    .home-products-grid .div_affiche_produit:nth-child(3n) .div_img_affiche_produit,
-    .shop-results-shell #articles_results .div_affiche_produit:nth-child(3n) .div_img_affiche_produit,
-    .store-articles-shell #store_articles_results .div_affiche_produit:nth-child(3n) .div_img_affiche_produit{
+    .home-products-grid .div_affiche_produit:nth-child(3n + 3) .div_img_affiche_produit,
+    .shop-results-shell #articles_results .div_affiche_produit:nth-child(3n + 3) .div_img_affiche_produit,
+    .store-articles-shell #store_articles_results .div_affiche_produit:nth-child(3n + 3) .div_img_affiche_produit{
         height: 300px;
     }
 
@@ -505,7 +582,8 @@
     }
 
     .checkout-form__row,
-    .admin-account-grid{
+    .admin-account-grid,
+    .admin-form-grid{
         grid-template-columns: 1fr;
     }
 
@@ -560,19 +638,141 @@
 }
 
 @media(max-width: 768px){
+    .edit-shop-page{
+        padding: 112px 12px 34px;
+        overflow: hidden;
+    }
+
+    .edit-shop-page .blob-bg{
+        top: 128px;
+        left: 0;
+        right: 0;
+        width: min(260px, 74vw);
+        height: min(260px, 74vw);
+        margin: 0 auto;
+        opacity: .28;
+    }
+
+    .edit-shop-layout{
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .edit-shop-content{
+        display: block;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .edit-shop-sidebar{
+        width: 100%;
+        max-width: 100%;
+        max-height: none;
+        overflow: visible;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    .edit-shop-sidebar .account-edit-nav{
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        margin: 0;
+        padding: 12px;
+        border-radius: 16px;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    .edit-shop-sidebar .account-edit-nav__group{
+        min-width: 0;
+        max-width: 100%;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        box-sizing: border-box;
+    }
+
+    .edit-shop-sidebar .account-edit-nav__group + .account-edit-nav__group{
+        padding-top: 0;
+        padding-left: 0;
+        border: 0;
+    }
+
+    .edit-shop-sidebar .account-edit-nav a{
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        min-height: 48px;
+        white-space: normal;
+        padding: 12px;
+        border: 1px solid rgba(103,117,214,.1);
+        background: rgba(255,255,255,.8);
+        color: #3f4660;
+        box-shadow: none;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    .edit-shop-sidebar .account-edit-nav a.is-active,
+    .edit-shop-sidebar .account-edit-nav a:hover{
+        background: rgba(103,117,214,.1);
+        border-color: rgba(103,117,214,.16);
+        border-left-color: var(--base_1_couleur);
+        color: #3f4fbd;
+    }
+
+    .edit-shop-sidebar .account-edit-nav a.is-active i,
+    .edit-shop-sidebar .account-edit-nav a:hover i{
+        color: var(--base_1_couleur);
+    }
+
+    .edit-shop-sidebar .account-edit-nav a span,
+    .edit-shop-sidebar .account-edit-nav a strong,
+    .edit-shop-sidebar .account-edit-nav a small{
+        max-width: 100%;
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .edit-shop-card__head,
+    .edit-shop-profile-row{
+        grid-template-columns: 1fr;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .edit-shop-form-title h1{
+        font-size: 24px;
+    }
+
+    .edit-shop-form{
+        grid-template-columns: 1fr;
+    }
+
+    .edit-shop-form .btn_ohnous,
+    .edit-shop-form--wide .btn_ohnous{
+        width: 100%;
+        justify-self: stretch;
+    }
+
     .account-page-shell,
     .account-edit-shell{
         padding: 95px 12px 42px;
     }
 
     .account-edit-nav{
-        justify-content: flex-start;
-        overflow-x: auto;
-        flex-wrap: nowrap;
-        padding-bottom: 4px;
+        width: 100%;
+        padding: 14px;
+        border-radius: 16px;
+        gap: 14px;
     }
 
     .account-edit-nav a{
-        white-space: nowrap;
+        min-height: 46px;
+        padding: 11px 12px;
     }
 }

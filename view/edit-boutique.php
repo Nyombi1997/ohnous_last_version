@@ -48,68 +48,81 @@
 <script>
     let home_page = true;
 </script>
-	<!-- intro -->
-	<div class="intro-hero plus">
-		<div class="blob-bg">
+	<div class="edit-shop-page">
+		<div class="blob-bg" aria-hidden="true">
             <span id="new_boutique"></span>
         </div>
-        <!-- container login page -->
-        <div class="container_login_page account-edit-shell">
-            <?php $storeNavCurrent = 'infos'; include VIEW.'store-account-nav.php'; ?>
-            <div class="div_login_page">
-                <div class="div_detail_login_page">
-                    <div class="div_icone_login_page">
-                        <div class="icone_login_page">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                        </div>
-                    </div>
-                    <div class="titre_login_page">
-                        Modifier boutique
-                    </div>
-                    <div class="div_form_ohnous" id="form">
-                        <!-- details -->
-                        <div class="form_edit_boutique">
-                            <div class="div_edit_profil_boutique">
-                                <div class="edit_profil_boutique">
-                                    <?= $profile ?>
-                                </div>
+        <div class="edit-shop-shell">
+            <div class="edit-shop-layout">
+                <aside class="edit-shop-sidebar">
+                    <?php $storeNavCurrent = 'infos'; include VIEW.'store-account-nav.php'; ?>
+                </aside>
+                <main class="edit-shop-content">
+                    <section class="edit-shop-card">
+                        <div class="edit-shop-card__head">
+                            <div>
+                                <h2>Profil public</h2>
+                                <p>Ces informations sont utilisées sur la page publique de votre boutique.</p>
                             </div>
-                            <div class="form_ohnous submit">
-                                <button type="submit" class="btn_ohnous" id="edit_profil">Modifier</button>
-                            </div>
-                        </div>
-                        <!-- details -->
-                        <form action="" method="post" id="form_nom" class="form_edit_boutique">
-                            <div class="form_ohnous">
+                            <a href="/boutique" class="edit-shop-view-link">
                                 <i class="fa-solid fa-store"></i>
-                                <input type="text" name="" id="nom" autocomplete="off" placeholder="Nom boutique" required value='<?= $boutique['nom'] ?>'>
+                                Voir la boutique
+                            </a>
+                        </div>
+
+                        <div class="edit-shop-profile-row">
+                            <div class="edit-shop-avatar">
+                                <?= $profile ?>
                             </div>
-                            <div class="form_ohnous submit">
+                            <div class="edit-shop-profile-copy">
+                                <strong><?= htmlspecialchars((string)$boutique['nom'], ENT_QUOTES, 'UTF-8') ?></strong>
+                                <span><?= htmlspecialchars((string)$boutique['adresse_email'], ENT_QUOTES, 'UTF-8') ?></span>
+                            </div>
+                            <button type="button" class="btn_ohnous edit-shop-secondary-button" id="edit_profil">
+                                <i class="fa-solid fa-camera"></i>
+                                Modifier la photo
+                            </button>
+                        </div>
+
+                        <div class="edit-shop-form-title">
+                            <p>Espace boutique</p>
+                            <h1>Informations générales</h1>
+                        </div>
+
+                        <div class="edit-shop-forms" id="form">
+                            <form action="" method="post" id="form_nom" class="edit-shop-form">
+                                <div class="edit-shop-field">
+                                    <label for="nom">Nom de la boutique</label>
+                                    <div class="edit-shop-input">
+                                        <i class="fa-solid fa-store"></i>
+                                        <input type="text" id="nom" autocomplete="off" required value="<?= htmlspecialchars((string)$boutique['nom'], ENT_QUOTES, 'UTF-8') ?>">
+                                    </div>
+                                    <div class="choix_form_ohnous null" id="choix_form_ohnous"></div>
+                                </div>
                                 <button type="submit" class="btn_ohnous" id="valide_nom">Modifier</button>
-                            </div>
-                            <div class="choix_form_ohnous null" id="choix_form_ohnous">
-                            </div>
-                        </form>
-                        <!-- details -->
-                        <form action="" method="post" id="form_email" class="form_edit_boutique">
-                            <div class="form_ohnous">
-                                <i class="fa-solid fa-envelope"></i>
-                                <input type="email" name="" id="email" autocomplete="off" placeholder="email" required value='<?= $boutique['adresse_email'] ?>'>
-                            </div>
-                            <div class="form_ohnous submit">
+                            </form>
+
+                            <form action="" method="post" id="form_email" class="edit-shop-form">
+                                <div class="edit-shop-field">
+                                    <label for="email">Adresse email</label>
+                                    <div class="edit-shop-input">
+                                        <i class="fa-solid fa-envelope"></i>
+                                        <input type="email" id="email" autocomplete="off" required value="<?= htmlspecialchars((string)$boutique['adresse_email'], ENT_QUOTES, 'UTF-8') ?>">
+                                    </div>
+                                </div>
                                 <button type="submit" class="btn_ohnous" id="valide_email">Modifier</button>
-                            </div>
-                        </form>
-                        <form action="" method="post" id="form_description" class="form_edit_boutique">
-                            <div class="form_ohnous description">
-                                <textarea name="" id="description" placeholder="La description de votre boutique"><?= $boutique['description'] ?></textarea>
-                            </div>
-                            <div class="form_ohnous submit">
+                            </form>
+
+                            <form action="" method="post" id="form_description" class="edit-shop-form edit-shop-form--wide">
+                                <div class="edit-shop-field">
+                                    <label for="description">Description</label>
+                                    <textarea id="description" placeholder="La description de votre boutique"><?= htmlspecialchars((string)$boutique['description'], ENT_QUOTES, 'UTF-8') ?></textarea>
+                                </div>
                                 <button type="submit" class="btn_ohnous" id="valid_description">Modifier</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                            </form>
+                        </div>
+                    </section>
+                </main>
             </div>
         </div>
 	</div>

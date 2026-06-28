@@ -112,7 +112,7 @@
                             $icone = 'icon-panier_moins';
                         }
                         echo '
-                            <button class="panier '.$panier.'" id="btn_panier_'.$article['id'].'" data-has-multiple-sizes="'.(count($articleTaillesJson) > 1 ? '1' : '0').'" onclick="ajouterAuPanier('.ohnous_js_html_arg($mainImage['img']).','.(int)$article['id'].','.ohnous_js_html_arg($article['nom']).','.ohnous_js_html_arg($article['slug']).','.ohnous_js_html_arg($tailles).','.ohnous_js_html_arg((string)$pricing['prix_final']).','.ohnous_js_html_arg($image_article_style).','.ohnous_js_html_arg($image_article_background).','.ohnous_js_html_arg($articleTaillesJson).')"><span class="'.$icone.'"></span></button>';
+                            <button class="panier '.$panier.'" id="btn_panier_'.$article['id'].'" data-has-multiple-sizes="'.(count($articleTaillesJson) > 1 ? '1' : '0').'" data-cart-action="'.($panier === 'active' ? 'remove' : 'add').'" onclick="ajouterAuPanier('.ohnous_js_html_arg($mainImage['img']).','.(int)$article['id'].','.ohnous_js_html_arg($article['nom']).','.ohnous_js_html_arg($article['slug']).','.ohnous_js_html_arg($tailles).','.ohnous_js_html_arg((string)$pricing['prix_final']).','.ohnous_js_html_arg($image_article_style).','.ohnous_js_html_arg($image_article_background).','.ohnous_js_html_arg($articleTaillesJson).')"><span class="'.$icone.'"></span></button>';
                     ?>
                     <button
                         type="button"

@@ -40,6 +40,10 @@
         els.taillesWrapper = document.getElementById("div_filtre_tailles");
         els.categories = document.getElementById("details_filtre_categories");
         els.resetButton = document.getElementById("shop_reset_button");
+        els.filterOpen = document.getElementById("shop_filter_open");
+        els.filterClose = document.getElementById("shop_filter_close");
+        els.filterBackdrop = document.getElementById("shop_filter_backdrop");
+        els.filterSidebar = document.getElementById("shop_filter_sidebar");
     }
 
     function isShopPage() {
@@ -372,6 +376,20 @@
         }
     }
 
+    function closeMobileFilters() {
+        document.body.classList.remove("shop-filter-open");
+        if (els.filterSidebar) {
+            els.filterSidebar.setAttribute("aria-hidden", "true");
+        }
+    }
+
+    function openMobileFilters() {
+        document.body.classList.add("shop-filter-open");
+        if (els.filterSidebar) {
+            els.filterSidebar.setAttribute("aria-hidden", "false");
+        }
+    }
+
     function clearSearchPreservingInput() {
         state.recherche = "";
         if (els.input) {
@@ -658,6 +676,24 @@
                 resetAllFilters(false);
             });
         }
+
+        if (els.filterOpen) {
+            els.filterOpen.addEventListener("click", openMobileFilters);
+        }
+
+        if (els.filterClose) {
+            els.filterClose.addEventListener("click", closeMobileFilters);
+        }
+
+        if (els.filterBackdrop) {
+            els.filterBackdrop.addEventListener("click", closeMobileFilters);
+        }
+
+        document.addEventListener("keydown", function(event){
+            if (event.key === "Escape") {
+                closeMobileFilters();
+            }
+        });
 
         window.addEventListener("scroll", loadMoreIfNeeded);
         window.addEventListener("resize", loadMoreIfNeeded);

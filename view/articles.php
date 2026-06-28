@@ -117,15 +117,27 @@
     </div>
 </div>
 
+<div class="shop-mobile-filter-bar">
+    <button type="button" class="btn_voir_plus shop-mobile-filter-toggle" id="shop_filter_open">
+        <i class="fa-solid fa-sliders"></i> Filtres
+    </button>
+</div>
+
 <section class="parent_container_affiche_produit shop-catalog-page" id="shop_catalog_page">
-    <aside class="container_filtre_produit">
+    <div class="shop-filter-backdrop" id="shop_filter_backdrop"></div>
+    <aside class="container_filtre_produit" id="shop_filter_sidebar">
         <div class="sous_container_filtre_produit shop-filter-panel">
             <div class="shop-filter-head">
                 <div>
                     <p class="shop-filter-head__eyebrow">Catalogue</p>
                     <h2 class="shop-filter-head__title">Filtres</h2>
                 </div>
-                <a href="/shop" class="btn_voir_plus shop-reset-button null" id="shop_reset_button">Réinitialiser</a>
+                <div class="shop-filter-head__actions">
+                    <a href="/shop" class="btn_voir_plus shop-reset-button null" id="shop_reset_button">Réinitialiser</a>
+                    <button type="button" class="shop-filter-close" id="shop_filter_close" aria-label="Fermer les filtres">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
             </div>
 
             <div class="shop-toolbar">

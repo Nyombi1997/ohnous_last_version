@@ -1,31 +1,37 @@
 RÉPONSE UNIQUE. PAS D’EXPLICATIONS. PAS DE BLABLA.
 
 OBJECTIF :
-Exécuter uniquement la demande. Ne pas proposer de refonte, d’optimisation ou de fonctionnalités non demandées sauf si elles améliorent directement la demande sans modifier le comportement existant.
+Exécuter uniquement la demande actuelle, sans refonte générale, sans optimisation non demandée et sans ajout de fonctionnalité hors périmètre.
+
+PRIORITÉS :
+
+1. Ne rien casser.
+2. Préserver le comportement existant.
+3. Modifier uniquement le strict nécessaire.
+4. Réutiliser l’existant avant de créer du nouveau.
+5. Respecter l’architecture actuelle du projet.
 
 RÈGLES DE RÉPONSE :
 
 * Réponse courte.
 * Code final uniquement.
-* Pas d'explication sauf si indispensable.
-* Si une explication est nécessaire : maximum 3 lignes.
-* Pas de répétition.
-* Pas de texte décoratif.
 * Pas de résumé.
 * Pas de checklist finale.
-* Pas d'informations théoriques.
+* Pas de texte décoratif.
+* Pas d’explication sauf si indispensable.
+* Si une explication est indispensable : maximum 3 lignes.
 * Un seul message de réponse.
 
 RÈGLES DE DÉVELOPPEMENT :
 
-* Préserver intégralement le fonctionnement actuel.
-* Ne rien casser.
-* Respecter strictement l'architecture existante.
+* Respecter strictement l’architecture MVC existante.
 * Suivre ma logique de programmation.
-* Réutiliser les fonctions existantes avant d'en créer de nouvelles.
-* Ne jamais dupliquer une logique déjà présente.
-* Respecter le modèle MVC existant.
-* Respecter les conventions déjà utilisées dans le projet.
+* Réutiliser les fonctions, vues, classes et scripts existants.
+* Ne pas dupliquer une logique déjà présente.
+* Ne pas créer de système parallèle.
+* Ne pas modifier une fonctionnalité qui n’est pas directement concernée par la demande.
+* Ne pas changer les noms de routes, classes, fonctions ou variables sauf nécessité absolue.
+* Ne pas remplacer une logique existante par une autre approche si ce n’est pas nécessaire.
 
 STRUCTURE DU PROJET :
 
@@ -42,74 +48,83 @@ STRUCTURE DU PROJET :
 BASE DE DONNÉES :
 
 * Ne jamais modifier model/bdd.php.
-* Ne jamais supposer l'existence d'une table.
-* Ne jamais supposer l'existence d'une colonne.
+* Ne jamais supposer l’existence d’une table.
+* Ne jamais supposer l’existence d’une colonne.
 * Vérifier avant utilisation.
-* Toute modification SQL nécessaire doit être ajoutée dans README.
-* Fournir du SQL directement exécutable dans phpMyAdmin.
+* Si une modification SQL est nécessaire, l’ajouter dans README.
+* Le SQL doit être directement exécutable dans phpMyAdmin.
+* Ne pas supprimer ni altérer les données existantes.
 
 SESSIONS ET AUTHENTIFICATION :
 
 * Utiliser les sessions déjà existantes.
 * Respecter exactement la logique actuelle de connexion.
-* Ne pas créer de système parallèle.
 * Ne pas contourner les vérifications existantes.
 * Les commentaires et avis nécessitent obligatoirement une connexion.
-* Si non connecté :
+* Si l’utilisateur n’est pas connecté :
 
-  * ouvrir un popup moderne Login / Inscription.
-  * utiliser les formulaires existants.
-  * connecter l'utilisateur sans comportement étranger.
+  * ouvrir un popup moderne Login / Inscription ;
+  * utiliser les formulaires existants ;
+  * connecter l’utilisateur sans comportement étranger.
 * Après connexion :
 
-  * mettre automatiquement à jour les boutons, liens et icônes de connexion.
+  * mettre automatiquement à jour les boutons, liens et icônes liés à l’état de connexion.
 
 FRONTEND :
 
 * Utiliser jQuery pour toutes les requêtes AJAX.
-* Utiliser SweetAlert si nécessaire.
+* Utiliser SweetAlert uniquement si nécessaire.
 * Réutiliser les composants existants.
 * Utiliser exclusivement le design actuel du projet.
-* Design moderne Liquid / Glass.
-* Pas de design extérieur au projet.
+* Respecter le design moderne Liquid / Glass déjà présent.
+* Ne pas importer de design extérieur.
 * Éviter les dégradés excessifs.
-* Interface légère.
-* Interface fluide.
-* Interface responsive.
-* Respect UI/UX existante.
-* Respect SEO.
+* Garder une interface légère, fluide et responsive.
+* Respecter l’UI/UX existante.
+* Respecter le SEO existant.
+
+FORMULAIRES ET INPUTS :
+
+* Labels toujours au-dessus des champs.
+* Inputs organisés en grille quand l’espace le permet.
+* En mobile, les inputs doivent passer les uns sous les autres.
+* Tous les blocs d’inputs doivent avoir une taille cohérente.
+* Espacement régulier entre chaque champ.
+* Aucun `box-shadow` sur les inputs, selects ou textareas.
+* Les styles doivent venir de `asset/css` et rester cohérents avec OHNOUS.
 
 IMAGES :
 
 * Utiliser ImageKit.
-* S'inspirer de view/upload_image.php.
-* Si amélioration :
-
-  * conserver la logique actuelle.
-  * rendre le code plus propre sans changer le comportement.
+* S’inspirer de `view/upload_image.php`.
+* Conserver la logique actuelle.
+* Si le code est amélioré, le comportement ne doit pas changer.
 
 JAVASCRIPT :
 
-* Tous les scripts dans asset/js.
-* Réutiliser les scripts existants avant d'en créer.
+* Tous les scripts doivent être placés dans `asset/js`.
+* Réutiliser les scripts existants avant d’en créer de nouveaux.
+* Ne pas mettre de JavaScript inline si un fichier existant peut être utilisé proprement.
 
 CSS :
 
-* Tous les styles dans asset/css.
+* Tous les styles doivent être placés dans `asset/css`.
 * Réutiliser le design existant.
-* Aucun style qui semble provenir d'un autre template.
+* Aucun style qui semble venir d’un autre template.
+* Ne pas ajouter de `box-shadow` inutile sur les champs.
 
 COMMENTAIRES DANS LE CODE :
 
 * Commenter uniquement les parties critiques.
-* Commentaires utiles au troubleshooting.
-* Pas de commentaires inutiles.
+* Les commentaires doivent aider au troubleshooting.
+* Pas de commentaires décoratifs ou évidents.
 
 TEXTES :
 
 * Français correct.
 * Accents corrects.
 * Ponctuation française correcte.
+* Aucun texte corrompu ou mal encodé.
 
 ENCODAGE :
 
@@ -120,59 +135,57 @@ ENCODAGE :
   * Set-Content
   * Out-File
   * -replace
-  * ou toute commande modifiant l'encodage Windows.
+  * toute commande risquant de modifier l’encodage Windows.
 * Utiliser uniquement :
 
   * apply_patch
-  * Python avec encoding="utf-8"
-* Préserver :
+  * Python avec `encoding="utf-8"`
+* Préserver correctement :
   é à è ù ç œ ’
 * Corriger immédiatement tout texte corrompu :
-
-  * Ã©
-  * Ã
-  * â€™
-  * â€œ
-  * â€
-  * etc.
+  Ã©, Ã, â€™, â€œ, â€ et équivalents.
 
 AVANT CHAQUE MODIFICATION :
 
 1. Identifier la logique existante.
-2. Réutiliser l'existant.
-3. Modifier le minimum nécessaire.
-4. Vérifier qu'aucune fonctionnalité existante n'est cassée.
+2. Vérifier les fichiers concernés.
+3. Réutiliser l’existant.
+4. Modifier le minimum nécessaire.
+5. Vérifier que le comportement existant reste intact.
 
 DEMANDE ACTUELLE :
 
-1. Corriger la suppression du panier.
+1. Corriger la suppression du panier
 
-* Le bouton supprimer effectue actuellement l'opération inverse.
-* Corriger sans modifier le reste du système panier.
+* Le bouton supprimer effectue actuellement l’opération inverse.
+* Corriger uniquement cette erreur.
+* Ne pas modifier le reste du système panier.
 
-2. Corriger "Commander maintenant".
+2. Corriger “Commander maintenant”
 
 * Depuis la fiche produit :
 
-  * envoyer directement au checkout.
+  * envoyer directement au checkout ;
   * avec uniquement le produit sélectionné.
 * Depuis le panier :
 
-  * conserver le comportement actuel.
+  * conserver le comportement actuel ;
   * afficher tous les produits du panier dans le checkout.
 
-3. Mobile galerie images.
+3. Corriger la galerie images en mobile
+   Pages concernées :
 
-* Accueil.
-* Shop.
-* Vue boutique.
-* Affichage mobile :
+* Accueil
+* Shop
+* Vue boutique
 
-  * 2 images groupées.
-  * puis 1 image seule.
-  * puis répétition du motif.
+Affichage mobile attendu :
 
-4. Boutiques à l'accueil.
+* 2 images groupées ;
+* puis 1 image seule ;
+* puis répétition du motif.
+
+4. Ajouter les boutiques à l’accueil
 
 * Ajouter une section swipe horizontale.
 * Utiliser Slides Per View.
@@ -181,21 +194,20 @@ DEMANDE ACTUELLE :
 * Swipe tactile uniquement.
 * Dernière carte :
 
-  * "Voir toutes les boutiques".
-  * lien vers la liste complète.
+  * texte : “Voir toutes les boutiques” ;
+  * lien vers la page complète des boutiques.
 
-5. Créer une page liste des boutiques.
+5. Créer une page liste des boutiques
 
-* Afficher les boutiques.
-* Afficher photo profil.
-* Si absente :
-
-  * image par défaut.
-* Responsive.
+* Afficher toutes les boutiques.
+* Afficher la photo de profil de chaque boutique.
+* Si aucune photo n’existe, afficher une image par défaut.
+* Page responsive.
 * Design identique au reste du site.
+* Ne pas créer de style extérieur au projet.
 
 IMPORTANT :
 Fais uniquement ce qui est demandé.
-Ne modifie rien d'autre.
+Ne modifie rien d’autre.
 Ne crée aucune fonctionnalité non demandée.
-Si une modification SQL est nécessaire, ajoute-la dans README avec le SQL prêt à coller dans phpMyAdmin.
+Si une modification SQL est nécessaire, ajoute-la uniquement dans README avec le SQL prêt à coller dans phpMyAdmin.

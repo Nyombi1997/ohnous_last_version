@@ -20,22 +20,52 @@
 /* Formulaires */
 .form_group_ajout_image {
     margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .label_ajout_image {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 0;
     font-weight: 600;
+    line-height: 1.25;
 }
 
 .input_ajout_image
 {
     width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    min-height: 54px;
+    padding: 14px 16px;
+    border: 1px solid rgba(153, 153, 153, .42);
+    border-radius: 10px;
     font-size: 16px;
     background: var(--blanc);
+    box-shadow: none;
+    outline: none;
+    transition: border-color .2s ease, background .2s ease, opacity .2s ease;
+}
+
+.input_ajout_image:hover {
+    border-color: rgba(103, 117, 214, .38);
+}
+
+.input_ajout_image:focus {
+    border-color: var(--base_1_couleur);
+    box-shadow: none;
+}
+
+.input_ajout_image:disabled {
+    opacity: .62;
+    cursor: not-allowed;
+    background: rgba(245, 246, 252, .92);
+}
+
+.input_ajout_image.error,
+.input_ajout_image.is-error,
+.input_ajout_image:invalid:not(:placeholder-shown) {
+    border-color: rgba(217, 79, 100, .72);
+    box-shadow: none;
 }
 
 .article-name-limit-hint {

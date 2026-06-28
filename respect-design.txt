@@ -1,0 +1,11 @@
+IMPORTANT
+
+Ne redessine jamais la structure générale de la page.
+
+Travaille uniquement à l'intérieur des conteneurs déjà existants.
+
+Ne modifie jamais les dimensions du layout principal (header, sidebar, container, footer) sauf si cela est explicitement demandé.
+
+Toute nouvelle interface doit s'adapter au layout existant et non l'inverse.
+
+Si un composant devient plus grand que son conteneur, rends ce composant scrollable au lieu d'agrandir ou de casser la page.

@@ -103,7 +103,7 @@
                                     </div>
                                 </div>
                                 <div class="boutton_panier_affiche_produit">
-                                    <button type="button" class="'.$panier.'" id="btn_panier_'.$donnee['id'].'" data-has-multiple-sizes="'.($hasMultipleTailles ? '1' : '0').'" onclick="ajouterAuPanier('.ohnous_js_html_arg($img[0]['img']).','.(int)$donnee['id'].','.ohnous_js_html_arg($donnee['nom']).','.ohnous_js_html_arg($donnee['slug']).','.ohnous_js_html_arg($tailles).','.ohnous_js_html_arg((string)$pricing['prix_final']).','.ohnous_js_html_arg($imgStyles).','.ohnous_js_html_arg($imgBackground).','.ohnous_js_html_arg($taillesJson).')"><span class="'.$icone.'"></span></button>
+                                    <button type="button" class="'.$panier.'" id="btn_panier_'.$donnee['id'].'" data-has-multiple-sizes="'.($hasMultipleTailles ? '1' : '0').'" data-cart-action="'.($panier === 'active' ? 'remove' : 'add').'" onclick="ajouterAuPanier('.ohnous_js_html_arg($img[0]['img']).','.(int)$donnee['id'].','.ohnous_js_html_arg($donnee['nom']).','.ohnous_js_html_arg($donnee['slug']).','.ohnous_js_html_arg($tailles).','.ohnous_js_html_arg((string)$pricing['prix_final']).','.ohnous_js_html_arg($imgStyles).','.ohnous_js_html_arg($imgBackground).','.ohnous_js_html_arg($taillesJson).')"><span class="'.$icone.'"></span></button>
                                 </div>
                             </div>
                         </div>

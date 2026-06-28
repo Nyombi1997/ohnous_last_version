@@ -1,0 +1,105 @@
+## GARDE-FOU UI / RESPONSIVE (À RESPECTER OBLIGATOIREMENT)
+
+Avant de considérer le travail terminé, vérifie que l'interface respecte les contraintes suivantes.
+
+### Layout
+
+* Aucun élément ne doit dépasser de son conteneur.
+* Aucun élément ne doit sortir de l'écran horizontalement.
+* Aucun scroll horizontal ne doit apparaître.
+* Aucun élément ne doit chevaucher un autre.
+* Aucun composant ne doit masquer un autre composant.
+* Aucun texte ne doit être tronqué.
+
+### Conteneurs
+
+* Tous les conteneurs doivent utiliser correctement les contraintes CSS (`width`, `max-width`, `min-width`, `overflow`, `flex`, `grid`).
+* Ne jamais utiliser de largeur fixe lorsqu'une largeur fluide est préférable.
+* Les cartes doivent toujours rester à l'intérieur de leur parent.
+
+### Scroll
+
+* Si une zone devient plus grande que son conteneur, c'est cette zone qui doit scroller.
+* Ne jamais faire dépasser une sidebar ou un menu de son conteneur.
+* Les scrolls doivent être internes lorsque nécessaire.
+* Éviter `overflow: hidden` lorsqu'il masque du contenu.
+
+### Sidebar / Menus
+
+* Une sidebar ne doit jamais passer devant la barre de recherche, le header ou le footer.
+* Elle doit rester entièrement contenue dans son parent.
+* Si son contenu dépasse la hauteur disponible, elle doit devenir scrollable.
+* Elle ne doit jamais agrandir la page.
+
+### Responsive
+
+Tester systématiquement les résolutions suivantes :
+
+* 1920 px
+* 1440 px
+* 1366 px
+* 1024 px
+* 768 px
+* 480 px
+* 390 px
+* 360 px
+
+À chacune de ces tailles :
+
+* aucun débordement ;
+* aucun chevauchement ;
+* aucune barre de scroll horizontale ;
+* aucune coupure de texte ;
+* aucun bouton inaccessible ;
+* aucun menu cassé.
+
+### Flex / Grid
+
+Privilégier :
+
+* Flexbox
+* CSS Grid
+* gap
+* minmax()
+* flex-wrap
+
+Éviter les marges négatives et les positionnements qui rendent la mise en page fragile.
+
+### Positionnement
+
+Éviter autant que possible :
+
+* `position: absolute`
+* `position: fixed`
+
+Ne les utiliser que lorsqu'ils sont réellement indispensables.
+
+Le layout doit être construit principalement avec Flexbox et Grid.
+
+### Dimensions
+
+Éviter :
+
+* `height: 100vh`
+* `width` fixes
+* `min-height` inutilement élevé
+
+Privilégier :
+
+* `height: auto`
+* `max-width: 100%`
+* `width: 100%`
+* `box-sizing: border-box`
+
+### Avant chaque livraison
+
+Contrôler que :
+
+* le header reste intact ;
+* le footer reste intact ;
+* la barre de recherche reste accessible ;
+* les menus restent dans leurs limites ;
+* le contenu principal ne change pas de largeur de manière incohérente ;
+* toutes les pages restent parfaitement responsives.
+
+Si une modification provoque un débordement, un chevauchement, un problème de responsive ou de scroll, corriger ce problème avant de considérer la tâche terminée.
