@@ -54,7 +54,8 @@
             <span id="new_boutique"></span>
         </div>
         <!-- container login page -->
-        <div class="container_login_page">
+        <div class="container_login_page account-edit-shell">
+            <?php $storeNavCurrent = 'infos'; include VIEW.'store-account-nav.php'; ?>
             <div class="div_login_page">
                 <div class="div_detail_login_page">
                     <div class="div_icone_login_page">
@@ -99,31 +100,6 @@
                                 <button type="submit" class="btn_ohnous" id="valide_email">Modifier</button>
                             </div>
                         </form>
-                        <!-- details -->
-                        <form action="" method="post" id="form_password" class="form_edit_boutique">
-                            <div class="form_ohnous password">
-                                <i class="fa-solid fa-lock"></i>
-                                <i class="fa-solid fa-eye-slash vu_password_form_ohnous"></i>
-                                <input type="password" name="" id="password" autocomplete="new-password" placeholder="Ancien mot de passe" required>
-                            </div>
-                            <div class="form_ohnous password">
-                                <i class="fa-solid fa-lock"></i>
-                                <i class="fa-solid fa-eye-slash vu_password_form_ohnous"></i>
-                                <input type="password" name="" id="password" autocomplete="new-password" placeholder="Nouveau mot de passe" required>
-                            </div>
-                            <div class="form_ohnous password">
-                                <i class="fa-solid fa-lock"></i>
-                                <i class="fa-solid fa-eye-slash vu_password_form_ohnous"></i>
-                                <input type="password" name="" id="password" autocomplete="new-password" placeholder="Confirmer nouveau mot de passe" required>
-                            </div>
-                            <div class="form_ohnous submit">
-                                <button type="submit" class="btn_ohnous" id="valid_password">Modifier</button>
-                            </div>
-                            <div class="form_ohnous word">
-                                <a href="/changer-mot-de-passe">Mot de passe oublié ?</a> 
-                            </div>
-                        </form>
-                        <!-- details -->
                         <form action="" method="post" id="form_description" class="form_edit_boutique">
                             <div class="form_ohnous description">
                                 <textarea name="" id="description" placeholder="La description de votre boutique"><?= $boutique['description'] ?></textarea>
@@ -132,34 +108,6 @@
                                 <button type="submit" class="btn_ohnous" id="valid_description">Modifier</button>
                             </div>
                         </form>
-                        <?php if(ohnous_is_store_active($boutique)): ?>
-                            <form action="" method="post" id="form_socials" class="form_edit_boutique">
-                                <div class="form_ohnous">
-                                    <i class="fa-brands fa-facebook"></i>
-                                    <input type="text" id="facebook" autocomplete="off" placeholder="Lien Facebook" value="<?= htmlspecialchars((string)($boutique['facebook'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
-                                </div>
-                                <div class="form_ohnous">
-                                    <i class="fa-brands fa-instagram"></i>
-                                    <input type="text" id="instagram" autocomplete="off" placeholder="Lien Instagram" value="<?= htmlspecialchars((string)($boutique['instagram'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
-                                </div>
-                                <div class="form_ohnous">
-                                    <i class="fa-brands fa-x-twitter"></i>
-                                    <input type="text" id="twitter" autocomplete="off" placeholder="Lien X / Twitter" value="<?= htmlspecialchars((string)($boutique['twitter'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
-                                </div>
-                                <div class="form_ohnous">
-                                    <i class="fa-brands fa-threads"></i>
-                                    <input type="text" id="trends" autocomplete="off" placeholder="Lien Threads" value="<?= htmlspecialchars((string)($boutique['trends'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
-                                </div>
-                                <div class="form_ohnous">
-                                    <i class="fa-brands fa-tiktok"></i>
-                                    <input type="text" id="tiktok" autocomplete="off" placeholder="Lien TikTok" value="<?= htmlspecialchars((string)($boutique['tiktok'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
-                                </div>
-                                <div class="store-socials-errors" id="store_socials_errors"></div>
-                                <div class="form_ohnous submit">
-                                    <button type="submit" class="btn_ohnous" id="valid_socials">Enregistrer les liens</button>
-                                </div>
-                            </form>
-                        <?php endif; ?>
                     </div>
                 </div>
             </div>

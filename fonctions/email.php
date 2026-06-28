@@ -39,7 +39,7 @@ function welcome($email = "", $isActive = true, $name = "", $activationUrl = "ht
     $mail->Host = 'smtp.hostinger.com';
     $mail->SMTPAuth = true;
     $mail->Username = 'contact@ohnous.store'; // ton email
-    $mail->Password = 'Ohnous@2026'; // ton mot de passe
+    $mail->Password = 'OhNous@2026'; // ton mot de passe
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
     $mail->Port = 465;
 
@@ -187,7 +187,7 @@ function ohnous_send_user_activation_request_email(array $user, array $request)
     $mail->Host = 'smtp.hostinger.com';
     $mail->SMTPAuth = true;
     $mail->Username = 'contact@ohnous.store';
-    $mail->Password = 'Ohnous@2026';
+    $mail->Password = 'OhNous@2026';
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
     $mail->Port = 465;
 
@@ -231,7 +231,7 @@ function code_verification($email = "", $code = '000000')
     $mail->Host = 'smtp.hostinger.com';
     $mail->SMTPAuth = true;
     $mail->Username = 'contact@ohnous.store'; // ton email
-    $mail->Password = 'Ohnous@2026'; // ton mot de passe
+    $mail->Password = 'OhNous@2026'; // ton mot de passe
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
     $mail->Port = 465;
 
@@ -349,12 +349,12 @@ function ohnous_send_store_activation_request_email(array $boutique, array $requ
     $mail->Host = 'smtp.hostinger.com';
     $mail->SMTPAuth = true;
     $mail->Username = 'contact@ohnous.store';
-    $mail->Password = 'Ohnous@2026';
+    $mail->Password = 'OhNous@2026';
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
     $mail->Port = 465;
 
     $mail->setFrom('contact@ohnous.store', 'Ohnous');
-    $mail->addAddress('contact@ohnous.store');
+    ohnous_add_admin_recipients($mail);
     $mail->isHTML(true);
     $mail->Subject = 'Demande d’activation boutique - '.$boutique['nom'];
     $mail->Body = '
@@ -366,6 +366,11 @@ function ohnous_send_store_activation_request_email(array $boutique, array $requ
                     <p><strong>Boutique :</strong> '.htmlspecialchars($boutique['nom'], ENT_QUOTES, 'UTF-8').'</p>
                     <p><strong>Email :</strong> '.htmlspecialchars((string)$boutique['adresse_email'], ENT_QUOTES, 'UTF-8').'</p>
                     <p><strong>Slug :</strong> '.htmlspecialchars((string)($boutique['slug'] ?? ''), ENT_QUOTES, 'UTF-8').'</p>
+                    <p><strong>WhatsApp :</strong> '.htmlspecialchars((string)($request['whatsapp'] ?? ''), ENT_QUOTES, 'UTF-8').'</p>
+                    <p><strong>Appel :</strong> '.htmlspecialchars((string)($request['telephone'] ?? ''), ENT_QUOTES, 'UTF-8').'</p>
+                    <p><strong>Instagram :</strong> '.htmlspecialchars((string)($request['instagram'] ?? ''), ENT_QUOTES, 'UTF-8').'</p>
+                    <p><strong>Facebook :</strong> '.htmlspecialchars((string)($request['facebook'] ?? ''), ENT_QUOTES, 'UTF-8').'</p>
+                    <p><strong>TikTok :</strong> '.htmlspecialchars((string)($request['tiktok'] ?? ''), ENT_QUOTES, 'UTF-8').'</p>
                     <p><strong>Description :</strong><br>'.nl2br(htmlspecialchars((string)($boutique['description'] ?? ''), ENT_QUOTES, 'UTF-8')).'</p>
                     <p><strong>Date de demande :</strong> '.date('d/m/Y H:i').'</p>
                     <div style="padding-top:20px;">
@@ -391,7 +396,7 @@ function ohnous_send_message_notification_email($email = "", $senderName = "", $
     $mail->Host = 'smtp.hostinger.com';
     $mail->SMTPAuth = true;
     $mail->Username = 'contact@ohnous.store';
-    $mail->Password = 'Ohnous@2026';
+    $mail->Password = 'OhNous@2026';
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
     $mail->Port = 465;
 
@@ -427,7 +432,7 @@ function ohnous_send_admin_password_reset_email($resetUrl = "")
     $mail->Host = 'smtp.hostinger.com';
     $mail->SMTPAuth = true;
     $mail->Username = 'contact@ohnous.store';
-    $mail->Password = 'Ohnous@2026';
+    $mail->Password = 'OhNous@2026';
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
     $mail->Port = 465;
 
@@ -463,7 +468,7 @@ function ohnous_send_admin_store_contact_email($email = "", $storeName = "", $me
     $mail->Host = 'smtp.hostinger.com';
     $mail->SMTPAuth = true;
     $mail->Username = 'contact@ohnous.store';
-    $mail->Password = 'Ohnous@2026';
+    $mail->Password = 'OhNous@2026';
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
     $mail->Port = 465;
 
@@ -500,7 +505,7 @@ function ohnous_send_admin_invitation_email($email = "", $adminName = "", $magic
     $mail->Host = 'smtp.hostinger.com';
     $mail->SMTPAuth = true;
     $mail->Username = 'contact@ohnous.store';
-    $mail->Password = 'Ohnous@2026';
+    $mail->Password = 'OhNous@2026';
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
     $mail->Port = 465;
 
@@ -549,7 +554,7 @@ function ohnous_send_article_report_admin_email(array $article, array $boutique,
     $mail->Host = 'smtp.hostinger.com';
     $mail->SMTPAuth = true;
     $mail->Username = 'contact@ohnous.store';
-    $mail->Password = 'Ohnous@2026';
+    $mail->Password = 'OhNous@2026';
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
     $mail->Port = 465;
 
@@ -591,7 +596,7 @@ function ohnous_send_article_deleted_store_email(array $boutique, array $article
     $mail->Host = 'smtp.hostinger.com';
     $mail->SMTPAuth = true;
     $mail->Username = 'contact@ohnous.store';
-    $mail->Password = 'Ohnous@2026';
+    $mail->Password = 'OhNous@2026';
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
     $mail->Port = 465;
 

@@ -5,22 +5,13 @@
 
     header('Content-Type: application/json; charset=utf-8');
 
+    ohnous_require_admin_or_redirect('/admin-login');
+
     $token = html_entity_decode(filter_var($_POST['token'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $days = (int)html_entity_decode(filter_var($_POST['days'] ?? 0, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $months = (int)html_entity_decode(filter_var($_POST['months'] ?? 0, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 
-    if(!ohnous_table_exists('boutique_activation_requests'))
-    {
-        createTable('boutique_activation_requests', [
-            'id INT AUTO_INCREMENT PRIMARY KEY',
-            'boutique_id INT NOT NULL',
-            'token TEXT NULL',
-            'statut VARCHAR(30) NOT NULL DEFAULT "en_attente"',
-            'duree_jours INT NOT NULL DEFAULT 0',
-            'date_traitement DATETIME NULL',
-            'date_ajout DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP'
-        ]);
-    }
+    ohnous_ensure_store_activation_request_schema();
 
     if($token === '')
     {

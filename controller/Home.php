@@ -71,6 +71,18 @@
             $myView->render('Ohnous | MODIFIER BOUTIQUE OHNOUS !');
         }
 
+        public function showEditStoreContact ()
+        {
+            $myView = new View('edit-boutique-contact');
+            $myView->render('Ohnous | CONTACT BOUTIQUE OHNOUS !');
+        }
+
+        public function showEditStoreSecurity ()
+        {
+            $myView = new View('edit-boutique-security');
+            $myView->render('Ohnous | SÉCURITÉ BOUTIQUE OHNOUS !');
+        }
+
         public function showEditStoreProfile ()
         {
             $myView = new View('edit-profile-boutique');

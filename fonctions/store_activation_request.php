@@ -29,18 +29,7 @@
         exit;
     }
 
-    if(!ohnous_table_exists('boutique_activation_requests'))
-    {
-        createTable('boutique_activation_requests', [
-            'id INT AUTO_INCREMENT PRIMARY KEY',
-            'boutique_id INT NOT NULL',
-            'token TEXT NULL',
-            'statut VARCHAR(30) NOT NULL DEFAULT "en_attente"',
-            'duree_jours INT NOT NULL DEFAULT 0',
-            'date_traitement DATETIME NULL',
-            'date_ajout DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP'
-        ]);
-    }
+    ohnous_ensure_store_activation_request_schema();
 
     if(ohnous_is_store_active($boutique))
     {
@@ -51,12 +40,40 @@
         exit;
     }
 
-    $existing = only_select(
-        "boutique_activation_requests",
-        "boutique_id = ".(int)$boutique['id']." AND statut = 'en_attente'",
-        "id DESC",
-        1
-    );
+    $whatsapp = ohnous_clean_international_phone($_POST['whatsapp'] ?? '');
+    $telephone = ohnous_clean_international_phone($_POST['telephone'] ?? '');
+    $instagram = ohnous_clean_social_account($_POST['instagram'] ?? '');
+    $facebook = ohnous_clean_social_account($_POST['facebook'] ?? '');
+    $tiktok = ohnous_clean_social_account($_POST['tiktok'] ?? '');
+
+    if(trim((string)($_POST['whatsapp'] ?? '')) !== '' && $whatsapp === '')
+    {
+        echo json_encode([
+            'result' => 'error',
+            'msg' => "Le numéro WhatsApp est invalide."
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
+
+    if(trim((string)($_POST['telephone'] ?? '')) !== '' && $telephone === '')
+    {
+        echo json_encode([
+            'result' => 'error',
+            'msg' => "Le numéro d’appel est invalide."
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
+
+    if($whatsapp === '' && $telephone === '' && $instagram === '' && $facebook === '' && $tiktok === '')
+    {
+        echo json_encode([
+            'result' => 'error',
+            'msg' => "Renseignez au moins une information de contact."
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
+
+    $existing = ohnous_get_store_pending_activation_request((int)$boutique['id']);
 
     if($existing)
     {
@@ -71,6 +88,11 @@
     $request = [
         'boutique_id' => (int)$boutique['id'],
         'token' => $token,
+        'whatsapp' => $whatsapp,
+        'telephone' => $telephone,
+        'instagram' => $instagram,
+        'facebook' => $facebook,
+        'tiktok' => $tiktok,
         'statut' => 'en_attente'
     ];
 
@@ -79,6 +101,6 @@
 
     echo json_encode([
         'result' => 'ok',
-        'msg' => "La demande d’activation a été envoyée à contact@ohnous.store."
+        'msg' => "Votre demande d’activation a été envoyée."
     ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 ?>

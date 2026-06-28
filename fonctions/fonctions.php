@@ -1039,6 +1039,84 @@
         return $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
     }
 
+    function ohnous_ensure_store_activation_request_schema()
+    {
+        global $bdd;
+
+        if(!ohnous_table_exists('boutique_activation_requests'))
+        {
+            createTable('boutique_activation_requests', [
+                'id INT AUTO_INCREMENT PRIMARY KEY',
+                'boutique_id INT NOT NULL',
+                'token TEXT NULL',
+                'whatsapp VARCHAR(40) NULL',
+                'telephone VARCHAR(40) NULL',
+                'instagram VARCHAR(120) NULL',
+                'facebook VARCHAR(120) NULL',
+                'tiktok VARCHAR(120) NULL',
+                'statut VARCHAR(30) NOT NULL DEFAULT "en_attente"',
+                'duree_jours INT NOT NULL DEFAULT 0',
+                'date_traitement DATETIME NULL',
+                'date_ajout DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP'
+            ]);
+            return;
+        }
+
+        $columns = [
+            'whatsapp' => 'VARCHAR(40) NULL AFTER token',
+            'telephone' => 'VARCHAR(40) NULL AFTER whatsapp',
+            'instagram' => 'VARCHAR(120) NULL AFTER telephone',
+            'facebook' => 'VARCHAR(120) NULL AFTER instagram',
+            'tiktok' => 'VARCHAR(120) NULL AFTER facebook',
+        ];
+
+        foreach($columns as $column => $definition)
+        {
+            if(!ohnous_column_exists('boutique_activation_requests', $column))
+            {
+                $bdd->exec("ALTER TABLE boutique_activation_requests ADD ".$column." ".$definition);
+            }
+        }
+    }
+
+    function ohnous_get_store_activation_status_label($status)
+    {
+        $labels = [
+            'en_attente' => 'En attente',
+            'traitee' => 'Traitée',
+            'refusee' => 'Refusée',
+        ];
+        return $labels[$status] ?? 'En attente';
+    }
+
+    function ohnous_get_store_pending_activation_request($storeId)
+    {
+        ohnous_ensure_store_activation_request_schema();
+        return only_select("boutique_activation_requests", "boutique_id = ".(int)$storeId." AND statut = 'en_attente'", "date_ajout DESC", 1);
+    }
+
+    function ohnous_get_latest_store_activation_request($storeId)
+    {
+        ohnous_ensure_store_activation_request_schema();
+        return only_select("boutique_activation_requests", "boutique_id = ".(int)$storeId, "date_ajout DESC", 1);
+    }
+
+    function ohnous_admin_fetch_store_activation_requests()
+    {
+        global $bdd;
+
+        ohnous_ensure_store_activation_request_schema();
+        $selectActive = ohnous_column_exists('boutiques', 'activer') ? "b.activer" : "0 AS activer";
+        $stmt = $bdd->query("
+            SELECT r.*, b.nom, b.adresse_email, b.profile, b.description, ".$selectActive."
+            FROM boutique_activation_requests r
+            INNER JOIN boutiques b ON b.id = r.boutique_id
+            ORDER BY r.date_ajout DESC, r.id DESC
+        ");
+
+        return $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
+    }
+
     function ohnous_send_welcome_email_once(array $account, $type = 'utilisateur')
     {
         global $bdd;

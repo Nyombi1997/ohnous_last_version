@@ -289,25 +289,7 @@ https://ohnous.store/paiement-verifier?reference=FP-XXXX
 - Les nouveaux textes ont été réécrits en UTF-8 côté fichiers modifiés.
 - Si ta base existante ne contient pas encore `payment_transactions` et `admin_access_tokens`, colle simplement le SQL ci-dessus dans phpMyAdmin.
 
-## SQL activation compte utilisateur
+## SQL activation compte boutique
 
 ```sql
-ALTER TABLE `utilisateur`
-  ADD COLUMN IF NOT EXISTS `activer` TINYINT(1) NOT NULL DEFAULT 0 AFTER `backgrounds`;
-
-CREATE TABLE IF NOT EXISTS `user_activation_requests` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `utilisateur_id` INT NOT NULL,
-  `whatsapp` VARCHAR(40) NULL,
-  `telephone` VARCHAR(40) NULL,
-  `instagram` VARCHAR(120) NULL,
-  `facebook` VARCHAR(120) NULL,
-  `tiktok` VARCHAR(120) NULL,
-  `statut` VARCHAR(30) NOT NULL DEFAULT 'en_attente',
-  `date_traitement` DATETIME NULL,
-  `date_ajout` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  INDEX `idx_user_activation_utilisateur` (`utilisateur_id`),
-  INDEX `idx_user_activation_statut` (`statut`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 ```

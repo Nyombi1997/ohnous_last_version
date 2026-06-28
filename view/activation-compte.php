@@ -62,5 +62,6 @@
     </section>
 </div>
 <link rel="stylesheet" href="/asset/css/intlTelInput.min.css?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/css/intlTelInput.min.css") ?>">
+<link rel="stylesheet" href="/asset/css/intl-tel-input-fix.css?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/css/intl-tel-input-fix.css") ?>">
 <script src="/asset/js/intlTelInputWithUtils.min.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/intlTelInputWithUtils.min.js") ?>" defer></script>
 <script src="/asset/js/user_activation.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/user_activation.js") ?>" defer></script>

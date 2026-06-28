@@ -65,17 +65,7 @@
                                 class="blur-up"
                             />';
             }
-            $verif_welcome_email = select_bdd($bdd, "bienvenue_email", 'client_unique_id = "'.$boutique['unique_id'].'"', null, 0, null, false);
-            if(count($verif_welcome_email)==0)
-            {
-                if(welcome($email = $boutique['adresse_email']))
-                {
-                    $insert_data = [
-                        "client_unique_id" => $boutique['unique_id']
-                    ];
-                    insert_bdd($bdd, "bienvenue_email", $insert_data);
-                }
-            }
+            ohnous_send_welcome_email_once($boutique, 'boutique');
         }
         else
         {

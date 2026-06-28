@@ -325,7 +325,7 @@ function ajouterAuPanier(imgSrc = null, produitId = null, produitNom = null, pro
     let corps_detail_panier = document.getElementById("corps_detail_panier");
     let cartKey = getCartKey(produitId, produitTaille);
     let tailles = normalizeProductSizes(produitTailles, produitTaille);
-    let shouldRemove = false;
+    let shouldRemove = !!getCartItemElement(cartKey);
 
     if (tailles.length > 1) {
         Swal.fire({

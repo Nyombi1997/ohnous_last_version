@@ -1,9 +1,11 @@
 /* aller vers modifier profile */
 let
 edit_profil = document.getElementById("edit_profil");
-edit_profil.addEventListener("click",function(){
-    window.location = '/editer-profile-boutique';
-})
+if(edit_profil){
+    edit_profil.addEventListener("click",function(){
+        window.location = '/editer-profile-boutique';
+    })
+}
 
 /* valider le nouveau nom */
 let
@@ -13,6 +15,7 @@ choix_form_ohnous = document.getElementById("choix_form_ohnous");
 nom = document.getElementById("nom"),
 valide_nom = document.getElementById("valide_nom");
 
+if(form_nom && nom && valide_nom){
 form_nom.addEventListener("submit",function(e){
     e.preventDefault();
     let
@@ -89,6 +92,7 @@ nom.addEventListener("input",function(){
     choix_form_ohnous.classList.add("null");
     choix_form_ohnous.innerHTML = "";
 })
+}
 
 /* checking adresse email */
 let
@@ -97,6 +101,7 @@ email = document.getElementById("email"),
 valide_email = document.getElementById("valide_email");
 let emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+if(form_email && email && valide_email){
 form_email.addEventListener("submit",function(e){
     e.preventDefault();
     let
@@ -162,12 +167,14 @@ form_email.addEventListener("submit",function(e){
         )
     }
 })
+}
 
 /* let check new password */
 let form_password = document.getElementById("form_password"),
 password = document.querySelectorAll("#password"),
 valid_password = document.getElementById("valid_password");
 
+if(form_password && valid_password){
 form_password.addEventListener("submit",function(e){
     e.preventDefault();
     /* checker password */
@@ -230,7 +237,7 @@ form_password.addEventListener("submit",function(e){
                     confirmButtonText: "OK",
                     confirmButtonColor: "#6775d6"
                 })
-                email.focus();
+                password[0].focus();
                 valid_password.removeAttribute("disabled");
                 return;
             }
@@ -253,6 +260,7 @@ form_password.addEventListener("submit",function(e){
         }
     )
 })
+}
 
 /* afficher password */
 document.querySelectorAll(".vu_password_form_ohnous").forEach(function(element){
@@ -277,6 +285,7 @@ let
 description = document.getElementById("description"),
 form_description = document.getElementById("form_description"),
 valid_description = document.getElementById("valid_description");
+if(form_description && description && valid_description){
 form_description.addEventListener("submit",function(e){
     e.preventDefault();
     valid_description.setAttribute("disabled","");
@@ -317,6 +326,7 @@ form_description.addEventListener("submit",function(e){
         }
     )
 })
+}
 
 /* liens sociaux */
 let form_socials = document.getElementById("form_socials");

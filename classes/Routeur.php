@@ -32,6 +32,8 @@
                             "boutique" => ["controller" => 'Home', "method" => 'showStore'],
                             "boutiques" => ["controller" => 'Home', "method" => 'showStores'],
                             "editer-boutique" => ["controller" => 'Home', "method" => 'showEditStore'],
+                            "editer-boutique-contact" => ["controller" => 'Home', "method" => 'showEditStoreContact'],
+                            "editer-boutique-securite" => ["controller" => 'Home', "method" => 'showEditStoreSecurity'],
                             "editer-profile-boutique" => ["controller" => 'Home', "method" => 'showEditStoreProfile'],
                             "editer-article" => ["controller" => 'Home', "method" => 'showEditArticle'],
                             "activer-boutique" => ["controller" => 'Home', "method" => 'showActiveStore'],
