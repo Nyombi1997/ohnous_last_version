@@ -28,7 +28,7 @@ function ohnous_build_mailer()
 }
 
 /* email bienvenue */
-function welcome($email = "")
+function welcome($email = "", $isActive = true, $name = "", $activationUrl = "https://ohnous.store/activation-compte")
 {
     $mail = ohnous_build_mailer();
     if ($mail === false) {
@@ -47,6 +47,11 @@ function welcome($email = "")
     $mail->addAddress($email);
     $mail->isHTML(true);
     $mail->Subject = 'Bienvenue sur OhNous';
+    $activationBlock = $isActive ? '' : '
+            <p class="texte">Votre compte n’est pas encore activé. Soumettez votre demande d’activation pour profiter pleinement de votre espace OhNous.</p>
+            <div class="div-lien" style="margin-bottom:16px;">
+                <a href="'.htmlspecialchars($activationUrl, ENT_QUOTES, 'UTF-8').'" style="color:#ffffff; text-decoration:none; font-weight:bold;" target="_blank" class="lien">Demander l’activation</a>
+            </div>';
     $mail->Body = '<!DOCTYPE html>
     <html lang="fr">
     <head>
@@ -120,13 +125,94 @@ function welcome($email = "")
         </div>
         <div class="content">
             <h1 class="titre">Bienvenue sur <strong class="en-valeur">OhNous</strong></h1>
+            '.(trim((string)$name) !== '' ? '<p class="texte">Bonjour '.htmlspecialchars($name, ENT_QUOTES, 'UTF-8').',</p>' : '').'
             <p class="texte">Commencez votre nouvelle expérience avec OhNous</p>
+            '.$activationBlock.'
             <div class="div-lien">
                 <a href="https://ohnous.store" style="color:#ffffff; text-decoration:none; font-weight:bold;" target="_blank" class="lien">Visiter le site</a>
             </div>
         </div>
     </body>
     </html>
+    ';
+
+    try {
+        return $mail->send();
+    } catch (Exception $e) {
+        error_log('Erreur email de bienvenue : ' . $e->getMessage());
+        return false;
+    }
+}
+
+function ohnous_add_admin_recipients($mail)
+{
+    global $bdd;
+
+    if(!function_exists('ohnous_table_exists') || !ohnous_table_exists('admins'))
+    {
+        $mail->addAddress('contact@ohnous.store');
+        return;
+    }
+
+    $admins = select_bdd($bdd, "admins", null, null, 0, "id ASC", false);
+    $hasRecipient = false;
+
+    foreach($admins as $admin)
+    {
+        $email = trim((string)($admin['email'] ?? ''));
+        if($email === '' || strtolower($email) === 'admin@admin.com' || !filter_var($email, FILTER_VALIDATE_EMAIL))
+        {
+            continue;
+        }
+        $mail->addAddress($email);
+        $hasRecipient = true;
+    }
+
+    if(!$hasRecipient)
+    {
+        $mail->addAddress('contact@ohnous.store');
+    }
+}
+
+function ohnous_send_user_activation_request_email(array $user, array $request)
+{
+    $mail = ohnous_build_mailer();
+    if ($mail === false) {
+        return false;
+    }
+
+    $adminUrl = 'https://ohnous.store/admin-activation-utilisateurs';
+
+    $mail->isSMTP();
+    $mail->Host = 'smtp.hostinger.com';
+    $mail->SMTPAuth = true;
+    $mail->Username = 'contact@ohnous.store';
+    $mail->Password = 'Ohnous@2026';
+    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+    $mail->Port = 465;
+
+    $mail->setFrom('contact@ohnous.store', 'Ohnous');
+    ohnous_add_admin_recipients($mail);
+    $mail->isHTML(true);
+    $mail->Subject = 'Demande d’activation utilisateur - '.$user['nom'];
+    $mail->Body = '
+        <html lang="fr">
+            <body style="font-family:Arial, Helvetica, sans-serif; background:#f5f7ff; padding:24px;">
+                <div style="max-width:680px; margin:0 auto; background:#ffffff; border-radius:24px; padding:32px; box-shadow:0 20px 60px rgba(46, 61, 104, 0.12);">
+                    <h1 style="margin-top:0;">Demande d’activation utilisateur</h1>
+                    <p><strong>Utilisateur :</strong> '.htmlspecialchars((string)$user['nom'], ENT_QUOTES, 'UTF-8').'</p>
+                    <p><strong>Email :</strong> '.htmlspecialchars((string)$user['adresse_email'], ENT_QUOTES, 'UTF-8').'</p>
+                    <p><strong>WhatsApp :</strong> '.htmlspecialchars((string)($request['whatsapp'] ?? ''), ENT_QUOTES, 'UTF-8').'</p>
+                    <p><strong>Appel :</strong> '.htmlspecialchars((string)($request['telephone'] ?? ''), ENT_QUOTES, 'UTF-8').'</p>
+                    <p><strong>Instagram :</strong> '.htmlspecialchars((string)($request['instagram'] ?? ''), ENT_QUOTES, 'UTF-8').'</p>
+                    <p><strong>Facebook :</strong> '.htmlspecialchars((string)($request['facebook'] ?? ''), ENT_QUOTES, 'UTF-8').'</p>
+                    <p><strong>TikTok :</strong> '.htmlspecialchars((string)($request['tiktok'] ?? ''), ENT_QUOTES, 'UTF-8').'</p>
+                    <p style="margin-top:24px;">
+                        <a href="'.$adminUrl.'" style="display:inline-block; background:#6775d6; color:#ffffff; text-decoration:none; padding:14px 22px; border-radius:999px; font-weight:bold;">Ouvrir l’espace admin</a>
+                    </p>
+                </div>
+            </body>
+        </html>
     ';
 
     return $mail->send();

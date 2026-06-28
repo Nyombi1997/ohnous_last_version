@@ -1,44 +1,41 @@
 /* aller vers modifier profile */
-let
-edit_profil = document.getElementById("edit_profil");
-edit_profil.addEventListener("click",function(){
-    window.location = '/editer-profile-utilisateur';
-})
+let edit_profil = document.getElementById("edit_profil");
+if(edit_profil){
+    edit_profil.addEventListener("click",function(){
+        window.location = '/editer-profile-utilisateur';
+    })
+}
 
-/* valider le nouveau nom */
 let
 form_nom = document.getElementById("form_nom"),
-new_boutique = document.getElementById("new_boutique"),
-choix_form_ohnous = document.getElementById("choix_form_ohnous");
+choix_form_ohnous = document.getElementById("choix_form_ohnous"),
 nom = document.getElementById("nom"),
 valide_nom = document.getElementById("valide_nom");
 
-form_nom.addEventListener("submit",function(e){
-    e.preventDefault();
-    let
-    value_nom = nom.value.trim();
-    value_nom = nom.value.replace(/ +/g,"");
-    let erreur = "Entrez un nom d'utilisateur";
-    let link = "check_nom_utilisateur_online";
-    /* si le text est vide */
-    if(value_nom == "")
-    {
+if(form_nom){
+    form_nom.addEventListener("submit",function(e){
+        e.preventDefault();
+        let value_nom = nom.value.trim();
+        value_nom = nom.value.replace(/ +/g,"");
+        let erreur = "Entrez un nom d'utilisateur";
+        let link = "check_nom_utilisateur_online";
+
+        if(value_nom == "")
+        {
             Swal.fire({
-            icon: "error",
-            title: erreur,
-            text: "",
-            confirmButtonText: "OK",
-            confirmButtonColor: "#6775d6"
-        })
-        return;
-    }
-    else
-    {
+                icon: "error",
+                title: erreur,
+                text: "",
+                confirmButtonText: "OK",
+                confirmButtonColor: "#6775d6"
+            })
+            return;
+        }
+
         valide_nom.setAttribute("disabled","");
         $.post("fonctions/"+link+".php",
             {nom: nom.value.trim()},
             function(data){
-                /* si le text exist */
                 if(data.result == "error")
                 {
                     Swal.fire({
@@ -53,75 +50,75 @@ form_nom.addEventListener("submit",function(e){
                     valide_nom.removeAttribute("disabled");
                     return;
                 }
-                else
-                {
-                    Swal.fire({
-                        icon: "success",
-                        title: "Le nom a été modifier",
-                        text: "",
-                        confirmButtonText: "OK",
-                        confirmButtonColor: "#6775d6",
-                        iconColor: "#6775d6",
-                        timer: 1000
-                    })
-                    valide_nom.removeAttribute("disabled");
-                }
+
+                Swal.fire({
+                    icon: "success",
+                    title: "Le nom a été modifier",
+                    text: "",
+                    confirmButtonText: "OK",
+                    confirmButtonColor: "#6775d6",
+                    iconColor: "#6775d6",
+                    timer: 1000
+                })
+                valide_nom.removeAttribute("disabled");
             }
         )
-    }
-})
+    })
+}
 
-/* mettre un nom */
 function changeName(newNom = "")
 {
+    if(!choix_form_ohnous || !nom){
+        return;
+    }
     choix_form_ohnous.classList.add("null");
     choix_form_ohnous.innerHTML = "";
     nom.value = newNom;
 }
-/* lire l'écriture du nom */
-nom.addEventListener("input",function(){
-    choix_form_ohnous.classList.add("null");
-    choix_form_ohnous.innerHTML = "";
-})
 
-/* checking adresse email */
+if(nom && choix_form_ohnous){
+    nom.addEventListener("input",function(){
+        choix_form_ohnous.classList.add("null");
+        choix_form_ohnous.innerHTML = "";
+    })
+}
+
 let
 form_email = document.getElementById("form_email"),
 email = document.getElementById("email"),
 valide_email = document.getElementById("valide_email");
 let emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-form_email.addEventListener("submit",function(e){
-    e.preventDefault();
-    let
-    value_email = email.value.trim();
-    value_email = email.value.replace(/ +/g,"");
-    if(value_email == "")
-    {
+if(form_email){
+    form_email.addEventListener("submit",function(e){
+        e.preventDefault();
+        let value_email = email.value.trim();
+        value_email = email.value.replace(/ +/g,"");
+        if(value_email == "")
+        {
             Swal.fire({
-            icon: "error",
-            title: "Entrez une adresse email",
-            text: "",
-            confirmButtonText: "OK",
-            confirmButtonColor: "#6775d6"
-        })
-        email.focus();
-        return;
-    }
-    else if(emailRegex.test(email.value.trim()) == false)
-    {
+                icon: "error",
+                title: "Entrez une adresse email",
+                text: "",
+                confirmButtonText: "OK",
+                confirmButtonColor: "#6775d6"
+            })
+            email.focus();
+            return;
+        }
+        else if(emailRegex.test(email.value.trim()) == false)
+        {
             Swal.fire({
-            icon: "error",
-            title: "Entrez une adresse email correct",
-            text: "",
-            confirmButtonText: "OK",
-            confirmButtonColor: "#6775d6"
-        })
-        email.focus();
-        return;
-    }
-    else
-    {
+                icon: "error",
+                title: "Entrez une adresse email correct",
+                text: "",
+                confirmButtonText: "OK",
+                confirmButtonColor: "#6775d6"
+            })
+            email.focus();
+            return;
+        }
+
         valide_email.setAttribute("disabled","");
         $.post("fonctions/check_edit_email_user.php",
             {email: email.value.trim()},
@@ -139,97 +136,93 @@ form_email.addEventListener("submit",function(e){
                     valide_email.removeAttribute("disabled");
                     return;
                 }
-                else
-                {
-                    Swal.fire({
-                        icon: "success",
-                        title: "L'adresse email a été modifier",
-                        text: "",
-                        confirmButtonText: "OK",
-                        confirmButtonColor: "#6775d6",
-                        iconColor: "#6775d6",
-                        timer: 1000
-                    })
-                    valide_email.removeAttribute("disabled");
-                }
+
+                Swal.fire({
+                    icon: "success",
+                    title: "L'adresse email a été modifier",
+                    text: "",
+                    confirmButtonText: "OK",
+                    confirmButtonColor: "#6775d6",
+                    iconColor: "#6775d6",
+                    timer: 1000
+                })
+                valide_email.removeAttribute("disabled");
             }
         )
-    }
-})
+    })
+}
 
-/* let check new password */
 let form_password = document.getElementById("form_password"),
 password = document.querySelectorAll("#password"),
 valid_password = document.getElementById("valid_password");
 
-form_password.addEventListener("submit",function(e){
-    e.preventDefault();
-    /* checker password */
-    if(password.length>1)
-    {
-        if(password[1].value.length < 6)
+if(form_password){
+    form_password.addEventListener("submit",function(e){
+        e.preventDefault();
+        if(password.length>1)
         {
-            Swal.fire({
-                icon: "error",
-                title: "Le mot de passe doit avoir au moins 6 caractères",
-                text: "",
-                confirmButtonText: "OK",
-                confirmButtonColor: "#6775d6"
-            }).then(() => {
-                password[1].focus();
-            })
-            return;
-        }
-        else if(password[0].value == password[1].value)
-        {
-            Swal.fire({
-                icon: "error",
-                title: "Veuillez entrer un nouveau mot de passe",
-                text: "",
-                confirmButtonText: "OK",
-                confirmButtonColor: "#6775d6"
-            }).then(() => {
-                password[1].focus();
-            })
-            return;
-        }
-        else if(password[2].value != password[1].value)
-        {
-            Swal.fire({
-                icon: "error",
-                title: "Les mots de passe ne sont pas identique.",
-                text: "",
-                confirmButtonText: "OK",
-                confirmButtonColor: "#6775d6"
-            }).then(() => {
-                password[1].focus();
-            })
-            return;
-        }
-    }
-    /* checker si le password actuelle est correcte */
-    valid_password.setAttribute("disabled","");
-    $.post("fonctions/check_edit_password_utilisateur.php",
-        {
-            mdp: password[0].value,
-            mdp1: password[1].value,
-        },
-        function(data){
-            if(data.result == "error")
+            if(password[1].value.length < 6)
             {
                 Swal.fire({
                     icon: "error",
-                    title: data.msg,
+                    title: "Le mot de passe doit avoir au moins 6 caractères",
                     text: "",
                     confirmButtonText: "OK",
                     confirmButtonColor: "#6775d6"
+                }).then(() => {
+                    password[1].focus();
                 })
-                email.focus();
-                valid_password.removeAttribute("disabled");
                 return;
             }
-            else
+            else if(password[0].value == password[1].value)
             {
+                Swal.fire({
+                    icon: "error",
+                    title: "Veuillez entrer un nouveau mot de passe",
+                    text: "",
+                    confirmButtonText: "OK",
+                    confirmButtonColor: "#6775d6"
+                }).then(() => {
+                    password[1].focus();
+                })
+                return;
+            }
+            else if(password[2].value != password[1].value)
+            {
+                Swal.fire({
+                    icon: "error",
+                    title: "Les mots de passe ne sont pas identique.",
+                    text: "",
+                    confirmButtonText: "OK",
+                    confirmButtonColor: "#6775d6"
+                }).then(() => {
+                    password[1].focus();
+                })
+                return;
+            }
+        }
+
+        valid_password.setAttribute("disabled","");
+        $.post("fonctions/check_edit_password_utilisateur.php",
+            {
+                mdp: password[0].value,
+                mdp1: password[1].value,
+            },
+            function(data){
+                if(data.result == "error")
+                {
+                    Swal.fire({
+                        icon: "error",
+                        title: data.msg,
+                        text: "",
+                        confirmButtonText: "OK",
+                        confirmButtonColor: "#6775d6"
+                    })
+                    password[0].focus();
+                    valid_password.removeAttribute("disabled");
+                    return;
+                }
+
                 Swal.fire({
                     icon: "success",
                     title: "Le mot de passe a été changé avec succès !",
@@ -244,58 +237,50 @@ form_password.addEventListener("submit",function(e){
                     element.value = "";
                 })
             }
-        }
-    )
-})
+        )
+    })
+}
 
-/* afficher password */
 document.querySelectorAll(".vu_password_form_ohnous").forEach(function(element){
     element.addEventListener("click",function(){
         let parentElement = element.parentElement;
         let passwordInput = parentElement.querySelector("input");
         element.classList.toggle("fa-eye-slash");
         element.classList.toggle("fa-eye");
-        if(element.classList.contains("fa-eye-slash"))
-        {
-            passwordInput.type = "password";
-        }
-        else
-        {
-            passwordInput.type = "text";
-        }
+        passwordInput.type = element.classList.contains("fa-eye-slash") ? "password" : "text";
     })
 })
 
-/* lire l'écriture de la description */
 let
 description = document.getElementById("description"),
 form_description = document.getElementById("form_description"),
 valid_description = document.getElementById("valid_description");
-form_description.addEventListener("submit",function(e){
-    e.preventDefault();
-    valid_description.setAttribute("disabled","");
-    let temp_btn = valid_description.innerHTML;
-    valid_description.innerHTML = `<i class="fa-solid fa-circle-notch rotate"></i>`;
-    $.post("fonctions/check_edit_description_boutique.php",
-        {
-            description: description.value.trim(),
-        },
-        function(data){
-            if(data.result == "error")
+
+if(form_description){
+    form_description.addEventListener("submit",function(e){
+        e.preventDefault();
+        valid_description.setAttribute("disabled","");
+        let temp_btn = valid_description.innerHTML;
+        valid_description.innerHTML = `<i class="fa-solid fa-circle-notch rotate"></i>`;
+        $.post("fonctions/check_edit_description_boutique.php",
             {
-                Swal.fire({
-                    icon: "error",
-                    title: data.msg,
-                    text: "",
-                    confirmButtonText: "OK",
-                    confirmButtonColor: "#6775d6"
-                })
-                valid_description.removeAttribute("disabled");
-                valid_description.innerHTML = temp_btn;
-                return;
-            }
-            else
-            {
+                description: description.value.trim(),
+            },
+            function(data){
+                if(data.result == "error")
+                {
+                    Swal.fire({
+                        icon: "error",
+                        title: data.msg,
+                        text: "",
+                        confirmButtonText: "OK",
+                        confirmButtonColor: "#6775d6"
+                    })
+                    valid_description.removeAttribute("disabled");
+                    valid_description.innerHTML = temp_btn;
+                    return;
+                }
+
                 Swal.fire({
                     icon: "success",
                     title: "La descriprion de la boutique a été changer !",
@@ -308,7 +293,6 @@ form_description.addEventListener("submit",function(e){
                 valid_description.removeAttribute("disabled");
                 valid_description.innerHTML = temp_btn;
             }
-        }
-    )
-
-})
+        )
+    })
+}

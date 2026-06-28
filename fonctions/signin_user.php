@@ -1,6 +1,8 @@
 <?php
     include_once "../model/bdd.php";
     include_once "../model/select.php";
+    include_once "fonctions.php";
+    include_once "email.php";
     header('Content-Type: application/json; charset=utf-8');
 
     $user_name = html_entity_decode(filter_var($_POST['user_name'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
@@ -63,6 +65,12 @@
             session_start();
         }
         $_SESSION['user_ohnous_987654321'] = $unique_id;
+
+        $newUser = only_select("utilisateur", "unique_id = '".addslashes($unique_id)."'", null, null);
+        if($newUser)
+        {
+            ohnous_send_welcome_email_once($newUser, 'utilisateur');
+        }
 
         $results = [
             "result" => "ok",

@@ -203,10 +203,34 @@
             $myView->render('Ohnous | ZONES DE LIVRAISON');
         }
 
+        public function showAdminUserActivation ()
+        {
+            $myView = new View('admin-activation-utilisateurs');
+            $myView->render('Ohnous | ACTIVATION UTILISATEURS');
+        }
+
         public function showEditUser ()
         {
             $myView = new View('edit-user');
             $myView->render('Ohnous | MODIFIER UTILISATEUR OHNOUS !');
+        }
+
+        public function showEditUserContact ()
+        {
+            $myView = new View('edit-user-contact');
+            $myView->render('Ohnous | CONTACT ET ACTIVATION');
+        }
+
+        public function showEditUserSecurity ()
+        {
+            $myView = new View('edit-user-security');
+            $myView->render('Ohnous | SÉCURITÉ DU COMPTE');
+        }
+
+        public function showUserActivation ()
+        {
+            $myView = new View('activation-compte');
+            $myView->render('Ohnous | DEMANDE D’ACTIVATION');
         }
 
         public function showEditUserProfile ()

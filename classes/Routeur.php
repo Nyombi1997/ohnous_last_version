@@ -24,7 +24,10 @@
                             "nouveau-mot-de-passe" => ["controller" => 'Home', "method" => 'showNewPassword'],
                             "inscription-utilisateur" => ["controller" => 'Home', "method" => 'showSigninUser'],
                             "editer-user" => ["controller" => 'Home', "method" => 'showEditUser'],
+                            "editer-compte-contact" => ["controller" => 'Home', "method" => 'showEditUserContact'],
+                            "editer-compte-securite" => ["controller" => 'Home', "method" => 'showEditUserSecurity'],
                             "editer-profile-utilisateur" => ["controller" => 'Home', "method" => 'showEditUserProfile'],
+                            "activation-compte" => ["controller" => 'Home', "method" => 'showUserActivation'],
 
                             "boutique" => ["controller" => 'Home', "method" => 'showStore'],
                             "boutiques" => ["controller" => 'Home', "method" => 'showStores'],
@@ -47,6 +50,7 @@
                             "compte" => ["controller" => 'Home', "method" => 'showUserAccount'],
                             "checkout" => ["controller" => 'CheckoutController', "method" => 'showCheckout'],
                             "admin-zones-livraison" => ["controller" => 'Home', "method" => 'showAdminDeliveryZones'],
+                            "admin-activation-utilisateurs" => ["controller" => 'Home', "method" => 'showAdminUserActivation'],
                             "admin-admins" => ["controller" => 'AdminController', "method" => 'showAdminAccounts'],
                             "admin-acces" => ["controller" => 'AdminController', "method" => 'consumeAccessToken'],
                             "paiement-demarrer" => ["controller" => 'PaymentController', "method" => 'startPayment'],

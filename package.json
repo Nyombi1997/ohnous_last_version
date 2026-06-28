@@ -1,5 +1,5 @@
 {
   "dependencies": {
-    "intl-tel-input": "^28.0.4"
+    "intl-tel-input": "^28.1.0"
   }
 }

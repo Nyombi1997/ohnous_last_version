@@ -70,16 +70,6 @@
                                 class="blur-up"
                             />';
             }
-            /* verifier si l'utilisateur a déjà reçu l'email de bienvenue */
-            $verif_welcome_email = select_bdd($bdd, "bienvenue_email", $where = 'client_unique_id = "'.$user['unique_id'].'"', $limit = null, $offset = 0, $order = null, $random = false);
-            if(count($verif_welcome_email)==0)
-            {
-                welcome($email = $user['adresse_email']);
-                $insert_data = [
-                    "client_unique_id" => $user['unique_id']
-                ];
-                insert_bdd($bdd, "bienvenue_email", $insert_data);
-            }
         }
         else
         {

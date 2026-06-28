@@ -1,6 +1,8 @@
 <?php
     include_once "../model/bdd.php";
     include_once "../model/select.php";
+    include_once "fonctions.php";
+    include_once "email.php";
     header('Content-Type: application/json; charset=utf-8');
 
     if (session_status() === PHP_SESSION_NONE) {
@@ -33,6 +35,7 @@
                     "msg" => "boutique"
                 ];
                 $_SESSION['store_ohnous_987654321'] = $boutique[0]['unique_id'];
+                ohnous_send_welcome_email_once($boutique[0], 'boutique');
             }
             else
             {
@@ -51,6 +54,7 @@
                     "msg" => "compte"
                 ];
                 $_SESSION['user_ohnous_987654321'] = $user[0]['unique_id'];
+                ohnous_send_welcome_email_once($user[0], 'utilisateur');
             }
             else
             {

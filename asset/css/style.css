@@ -967,6 +967,91 @@ a
     font-weight: bold;
     margin: 10px 0px 6px;
 }
+
+:root{
+    --iti-path-flags-1x:url("../images/intl-tel-input/flags.webp");
+    --iti-path-flags-2x:url("../images/intl-tel-input/flags@2x.webp");
+}
+
+.account-page-shell,
+.account-edit-shell{
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 120px 18px 60px;
+}
+
+.account-edit-shell{
+    width: 100%;
+}
+
+.account-edit-nav{
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 18px;
+}
+
+.account-edit-nav a{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 16px;
+    border-radius: 999px;
+    color: #545b78;
+    text-decoration: none;
+    background: rgba(255,255,255,.72);
+    box-shadow: 0 14px 40px rgba(49,58,103,.08);
+    transition: .2s ease;
+}
+
+.account-edit-nav a.is-active,
+.account-edit-nav a:hover{
+    background: #6775d6;
+    color: #ffffff;
+}
+
+.account-edit-panel{
+    padding: 28px;
+    text-align: center;
+}
+
+.account-edit-panel h1{
+    margin-bottom: 8px;
+    color: #33384f;
+}
+
+.account-edit-muted{
+    color: #747b98;
+    margin-bottom: 18px;
+}
+
+.user-activation-panel{
+    align-items: flex-start;
+}
+
+.activation-user-form{
+    margin-top: 22px;
+    width: 100%;
+}
+
+.activation-user-form .iti,
+.activation-user-form .iti input{
+    width: 100%;
+}
+
+.admin-store-card__actions.nowrap{
+    flex-wrap: nowrap;
+}
+
+.admin-account-card__identity.compact{
+    gap: 10px;
+}
+
+.admin-account-card__identity.compact img{
+    width: 42px;
+    height: 42px;
+}
 .article-card-size-list
 {
     width: fit-content;

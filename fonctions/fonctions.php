@@ -943,6 +943,139 @@
         return true;
     }
 
+    function ohnous_is_user_active($user)
+    {
+        if(!$user || !is_array($user))
+        {
+            return false;
+        }
+
+        if(!ohnous_column_exists('utilisateur', 'activer'))
+        {
+            return true;
+        }
+
+        return isset($user['activer']) && (int)$user['activer'] === 1;
+    }
+
+    function ohnous_clean_social_account($value)
+    {
+        $value = trim((string)$value);
+        $value = preg_replace('#^https?://#i', '', $value);
+        $value = preg_replace('#^(www\.)?#i', '', $value);
+        $value = preg_replace('#^(instagram\.com|facebook\.com|fb\.com|tiktok\.com)/#i', '', $value);
+        $value = ltrim($value, '@/');
+        $value = preg_replace('/[^a-zA-Z0-9._-]/', '', $value);
+        return mb_substr($value, 0, 120);
+    }
+
+    function ohnous_clean_international_phone($value)
+    {
+        $value = trim((string)$value);
+        $value = preg_replace('/[^\d+]/', '', $value);
+        if(strpos($value, '00') === 0)
+        {
+            $value = '+'.substr($value, 2);
+        }
+        if(substr_count($value, '+') > 1 || ($value !== '' && $value[0] !== '+'))
+        {
+            return '';
+        }
+        $digits = preg_replace('/\D/', '', $value);
+        if(strlen($digits) < 8 || strlen($digits) > 15)
+        {
+            return '';
+        }
+        return '+'.$digits;
+    }
+
+    function ohnous_get_user_activation_status_label($status)
+    {
+        $labels = [
+            'en_attente' => 'En attente',
+            'acceptee' => 'Acceptée',
+            'refusee' => 'Refusée',
+        ];
+        return $labels[$status] ?? 'En attente';
+    }
+
+    function ohnous_get_user_pending_activation_request($userId)
+    {
+        if(!ohnous_table_exists('user_activation_requests'))
+        {
+            return null;
+        }
+
+        return only_select("user_activation_requests", "utilisateur_id = ".(int)$userId." AND statut = 'en_attente'", "date_ajout DESC", 1);
+    }
+
+    function ohnous_get_latest_user_activation_request($userId)
+    {
+        if(!ohnous_table_exists('user_activation_requests'))
+        {
+            return null;
+        }
+
+        return only_select("user_activation_requests", "utilisateur_id = ".(int)$userId, "date_ajout DESC", 1);
+    }
+
+    function ohnous_admin_fetch_user_activation_requests()
+    {
+        global $bdd;
+
+        if(!ohnous_table_exists('user_activation_requests'))
+        {
+            return [];
+        }
+
+        $selectActive = ohnous_column_exists('utilisateur', 'activer') ? "u.activer" : "1 AS activer";
+        $stmt = $bdd->query("
+            SELECT r.*, u.nom, u.adresse_email, u.profile, ".$selectActive."
+            FROM user_activation_requests r
+            INNER JOIN utilisateur u ON u.id = r.utilisateur_id
+            ORDER BY r.date_ajout DESC, r.id DESC
+        ");
+
+        return $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
+    }
+
+    function ohnous_send_welcome_email_once(array $account, $type = 'utilisateur')
+    {
+        global $bdd;
+
+        if(!ohnous_table_exists('bienvenue_email'))
+        {
+            return false;
+        }
+
+        $uniqueId = (string)($account['unique_id'] ?? '');
+        $email = trim((string)($account['adresse_email'] ?? ''));
+
+        if($uniqueId === '' || $email === '')
+        {
+            return false;
+        }
+
+        $exists = only_select("bienvenue_email", "client_unique_id = '".addslashes($uniqueId)."'", null, null);
+        if($exists)
+        {
+            return false;
+        }
+
+        $isActive = $type === 'boutique' ? ohnous_is_store_active($account) : ohnous_is_user_active($account);
+        $activationUrl = $type === 'boutique' ? 'https://ohnous.store/activer-boutique' : 'https://ohnous.store/activation-compte';
+
+        if(welcome($email, $isActive, (string)($account['nom'] ?? ''), $activationUrl))
+        {
+            insert_bdd($bdd, "bienvenue_email", [
+                "client_unique_id" => $uniqueId
+            ]);
+            return true;
+        }
+
+        return false;
+    }
+
     /* synchroniser en base les boutiques test pour les vues admin et les filtres */
     function ohnous_sync_test_store_activation()
     {
@@ -3008,6 +3141,7 @@
             'dashboard' => ['label' => 'Tableau de bord', 'link' => '/admin', 'icon' => 'fa-chart-line'],
             'boutiques' => ['label' => 'Boutiques', 'link' => '/admin-boutiques', 'icon' => 'fa-store'],
             'articles' => ['label' => 'Articles', 'link' => '/admin-articles', 'icon' => 'fa-tags'],
+            'utilisateurs' => ['label' => 'Activations', 'link' => '/admin-activation-utilisateurs', 'icon' => 'fa-user-check'],
             'livraison' => ['label' => 'Livraison', 'link' => '/admin-zones-livraison', 'icon' => 'fa-truck-fast'],
             'admins' => ['label' => 'Admins', 'link' => '/admin-admins', 'icon' => 'fa-user-shield'],
         ];

@@ -55,6 +55,7 @@
         </div>
         <!-- container login page -->
         <div class="container_login_page">
+            <?php $accountNavCurrent = 'infos'; include VIEW.'account-nav.php'; ?>
             <div class="div_login_page">
                 <div class="div_detail_login_page">
                     <div class="div_icone_login_page">
@@ -97,30 +98,6 @@
                             </div>
                             <div class="form_ohnous submit">
                                 <button type="submit" class="btn_ohnous" id="valide_email">Modifier</button>
-                            </div>
-                        </form>
-                        <!-- details -->
-                        <form action="" method="post" id="form_password" class="form_edit_boutique">
-                            <div class="form_ohnous password">
-                                <i class="fa-solid fa-lock"></i>
-                                <i class="fa-solid fa-eye-slash vu_password_form_ohnous"></i>
-                                <input type="password" name="" id="password" autocomplete="new-password" placeholder="Ancien mot de passe" required>
-                            </div>
-                            <div class="form_ohnous password">
-                                <i class="fa-solid fa-lock"></i>
-                                <i class="fa-solid fa-eye-slash vu_password_form_ohnous"></i>
-                                <input type="password" name="" id="password" autocomplete="new-password" placeholder="Nouveau mot de passe" required>
-                            </div>
-                            <div class="form_ohnous password">
-                                <i class="fa-solid fa-lock"></i>
-                                <i class="fa-solid fa-eye-slash vu_password_form_ohnous"></i>
-                                <input type="password" name="" id="password" autocomplete="new-password" placeholder="Confirmer nouveau mot de passe" required>
-                            </div>
-                            <div class="form_ohnous submit">
-                                <button type="submit" class="btn_ohnous" id="valid_password">Modifier</button>
-                            </div>
-                            <div class="form_ohnous word">
-                                <a href="/changer-mot-de-passe">Mot de passe oublié ?</a> 
                             </div>
                         </form>
                     </div>

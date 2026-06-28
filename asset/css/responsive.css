@@ -558,3 +558,21 @@
         min-height:96px;
     }
 }
+
+@media(max-width: 768px){
+    .account-page-shell,
+    .account-edit-shell{
+        padding: 95px 12px 42px;
+    }
+
+    .account-edit-nav{
+        justify-content: flex-start;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 4px;
+    }
+
+    .account-edit-nav a{
+        white-space: nowrap;
+    }
+}
