@@ -19,6 +19,10 @@ class FreshPayService
     {
         ohnous_boot_checkout_session();
 
+        if (!ohnous_is_payment_enabled()) {
+            return ['result' => 'error', 'msg' => "Le mode de paiement est temporairement désactivé."];
+        }
+
         $mode = trim((string)($request['mode'] ?? 'cart'));
         $context = ohnous_get_checkout_context($mode);
         if (empty($context['items'])) {

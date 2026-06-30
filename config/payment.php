@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'enabled' => true,
     'currency' => 'USD',
     'display_currency' => 'USD',
     'freshpay' => [

@@ -9,7 +9,7 @@
     var customerNumberInput = document.getElementById('checkout_customer_number');
     var operatorSelect = document.getElementById('checkout_operator');
     var addressTextarea = document.getElementById('checkout_address');
-    var checkoutConfig = window.ohnousCheckoutConfig || { subtotal: 0, mode: 'cart', visaEnabled: false, gatewayCurrency: 'USD' };
+    var checkoutConfig = window.ohnousCheckoutConfig || { subtotal: 0, mode: 'cart', paymentEnabled: true, visaEnabled: false, gatewayCurrency: 'USD' };
 
     if (!form) {
         return;
@@ -57,6 +57,11 @@
 
     function syncPaymentMethodUI() {
         var method = selectedPaymentMethod();
+
+        if (!checkoutConfig.paymentEnabled) {
+            updateFeedback('Le paiement est temporairement désactivé.', 'is-error');
+            return;
+        }
 
         $('.checkout-payment-method').removeClass('is-active');
         $('input[name="payment_method"]:checked').closest('.checkout-payment-method').addClass('is-active');
@@ -126,6 +131,11 @@
 
     form.addEventListener('submit', function (e) {
         e.preventDefault();
+
+        if (!checkoutConfig.paymentEnabled) {
+            updateFeedback('Le paiement est temporairement désactivé.', 'is-error');
+            return;
+        }
 
         var submitButton = form.querySelector('button[type="submit"]');
         var tempText = submitButton ? submitButton.innerHTML : '';

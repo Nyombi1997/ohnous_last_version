@@ -7,6 +7,7 @@
     $articlesPromo = ohnous_column_exists('articles', 'promo_actif')
         ? getRowCount($bdd, 'articles', 'promo_actif = 1')
         : 0;
+    $paymentEnabled = ohnous_is_payment_enabled();
 ?>
 <div class="content_page admin-page-shell">
     <section class="admin-hero liquid-panel">
@@ -21,6 +22,21 @@
     </section>
 
     <?= ohnous_render_admin_nav('dashboard') ?>
+
+    <section class="admin-payment-settings liquid-panel">
+        <div>
+            <span class="admin-hero__eyebrow">Paiement</span>
+            <h2>Mode de paiement</h2>
+            <p><?= $paymentEnabled ? "Le paiement est actuellement actif sur le site." : "Le paiement est actuellement désactivé sur le site." ?></p>
+        </div>
+        <form id="admin_payment_settings_form" class="admin-payment-settings__form">
+            <label class="admin-switch-card">
+                <input type="checkbox" id="admin_payment_enabled" <?= $paymentEnabled ? 'checked' : '' ?>>
+                <span><?= $paymentEnabled ? 'Paiement activé' : 'Paiement désactivé' ?></span>
+            </label>
+            <button type="submit" class="btn_ohnous">Enregistrer</button>
+        </form>
+    </section>
 
     <section class="admin-stat-grid">
         <article class="admin-stat-card liquid-panel">
@@ -71,3 +87,4 @@
         </a>
     </section>
 </div>
+<script src="/asset/js/admin_payment_settings.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/admin_payment_settings.js") ?>" defer></script>

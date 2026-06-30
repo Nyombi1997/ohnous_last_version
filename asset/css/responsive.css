@@ -526,6 +526,7 @@
     }
 
     .admin-hero,
+    .admin-payment-settings,
     .admin-page-head,
     .admin-search-bar{
         flex-direction: column;

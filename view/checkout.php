@@ -4,6 +4,7 @@
     $deliveryZones = ohnous_get_delivery_zones(true);
     $deliverySettings = ohnous_get_delivery_settings();
     $paymentConfig = include CONFIG . 'payment.php';
+    $paymentEnabled = ohnous_is_payment_enabled();
     $visaEnabled = !empty($paymentConfig['freshpay']['visa']['enabled']);
     $displayCurrency = trim((string)($paymentConfig['display_currency'] ?? 'USD'));
     $gatewayCurrency = trim((string)($paymentConfig['currency'] ?? 'CDF'));
@@ -46,6 +47,13 @@
                     <div class="checkout-warning">
                         <i class="fa-solid fa-triangle-exclamation"></i>
                         <p>Aucune zone de livraison active n'est encore configurée. Ajoutez vos zones dans l'espace admin avant de valider une commande.</p>
+                    </div>
+                <?php endif; ?>
+
+                <?php if(!$paymentEnabled): ?>
+                    <div class="checkout-warning">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <p>Le paiement est temporairement désactivé. Vous ne pouvez pas valider de commande pour le moment.</p>
                     </div>
                 <?php endif; ?>
 
@@ -98,7 +106,7 @@
                                 </select>
                             </div>
 
-                            <section class="checkout-payment-panel liquid-panel">
+                            <section class="checkout-payment-panel liquid-panel <?= !$paymentEnabled ? 'is-disabled' : '' ?>">
                                 <div class="checkout-payment-panel__head">
                                     <h2>Méthode de paiement</h2>
                                     <span>Encaissement FreshPay : <?= htmlspecialchars($gatewayCurrency, ENT_QUOTES, 'UTF-8') ?></span>
@@ -179,7 +187,7 @@
                                 </div>
                             </div>
 
-                            <button type="submit" class="btn_ohnous checkout-submit" <?= empty($deliveryZones) ? 'disabled' : '' ?>>Payer maintenant</button>
+                            <button type="submit" class="btn_ohnous checkout-submit" <?= (empty($deliveryZones) || !$paymentEnabled) ? 'disabled' : '' ?>>Payer maintenant</button>
                         </aside>
                     </div>
                 </form>
@@ -193,6 +201,7 @@
         window.ohnousCheckoutConfig = {
             subtotal: <?= json_encode((float)$checkoutContext['subtotal']) ?>,
             mode: <?= json_encode($checkoutContext['mode']) ?>,
+            paymentEnabled: <?= json_encode($paymentEnabled) ?>,
             visaEnabled: <?= json_encode($visaEnabled) ?>,
             gatewayCurrency: <?= json_encode($gatewayCurrency) ?>
         };

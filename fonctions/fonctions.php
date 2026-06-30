@@ -215,6 +215,39 @@
             'subtotal' => ohnous_get_items_total($items),
         ];
     }
+    function ohnous_get_payment_status_path()
+    {
+        return CONFIG . 'payment-status.json';
+    }
+    function ohnous_is_payment_enabled()
+    {
+        $paymentConfig = include CONFIG . 'payment.php';
+        $enabled = isset($paymentConfig['enabled']) ? (bool)$paymentConfig['enabled'] : true;
+        $statusPath = ohnous_get_payment_status_path();
+
+        if(is_file($statusPath))
+        {
+            $status = json_decode((string)file_get_contents($statusPath), true);
+            if(is_array($status) && array_key_exists('enabled', $status))
+            {
+                $enabled = (bool)$status['enabled'];
+            }
+        }
+
+        return $enabled;
+    }
+    function ohnous_set_payment_enabled($enabled)
+    {
+        $payload = [
+            'enabled' => (bool)$enabled,
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+
+        return file_put_contents(
+            ohnous_get_payment_status_path(),
+            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)
+        ) !== false;
+    }
     /* rendre une ligne HTML de panier/checkout */
     function ohnous_render_checkout_item_html(array $item, $compact = false)
     {
