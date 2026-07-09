@@ -82,6 +82,7 @@ FRESHPAY_METHOD_AFRIMONEY=afrimoney
 - `/paiement-callback-freshpay`
 - `/paiement-verifier`
 - `/paiement-retour`
+- `/admin-paiements`
 
 ## Configuration FreshPay
 
@@ -198,7 +199,7 @@ Si cette ligne retourne `false` ou une chaine vide, PHP ne voit pas encore ta va
 
 ## Important sur FreshPay
 
-- Le total envoyé est bien calculé ainsi : `sous_total + frais_livraison`.
+- Le total envoyé est bien calculé ainsi : `(sous_total + frais_livraison) + 10 %`.
 - La devise envoyée à FreshPay est `USD`.
 - Les champs FreshPay `merchant_id`, `merchant_secrete`, `firstname`, `lastname` et `email` sont figés dans `config/payment.php` selon les valeurs validées par FreshPay.
 - Le flux est asynchrone :
@@ -269,6 +270,19 @@ https://ohnous.store/paiement-verifier?reference=FP-XXXX
 
 ## SQL à coller dans phpMyAdmin
 
+```sql
+```
+
+Si une colonne existe déjà, ne relance pas sa ligne `ADD COLUMN`.
+
+## Gestion paiements du 9 juillet 2026
+
+- Ajout automatique de 10 % sur le montant HT au checkout.
+- Affichage checkout : sous-total, livraison, TVA / frais 10 %, total TTC.
+- Historique admin disponible sur `/admin-paiements` avec recherche, filtres, détail et export CSV.
+- Enregistrement des références internes, références prestataire, identifiants de transaction, montants HT/frais/total et payloads FreshPay.
+- Reçu email envoyé uniquement après confirmation d’un statut réussi FreshPay.
+- Messages Mobile Money détaillés conservés quand FreshPay renvoie une description ou un code d’erreur.
 
 
 ## Vérifications avant production

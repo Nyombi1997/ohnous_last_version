@@ -45,6 +45,7 @@
                             "admin-boutique" => ["controller" => 'Home', "method" => 'showAdminStoreDetails'],
                             "admin-editer-photo-boutique" => ["controller" => 'Home', "method" => 'showAdminEditStoreProfile'],
                             "admin-articles" => ["controller" => 'Home', "method" => 'showAdminArticles'],
+                            "admin-paiements" => ["controller" => 'Home', "method" => 'showAdminPayments'],
                             "admin-editer-article" => ["controller" => 'Home', "method" => 'showAdminEditArticle'],
                             "admin-mot-de-passe" => ["controller" => 'Home', "method" => 'showAdminPassword'],
                             "admin-nouveau-mot-de-passe" => ["controller" => 'Home', "method" => 'showAdminNewPassword'],

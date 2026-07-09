@@ -11,6 +11,15 @@ PRIORITÉS :
 4. Réutiliser l’existant avant de créer du nouveau.
 5. Respecter l’architecture actuelle du projet.
 
+Avant toute modification :
+
+* analyse la structure du projet ;
+* identifie les fichiers réellement concernés ;
+* ne casse jamais les fonctionnalités existantes ;
+* privilégie la réutilisation du code plutôt que les duplications.
+* Liste chaque tache pour que tout soit bien et correctement fait
+* Rassure toi de bien vérifier le fichier sql si celui-ci est joins, pour connaître la structure sql
+
 RÈGLES DE RÉPONSE :
 
 * Réponse courte.
@@ -76,12 +85,184 @@ FRONTEND :
 * Utiliser SweetAlert uniquement si nécessaire.
 * Réutiliser les composants existants.
 * Utiliser exclusivement le design actuel du projet.
-* Respecter le design moderne Liquid / Glass déjà présent.
+* Respecter l'identité visuelle de OHNOUS : design moderne, premium et épuré inspiré du Glass Design (effet vitré discret), avec des cartes élégantes, une excellente hiérarchie visuelle, beaucoup d'espace, des animations subtiles et une interface qui privilégie la simplicité plutôt que l'accumulation d'éléments.
 * Ne pas importer de design extérieur.
 * Éviter les dégradés excessifs.
 * Garder une interface légère, fluide et responsive.
 * Respecter l’UI/UX existante.
 * Respecter le SEO existant.
+DESIGN OHNOUS :
+
+* Le site utilise une identité visuelle moderne inspirée du "Glass Design" (effet vitré).
+* Conserver ce langage graphique sur toutes les nouvelles pages et fonctionnalités.
+* Les effets de verre doivent rester élégants, discrets et cohérents avec le reste du site.
+* Ne pas transformer le site en template générique.
+* Toutes les nouvelles interfaces doivent sembler avoir toujours fait partie du projet.
+* Conserver une hiérarchie visuelle claire avec beaucoup d'espace, une excellente lisibilité et une interface épurée.
+* Éviter de surcharger les pages avec des bordures, des couleurs ou des effets inutiles.
+* Utiliser des cartes modernes, des transitions discrètes et une interface premium.
+* Les composants doivent suivre le même style graphique sur tout le projet afin de garantir une parfaite cohérence visuelle.
+
+DESIGN UX :
+
+* Privilégier une interface intuitive où l'utilisateur comprend naturellement quoi faire.
+* Réduire au maximum les textes explicatifs dans l'interface.
+* Préférer une bonne organisation, des titres explicites, des icônes, des placeholders et des libellés clairs plutôt que de longs paragraphes.
+* Ne jamais encombrer une page avec des descriptions inutiles.
+* Les messages d'aide ne doivent apparaître que lorsqu'ils apportent une réelle valeur à l'utilisateur.
+* Les interfaces doivent rester simples, propres et rapides à comprendre.
+
+DOCUMENTATION :
+
+* Toutes les explications techniques, choix d'architecture, modifications importantes, dépendances installées, commandes à exécuter, migrations SQL et informations destinées au développeur doivent être ajoutées dans le README.
+* Le frontend doit rester le plus épuré possible.
+* Ne pas afficher de notes techniques, de textes destinés au développeur ou d'explications inutiles dans l'interface utilisateur.
+* Si une fonctionnalité nécessite une explication détaillée, la documenter dans le README plutôt que dans l'application.
+## Dégradés
+
+Les dégradés sont interdits.
+
+Utilise uniquement des couleurs unies.
+
+Exception uniquement si une demande explicite le nécessite.
+## Fond des pages
+
+Le fond doit toujours être :
+
+* blanc,
+* ou gris très léger.
+
+Jamais de fond coloré.
+---
+
+## Cartes
+
+Toutes les cartes doivent respecter les règles suivantes :
+
+* fond blanc ;
+* ombre légère ;
+* bordure discrète si nécessaire ;
+* espacement homogène ;
+* coins légèrement arrondis.
+---
+
+## Border radius
+
+Ne dépasse jamais :
+
+10 px
+
+Exception :
+
+* avatars ;
+* boutons ronds ;
+* badges circulaires.
+
+Évite les coins trop arrondis.
+
+
+---
+
+## Inputs
+
+Tous les formulaires doivent suivre une grille propre.
+
+Largeurs autorisées uniquement :
+
+* 25 %
+* 50 %
+* 100 %
+
+Ne jamais utiliser des largeurs incohérentes.
+
+Les champs doivent toujours être parfaitement alignés.
+
+Respecter un espacement identique entre chaque ligne.
+
+Que les inputs numbers ne puissent pas avoir l'icone par défaut du navigateur qui permet de pouvoir augmenter ou diminuer la quantité
+
+---
+
+## Texte
+
+Pour tous les champs de saisie :
+
+minimum **16 px**
+
+afin d'assurer une bonne lisibilité sur mobile.
+
+Pour le reste :
+
+* hiérarchie claire des tailles ;
+* jamais de texte trop petit.
+* N'alignent jamais un text gras avec un text normal si celui-ci est un titre ou un nom et le reste est un detail du nom ou du titre ou quelque chose dans ce sens là, dans l'idéal il faudrait passer l'autre text à la ligne ou mettre un séparateur.
+* Je ne veux pas de lien avec les underlines à moins que ce soit un lien qu'on a placé sur une description ou un message ou quelque chose de ce genre mais si c'est pour naviguer dans le site je veux que tu prenne en comptes le design et retire l'underline.
+
+
+---
+
+## Boutons
+
+Les boutons doivent :
+
+* conserver une hauteur uniforme ;
+* avoir le même radius ;
+* respecter la palette officielle ;
+* posséder un état hover discret ;
+* posséder un état disabled cohérent.
+* centre toujours les icônes dans les boutons 
+* Quand un bouton a un fond foncé que le text dessus soit claire et vice versa
+
+---
+
+## Icônes
+
+Utiliser uniquement Font Awesome.
+
+Les tailles doivent être cohérentes.
+
+Éviter les icônes disproportionnées.
+
+---
+
+## Responsive
+
+Le site doit être entièrement responsive.
+
+Desktop :
+
+* bonne utilisation des colonnes.
+
+Tablette :
+
+* réorganisation propre.
+
+Mobile :
+
+* priorité à une seule colonne lorsque nécessaire ;
+* aucune coupure de texte ;
+* aucun débordement horizontal ;
+* aucun élément caché derrière un autre.
+
+---
+
+## Espacements
+
+Utiliser des espacements constants.
+
+Éviter les marges ou paddings arbitraires.
+
+Conserver un rythme visuel homogène.
+
+---
+
+## Animations
+
+Animations discrètes uniquement.
+
+Transitions fluides.
+
+Jamais d'animations excessives.
 
 FORMULAIRES ET INPUTS :
 
@@ -105,13 +286,41 @@ JAVASCRIPT :
 * Tous les scripts doivent être placés dans `asset/js`.
 * Réutiliser les scripts existants avant d’en créer de nouveaux.
 * Ne pas mettre de JavaScript inline si un fichier existant peut être utilisé proprement.
+GRAPHIQUES (APEXCHARTS) :
 
+* Utiliser exclusivement ApexCharts pour tous les graphiques et dashboards.
+* Ne plus utiliser Chart.js, Google Charts, Morris.js, C3.js, D3.js ou toute autre librairie de graphiques sauf demande explicite.
+* Installer ApexCharts via npm si nécessaire.
+* Réutiliser l'installation existante si elle est déjà présente.
+* Tous les graphiques doivent être responsives.
+* Utiliser les animations natives d'ApexCharts.
+* Conserver le style visuel de OHNOUS.
+* Utiliser uniquement des couleurs de la palette officielle du projet.
+* Éviter les effets visuels excessifs.
+* Les graphiques doivent être lisibles en mode Desktop, Tablette et Mobile.
+* Utiliser des tooltips modernes.
+* Activer le redimensionnement automatique.
+* Les légendes doivent être propres et cohérentes.
+* Les graphiques doivent s'intégrer dans les cartes existantes sans casser le layout.
+* Respecter les espacements du projet.
+* Ne jamais utiliser de largeur ou de hauteur fixe lorsqu'un comportement responsive est préférable.
+* Lorsqu'un dashboard est demandé, privilégier les composants natifs d'ApexCharts avant de créer une solution personnalisée.
+DASHBOARDS :
+
+* Concevoir les tableaux de bord dans un style moderne inspiré de Shopify, Stripe, Linear, Vercel ou Notion.
+* Utiliser des cartes homogènes, des statistiques claires et des graphiques ApexCharts.
+* Les dashboards doivent rester sobres, professionnels et très lisibles.
+* Ne jamais surcharger une page avec trop de graphiques.
+* Privilégier la simplicité, la hiérarchie visuelle et les indicateurs réellement utiles.
 CSS :
 
 * Tous les styles doivent être placés dans `asset/css`.
+* Pour les styles responsives ils doivent être dans responsive.css
 * Réutiliser le design existant.
 * Aucun style qui semble venir d’un autre template.
 * Ne pas ajouter de `box-shadow` inutile sur les champs.
+
+
 
 COMMENTAIRES DANS LE CODE :
 

@@ -360,8 +360,14 @@
     .admin-list-grid,
     .admin-store-layout,
     .admin-test-store-form__grid,
-    .admin-mini-grid{
+    .admin-mini-grid,
+    .admin-payment-layout,
+    .admin-payment-filters{
         grid-template-columns: 1fr;
+    }
+
+    .admin-payment-detail{
+        position: static;
     }
 
     .admin-form-grid{
@@ -375,6 +381,50 @@
     .admin-article-table__row{
         grid-template-columns: 1fr;
         padding: 18px 0;
+    }
+
+    .admin-payment-row{
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+}
+
+@media (max-width: 1024px){
+    .checkout-shell{
+        padding: 24px 14px 46px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+
+    .checkout-main{
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        box-sizing: border-box;
+    }
+
+    .checkout-form__grid{
+        grid-template-columns: 1fr;
+        gap: 18px;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    .checkout-form__fields,
+    .checkout-summary,
+    .checkout-payment-panel{
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    .checkout-summary{
+        order: -1;
+        position: static;
     }
 }
 
@@ -535,7 +585,8 @@
 
     .admin-store-card__actions,
     .admin-store-overview__actions,
-    .admin-edit-form__actions{
+    .admin-edit-form__actions,
+    .admin-payment-filters{
         flex-direction: column;
     }
 
@@ -555,7 +606,7 @@
 
     .checkout-main{
         padding: 16px;
-        border-radius: 24px;
+        border-radius: 10px;
     }
 
     .checkout-main__head,
@@ -590,17 +641,18 @@
 
     .checkout-summary{
         padding: 16px;
+        border-radius: 10px;
     }
 
     .checkout-payment-method{
         padding: 14px;
-        border-radius: 18px;
+        border-radius: 10px;
     }
 
     .checkout-order-item,
     .checkout-order-item.compact{
         padding: 12px;
-        border-radius: 18px;
+        border-radius: 10px;
     }
 
     .articles-toolbar{

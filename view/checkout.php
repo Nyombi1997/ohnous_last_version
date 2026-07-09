@@ -8,6 +8,8 @@
     $visaEnabled = !empty($paymentConfig['freshpay']['visa']['enabled']);
     $displayCurrency = trim((string)($paymentConfig['display_currency'] ?? 'USD'));
     $gatewayCurrency = trim((string)($paymentConfig['currency'] ?? 'CDF'));
+    $paymentFeeRate = ohnous_get_payment_fee_rate();
+    $initialTotals = ohnous_calculate_payment_totals($checkoutContext['items'], 0);
     $checkoutSuccess = isset($_GET['success']) && (int)$_GET['success'] === 1;
     $orderNumber = trim((string)($_GET['order'] ?? ''));
 ?>
@@ -181,9 +183,13 @@
                                     <span>Livraison</span>
                                     <strong><span id="checkout_delivery_price">0.00</span> <?= htmlspecialchars($displayCurrency, ENT_QUOTES, 'UTF-8') ?></strong>
                                 </div>
+                                <div class="checkout-summary__line">
+                                    <span>TVA / Frais (10 %)</span>
+                                    <strong><span id="checkout_payment_fee"><?= number_format($initialTotals['payment_fee_amount'], 2, '.', ' ') ?></span> <?= htmlspecialchars($displayCurrency, ENT_QUOTES, 'UTF-8') ?></strong>
+                                </div>
                                 <div class="checkout-summary__line total">
-                                    <span>Total</span>
-                                    <strong><span id="checkout_total"><?= number_format($checkoutContext['subtotal'], 2, '.', ' ') ?></span> <?= htmlspecialchars($displayCurrency, ENT_QUOTES, 'UTF-8') ?></strong>
+                                    <span>Total TTC</span>
+                                    <strong><span id="checkout_total"><?= number_format($initialTotals['total'], 2, '.', ' ') ?></span> <?= htmlspecialchars($displayCurrency, ENT_QUOTES, 'UTF-8') ?></strong>
                                 </div>
                             </div>
 
@@ -200,6 +206,7 @@
     <script>
         window.ohnousCheckoutConfig = {
             subtotal: <?= json_encode((float)$checkoutContext['subtotal']) ?>,
+            paymentFeeRate: <?= json_encode((float)$paymentFeeRate) ?>,
             mode: <?= json_encode($checkoutContext['mode']) ?>,
             paymentEnabled: <?= json_encode($paymentEnabled) ?>,
             visaEnabled: <?= json_encode($visaEnabled) ?>,

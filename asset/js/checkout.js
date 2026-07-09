@@ -2,6 +2,7 @@
     var form = document.getElementById('checkout_form');
     var zoneSelect = document.getElementById('checkout_zone');
     var deliveryPriceElement = document.getElementById('checkout_delivery_price');
+    var paymentFeeElement = document.getElementById('checkout_payment_fee');
     var totalElement = document.getElementById('checkout_total');
     var paymentFeedback = document.getElementById('checkout_payment_feedback');
     var paymentMethodInputs = document.querySelectorAll('input[name="payment_method"]');
@@ -9,7 +10,7 @@
     var customerNumberInput = document.getElementById('checkout_customer_number');
     var operatorSelect = document.getElementById('checkout_operator');
     var addressTextarea = document.getElementById('checkout_address');
-    var checkoutConfig = window.ohnousCheckoutConfig || { subtotal: 0, mode: 'cart', paymentEnabled: true, visaEnabled: false, gatewayCurrency: 'USD' };
+    var checkoutConfig = window.ohnousCheckoutConfig || { subtotal: 0, paymentFeeRate: 0.10, mode: 'cart', paymentEnabled: true, visaEnabled: false, gatewayCurrency: 'USD' };
 
     if (!form) {
         return;
@@ -32,10 +33,16 @@
     function syncTotals() {
         var selectedOption = zoneSelect ? zoneSelect.options[zoneSelect.selectedIndex] : null;
         var deliveryPrice = selectedOption ? parseFloat(selectedOption.getAttribute('data-price') || '0') : 0;
-        var total = parseFloat(checkoutConfig.subtotal || 0) + deliveryPrice;
+        var amountHt = parseFloat(checkoutConfig.subtotal || 0) + deliveryPrice;
+        var paymentFee = Math.round((amountHt * parseFloat(checkoutConfig.paymentFeeRate || 0.10)) * 100) / 100;
+        var total = amountHt + paymentFee;
 
         if (deliveryPriceElement) {
             deliveryPriceElement.innerText = deliveryPrice.toFixed(2);
+        }
+
+        if (paymentFeeElement) {
+            paymentFeeElement.innerText = paymentFee.toFixed(2);
         }
 
         if (totalElement) {
@@ -86,7 +93,7 @@
                 'is-pending'
             );
         } else {
-            updateFeedback('Le paiement Mobile Money sera initié, puis confirmé de manière asynchrone par FreshPay en ' + checkoutConfig.gatewayCurrency + '.', 'is-pending');
+            updateFeedback('Le paiement Mobile Money inclut le sous-total, la livraison et les frais TTC de 10 % en ' + checkoutConfig.gatewayCurrency + '.', 'is-pending');
         }
     }
 

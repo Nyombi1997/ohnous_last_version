@@ -179,6 +179,12 @@
             $myView->render("Ohnous | MODIFICATION D'ARTICLE");
         }
 
+        public function showAdminPayments ()
+        {
+            $myView = new View('admin-paiements');
+            $myView->render('Ohnous | GESTION DES PAIEMENTS');
+        }
+
         public function showAdminPassword ()
         {
             $myView = new View('admin-password');

@@ -168,6 +168,27 @@
 
         return $total;
     }
+    function ohnous_get_payment_fee_rate()
+    {
+        return 0.10;
+    }
+    function ohnous_calculate_payment_totals(array $items, $deliveryPrice = 0)
+    {
+        $subtotal = (float)ohnous_get_items_total($items);
+        $deliveryPrice = (float)$deliveryPrice;
+        $amountHt = $subtotal + $deliveryPrice;
+        $feeRate = ohnous_get_payment_fee_rate();
+        $feeAmount = round($amountHt * $feeRate, 2);
+
+        return [
+            'subtotal' => $subtotal,
+            'delivery_price' => $deliveryPrice,
+            'amount_ht' => $amountHt,
+            'payment_fee_rate' => $feeRate,
+            'payment_fee_amount' => $feeAmount,
+            'total' => round($amountHt + $feeAmount, 2),
+        ];
+    }
     function ohnous_clear_direct_checkout()
     {
         ohnous_boot_checkout_session();
@@ -3252,6 +3273,7 @@
             'dashboard' => ['label' => 'Tableau de bord', 'link' => '/admin', 'icon' => 'fa-chart-line'],
             'boutiques' => ['label' => 'Boutiques', 'link' => '/admin-boutiques', 'icon' => 'fa-store'],
             'articles' => ['label' => 'Articles', 'link' => '/admin-articles', 'icon' => 'fa-tags'],
+            'paiements' => ['label' => 'Paiements', 'link' => '/admin-paiements', 'icon' => 'fa-credit-card'],
             'utilisateurs' => ['label' => 'Activations', 'link' => '/admin-activation-utilisateurs', 'icon' => 'fa-user-check'],
             'livraison' => ['label' => 'Livraison', 'link' => '/admin-zones-livraison', 'icon' => 'fa-truck-fast'],
             'admins' => ['label' => 'Admins', 'link' => '/admin-admins', 'icon' => 'fa-user-shield'],

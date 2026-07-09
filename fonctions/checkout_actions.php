@@ -109,8 +109,7 @@
 
         $account = ohnous_get_current_account();
         $orderNumber = 'OHN-'.date('YmdHis').'-'.mt_rand(100, 999);
-        $subtotal = ohnous_get_items_total($context['items']);
-        $total = $subtotal + (float)$deliveryPrice;
+        $totals = ohnous_calculate_payment_totals($context['items'], $deliveryPrice);
 
         $insertOrder = [
             'order_number' => $orderNumber,
@@ -123,11 +122,16 @@
             'email' => $email,
             'zone_id' => $zoneId,
             'zone_nom' => $zone['nom'] ?? '',
-            'livraison_prix' => $deliveryPrice,
-            'sous_total' => $subtotal,
-            'total' => $total,
+            'livraison_prix' => $totals['delivery_price'],
+            'sous_total' => $totals['subtotal'],
+            'total' => $totals['total'],
             'statut' => 'nouvelle'
         ];
+
+        if(ohnous_column_exists('commandes', 'frais_paiement'))
+        {
+            $insertOrder['frais_paiement'] = $totals['payment_fee_amount'];
+        }
 
         insert_bdd($bdd, 'commandes', $insertOrder);
         $commandeId = (int)$bdd->lastInsertId();

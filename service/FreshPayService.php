@@ -151,6 +151,9 @@ class FreshPayService
             'freshpay_transaction_id' => null,
             'financial_institution_id' => null,
             'customer_number' => $this->maskCustomerNumber($customerNumber),
+            'amount_ht' => number_format((float)$totals['amount_ht'], 2, '.', ''),
+            'payment_fee_rate' => number_format((float)$totals['payment_fee_rate'], 4, '.', ''),
+            'payment_fee_amount' => number_format((float)$totals['payment_fee_amount'], 2, '.', ''),
             'amount' => number_format((float)$totals['total'], 2, '.', ''),
             'currency' => $totals['currency'],
             'request_payload' => json_encode($requestPayload, JSON_UNESCAPED_UNICODE),
@@ -187,6 +190,8 @@ class FreshPayService
             'trans_status' => $normalized['trans_status'],
             'trans_status_description' => $normalized['description'],
             'freshpay_transaction_id' => $normalized['transaction_id'],
+            'provider_reference' => $normalized['provider_reference'],
+            'transaction_number' => $normalized['transaction_number'],
             'financial_institution_id' => $normalized['financial_institution_id'],
             'response_payload' => json_encode($remoteResponse, JSON_UNESCAPED_UNICODE),
         ]);
@@ -194,6 +199,10 @@ class FreshPayService
         update_bdd($this->bdd, 'commandes', [
             'statut' => $normalized['order_status'],
         ], "id = '" . (int)$order['order_id'] . "'");
+
+        if ($this->isSuccessStatus($normalized['trans_status'])) {
+            $this->sendReceiptIfConfirmed($transactionId);
+        }
 
         return [
             'result' => $normalized['result'],
@@ -304,6 +313,8 @@ class FreshPayService
             'trans_status' => $normalized['trans_status'],
             'trans_status_description' => $normalized['description'],
             'freshpay_transaction_id' => $normalized['transaction_id'] ?: $transaction['freshpay_transaction_id'],
+            'provider_reference' => $normalized['provider_reference'] ?: ($transaction['provider_reference'] ?? null),
+            'transaction_number' => $normalized['transaction_number'] ?: ($transaction['transaction_number'] ?? null),
             'financial_institution_id' => $normalized['financial_institution_id'] ?: $transaction['financial_institution_id'],
             'callback_payload' => json_encode($payload, JSON_UNESCAPED_UNICODE),
             'response_payload' => json_encode($data, JSON_UNESCAPED_UNICODE),
@@ -312,6 +323,10 @@ class FreshPayService
         update_bdd($this->bdd, 'commandes', [
             'statut' => $normalized['order_status'],
         ], "id = '" . (int)$transaction['order_id'] . "'");
+
+        if ($this->isSuccessStatus($normalized['trans_status'])) {
+            $this->sendReceiptIfConfirmed((int)$transaction['id']);
+        }
 
         http_response_code(200);
         $callbackLogger('callback_processed', 200, [
@@ -360,6 +375,8 @@ class FreshPayService
             'trans_status' => $normalized['trans_status'],
             'trans_status_description' => $normalized['description'],
             'freshpay_transaction_id' => $normalized['transaction_id'] ?: $transaction['freshpay_transaction_id'],
+            'provider_reference' => $normalized['provider_reference'] ?: ($transaction['provider_reference'] ?? null),
+            'transaction_number' => $normalized['transaction_number'] ?: ($transaction['transaction_number'] ?? null),
             'financial_institution_id' => $normalized['financial_institution_id'] ?: $transaction['financial_institution_id'],
             'response_payload' => json_encode($remoteResponse, JSON_UNESCAPED_UNICODE),
         ]);
@@ -367,6 +384,10 @@ class FreshPayService
         update_bdd($this->bdd, 'commandes', [
             'statut' => $normalized['order_status'],
         ], "id = '" . (int)$transaction['order_id'] . "'");
+
+        if ($this->isSuccessStatus($normalized['trans_status'])) {
+            $this->sendReceiptIfConfirmed((int)$transaction['id']);
+        }
 
         return [
             'result' => 'ok',
@@ -382,7 +403,7 @@ class FreshPayService
     {
         $orderNumber = 'OHN-' . date('YmdHis') . '-' . mt_rand(100, 999);
 
-        insert_bdd($this->bdd, 'commandes', [
+        $orderData = [
             'order_number' => $orderNumber,
             'checkout_mode' => $context['mode'],
             'client_type' => $account['type'] ?? 'invite',
@@ -397,7 +418,13 @@ class FreshPayService
             'sous_total' => $totals['subtotal'],
             'total' => $totals['total'],
             'statut' => 'paiement_initié',
-        ]);
+        ];
+
+        if (ohnous_column_exists('commandes', 'frais_paiement')) {
+            $orderData['frais_paiement'] = $totals['payment_fee_amount'];
+        }
+
+        insert_bdd($this->bdd, 'commandes', $orderData);
 
         $orderId = (int)$this->bdd->lastInsertId();
 
@@ -531,15 +558,23 @@ class FreshPayService
             throw new RuntimeException('HTTP_TRANSPORT_ERROR: cURL errno=' . (int)$curlErrno . '; message=' . $curlError);
         }
 
-        if ($statusCode >= 400) {
-            $snippet = trim(mb_substr(preg_replace('/\s+/', ' ', (string)$responseBody), 0, 300));
-            throw new RuntimeException('HTTP_STATUS_ERROR: status=' . $statusCode . '; body=' . $snippet);
-        }
-
         $decoded = json_decode($responseBody, true);
         if (is_array($decoded)) {
             $decoded['_http_status'] = $statusCode;
+            if ($statusCode >= 400 && empty($decoded['Status']) && empty($decoded['status'])) {
+                $decoded['Status'] = 'error';
+            }
             return $decoded;
+        }
+
+        if ($statusCode >= 400) {
+            return [
+                '_http_status' => $statusCode,
+                'Status' => 'error',
+                'Trans_Status' => 'error',
+                'Trans_Status_Description' => trim(mb_substr(preg_replace('/\s+/', ' ', (string)$responseBody), 0, 500)),
+                'raw_body' => $responseBody,
+            ];
         }
 
         return [
@@ -555,9 +590,11 @@ class FreshPayService
 
         $status = strtolower(trim((string)($response[$callbackConfig['status_field']] ?? $response['status'] ?? 'submitted')));
         $transStatusRaw = trim((string)($response[$callbackConfig['trans_status_field']] ?? $response['trans_status'] ?? ''));
-        $description = trim((string)($response[$callbackConfig['description_field']] ?? $response['message'] ?? $response['Comment'] ?? ($options['default_description'] ?? 'Paiement en attente de confirmation.')));
+        $description = trim((string)($response[$callbackConfig['description_field']] ?? $response['message'] ?? $response['Message'] ?? $response['error'] ?? $response['Error'] ?? $response['Comment'] ?? ($options['default_description'] ?? 'Paiement en attente de confirmation.')));
         $transactionId = trim((string)($response[$callbackConfig['transaction_id_field']] ?? $response['transaction_id'] ?? $response['PayDRC_Reference'] ?? ''));
         $financialInstitutionId = trim((string)($response[$callbackConfig['financial_institution_id_field']] ?? $response['financial_institution_id'] ?? ''));
+        $providerReference = trim((string)($response['Provider_Reference'] ?? $response['provider_reference'] ?? $response['FreshPay_Reference'] ?? $response['PayDRC_Reference'] ?? $transactionId));
+        $transactionNumber = trim((string)($response['Transaction_Number'] ?? $response['transaction_number'] ?? $response['Trans_Number'] ?? $response['trans_number'] ?? $financialInstitutionId));
 
         $transStatus = strtolower($transStatusRaw);
         if ($transStatus === '') {
@@ -565,8 +602,9 @@ class FreshPayService
         }
 
         $isSuccess = in_array($transStatus, ['success', 'successful', 'paid', 'completed'], true);
-        $isFailed = in_array($transStatus, ['failed', 'cancelled', 'canceled', 'rejected', 'error'], true);
+        $isFailed = in_array($transStatus, ['failed', 'cancelled', 'canceled', 'rejected', 'refused', 'declined', 'error'], true);
         $statusAcknowledged = in_array($status, ['success', 'submitted', 'accepted'], true);
+        $description = $this->resolveGatewayDescription($description, $response);
 
         if (!$isSuccess && !$isFailed && $source === 'initiate' && $statusAcknowledged) {
             $transStatus = 'pending';
@@ -578,12 +616,68 @@ class FreshPayService
             'trans_status' => $transStatus !== '' ? $transStatus : 'pending',
             'description' => $description !== '' ? $description : 'Paiement en attente de confirmation.',
             'transaction_id' => $transactionId !== '' ? $transactionId : null,
+            'provider_reference' => $providerReference !== '' ? $providerReference : null,
+            'transaction_number' => $transactionNumber !== '' ? $transactionNumber : null,
             'financial_institution_id' => $financialInstitutionId !== '' ? $financialInstitutionId : null,
             'order_status' => $isSuccess ? 'payée' : ($isFailed ? 'échouée' : 'paiement_en_attente'),
             'frontend_message' => $isSuccess
-                ? '✅ Paiement réussi'
-                : ($isFailed ? '❌ Paiement refusé' : 'Paiement en cours de confirmation.'),
+                ? 'Paiement réussi'
+                : ($isFailed ? $description : 'Paiement en cours de confirmation.'),
         ];
+    }
+
+    private function resolveGatewayDescription($description, array $response)
+    {
+        $description = trim((string)$description);
+        $code = strtolower(trim((string)($response['Code'] ?? $response['code'] ?? $response['Error_Code'] ?? $response['error_code'] ?? '')));
+        $haystack = strtolower($description . ' ' . $code);
+
+        if (strpos($haystack, 'insufficient') !== false || strpos($haystack, 'solde') !== false || strpos($haystack, 'fund') !== false) {
+            return "Le paiement n'a pas pu être initié car votre compte Mobile Money ne dispose pas d'un solde suffisant.";
+        }
+
+        if (strpos($haystack, 'refus') !== false || strpos($haystack, 'reject') !== false || strpos($haystack, 'declin') !== false || strpos($haystack, 'cancel') !== false) {
+            return "Le paiement Mobile Money a été refusé. Vérifiez la notification reçue sur votre téléphone puis réessayez.";
+        }
+
+        return $description !== '' ? $description : 'Paiement en attente de confirmation.';
+    }
+
+    private function isSuccessStatus($status)
+    {
+        return in_array(strtolower((string)$status), ['success', 'successful', 'paid', 'completed'], true);
+    }
+
+    private function sendReceiptIfConfirmed($transactionId)
+    {
+        if (!function_exists('ohnous_send_payment_receipt_email') || !ohnous_column_exists('payment_transactions', 'receipt_sent_at')) {
+            return false;
+        }
+
+        $payment = null;
+        $stmt = $this->bdd->prepare("SELECT * FROM payment_transactions WHERE id = :id LIMIT 1");
+        $stmt->execute([':id' => (int)$transactionId]);
+        $payment = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$payment || !empty($payment['receipt_sent_at']) || !$this->isSuccessStatus($payment['trans_status'])) {
+            return false;
+        }
+
+        $order = only_select('commandes', "id = " . (int)$payment['order_id'], null, null);
+        if (!$order || empty($order['email']) || !filter_var($order['email'], FILTER_VALIDATE_EMAIL)) {
+            return false;
+        }
+
+        $items = $this->transactionModel->getOrderItems((int)$payment['order_id']);
+        if (!ohnous_send_payment_receipt_email($payment, $order, $items)) {
+            return false;
+        }
+
+        $this->transactionModel->updateById((int)$payment['id'], [
+            'receipt_sent_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        return true;
     }
 
     private function isValidCallbackSignature($rawBody, array $payload)

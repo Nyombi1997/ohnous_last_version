@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "apexcharts": "^5.16.0",
     "intl-tel-input": "^28.1.0"
   }
 }

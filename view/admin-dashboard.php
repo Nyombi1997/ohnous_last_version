@@ -78,6 +78,13 @@
                 <p>Créer des zones de livraison et piloter leur tarification.</p>
             </div>
         </a>
+        <a href="/admin-paiements" class="liquid-panel admin-shortcut-card">
+            <i class="fa-solid fa-credit-card"></i>
+            <div>
+                <strong>Gérer les paiements</strong>
+                <p>Consulter les transactions, statuts, clients et reçus.</p>
+            </div>
+        </a>
         <a href="/admin-admins" class="liquid-panel admin-shortcut-card">
             <i class="fa-solid fa-user-shield"></i>
             <div>

@@ -7,6 +7,7 @@ class PaymentController
         include_once MODEL . 'bdd.php';
         include_once MODEL . 'select.php';
         include_once FONCTION . 'fonctions.php';
+        include_once FONCTION . 'email.php';
         include_once MODEL . 'PaymentTransaction.php';
         include_once SERVICE . 'OrderAmountService.php';
         include_once SERVICE . 'FreshPayService.php';

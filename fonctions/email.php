@@ -621,5 +621,117 @@ function ohnous_send_article_deleted_store_email(array $boutique, array $article
     return $mail->send();
 }
 
+function ohnous_send_payment_receipt_email(array $payment, array $order, array $items)
+{
+    $mail = ohnous_build_mailer();
+    $email = trim((string)($order['email'] ?? ''));
+    if ($mail === false || $email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return false;
+    }
+
+    $currency = htmlspecialchars((string)($payment['currency'] ?? 'USD'), ENT_QUOTES, 'UTF-8');
+    $subtotal = (float)($order['sous_total'] ?? 0);
+    $delivery = (float)($order['livraison_prix'] ?? 0);
+    $amountHt = (float)($payment['amount_ht'] ?? ($subtotal + $delivery));
+    $feeAmount = (float)($payment['payment_fee_amount'] ?? max(((float)($payment['amount'] ?? 0) - $amountHt), 0));
+    $total = (float)($payment['amount'] ?? ($amountHt + $feeAmount));
+    $invoiceNumber = 'FAC-' . date('Ymd', strtotime((string)($payment['created_at'] ?? 'now'))) . '-' . str_pad((string)($payment['id'] ?? 0), 5, '0', STR_PAD_LEFT);
+
+    $rows = '';
+    foreach ($items as $item) {
+        $name = htmlspecialchars((string)($item['article_nom'] ?? 'Article OhNous'), ENT_QUOTES, 'UTF-8');
+        $qty = max(1, (int)($item['quantite'] ?? 1));
+        $unit = (float)($item['prix_unitaire'] ?? 0);
+        $lineTotal = $unit * $qty;
+        $rows .= '
+            <tr>
+                <td style="padding:12px; border-bottom:1px solid #e9ecf5;">'.$name.'</td>
+                <td style="padding:12px; border-bottom:1px solid #e9ecf5; text-align:center;">'.$qty.'</td>
+                <td style="padding:12px; border-bottom:1px solid #e9ecf5; text-align:right;">'.number_format($unit, 2, '.', ' ').' '.$currency.'</td>
+                <td style="padding:12px; border-bottom:1px solid #e9ecf5; text-align:right;">'.number_format($lineTotal, 2, '.', ' ').' '.$currency.'</td>
+            </tr>
+        ';
+    }
+
+    $mail->isSMTP();
+    $mail->Host = 'smtp.hostinger.com';
+    $mail->SMTPAuth = true;
+    $mail->Username = 'contact@ohnous.store';
+    $mail->Password = 'OhNous@2026';
+    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+    $mail->Port = 465;
+
+    $mail->setFrom('contact@ohnous.store', 'Ohnous');
+    $mail->addAddress($email);
+    $mail->isHTML(true);
+    $mail->Subject = 'Reçu de paiement OhNous - '.$invoiceNumber;
+    $mail->Body = '
+        <html lang="fr">
+            <body style="margin:0; font-family:Arial, Helvetica, sans-serif; background:#f6f7fb; color:#161722;">
+                <div style="max-width:760px; margin:0 auto; padding:24px;">
+                    <div style="background:#ffffff; border:1px solid #e9ecf5; border-radius:10px; padding:28px;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:24px;">
+                            <img src="https://ohnous.store/asset/images/icons/logo.png" alt="OHNOUS" style="max-width:150px; height:auto;">
+                            <div style="text-align:right;">
+                                <strong style="display:block; font-size:18px;">Paiement reçu</strong>
+                                <span style="color:#5d6478;">'.htmlspecialchars(date('d/m/Y H:i', strtotime((string)($payment['created_at'] ?? 'now'))), ENT_QUOTES, 'UTF-8').'</span>
+                            </div>
+                        </div>
+                        <h1 style="font-size:24px; margin:0 0 18px;">Reçu de paiement</h1>
+                        <table role="presentation" style="width:100%; border-collapse:collapse; margin-bottom:22px;">
+                            <tr>
+                                <td style="padding:8px 0; color:#5d6478;">Numéro de facture</td>
+                                <td style="padding:8px 0; text-align:right;"><strong>'.$invoiceNumber.'</strong></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:8px 0; color:#5d6478;">Numéro de paiement</td>
+                                <td style="padding:8px 0; text-align:right;"><strong>'.htmlspecialchars((string)($payment['reference'] ?? ''), ENT_QUOTES, 'UTF-8').'</strong></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:8px 0; color:#5d6478;">Mode de paiement</td>
+                                <td style="padding:8px 0; text-align:right;"><strong>'.htmlspecialchars((string)($payment['payment_method'] ?? ''), ENT_QUOTES, 'UTF-8').'</strong></td>
+                            </tr>
+                        </table>
+                        <table style="width:100%; border-collapse:collapse; border:1px solid #e9ecf5; border-radius:10px; overflow:hidden;">
+                            <thead>
+                                <tr style="background:#f6f7fb;">
+                                    <th style="padding:12px; text-align:left;">Article</th>
+                                    <th style="padding:12px; text-align:center;">Qté</th>
+                                    <th style="padding:12px; text-align:right;">Prix unitaire</th>
+                                    <th style="padding:12px; text-align:right;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>'.$rows.'</tbody>
+                        </table>
+                        <table role="presentation" style="width:100%; border-collapse:collapse; margin-top:22px;">
+                            <tr>
+                                <td style="padding:8px 0; color:#5d6478;">Sous-total</td>
+                                <td style="padding:8px 0; text-align:right;">'.number_format($amountHt, 2, '.', ' ').' '.$currency.'</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:8px 0; color:#5d6478;">TVA / Frais (10 %)</td>
+                                <td style="padding:8px 0; text-align:right;">'.number_format($feeAmount, 2, '.', ' ').' '.$currency.'</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:12px 0; font-size:18px;"><strong>Montant total payé</strong></td>
+                                <td style="padding:12px 0; text-align:right; font-size:18px;"><strong>'.number_format($total, 2, '.', ' ').' '.$currency.'</strong></td>
+                            </tr>
+                        </table>
+                        <div style="margin-top:24px; padding-top:18px; border-top:1px solid #e9ecf5; color:#5d6478; font-size:14px; line-height:1.6;">
+                            <strong style="color:#161722;">OHNOUS</strong><br>
+                            NIF : G2526655H<br>
+                            RCCM : CD/KNG/RCCM/21-A-01722<br>
+                            Email : contact@ohnous.store<br>
+                            Téléphone / WhatsApp : +243857663333
+                        </div>
+                    </div>
+                </div>
+            </body>
+        </html>
+    ';
+
+    return $mail->send();
+}
+
 
 ?>
