@@ -1,11 +1,4 @@
 Aide moi à améliorer ce prompt stp
 Avant tout lis d'abord : checklist-ohnous.txt
 
-Je veux avoir un rapport des paiements enregistré dans ma base de donnée, je veux pouvoir voir quel article a été payer et quel client si il est inscrit a payé, si non juste voir le numéro, ensuite je veux que j'ai le rapport des status de son paiement et tout ce qui reste.
-je veux sur chaque payment effectuer via le mode de paiement déjà intégrer dans mon site on puisse ajouter 10% du montant à payer au moment du paiement.
-Il faut enregistré le numéro de référence du paiement réussit
-Il faut que si quelqu'un fait un paiement via orange money que si ils n'ont pas un montant suffisant dans leurs mobile money le message push ne va pas s'afficher sur leurs portables
-S'il faut l'afficher, que ça afficher le 10% ajouter comme TTC
-Je veux que chaque paiement envoi un reçu au client pour lui informer que son paiement a bien été reçu, donc pour chaque paiement réussit
-Ce reçu doit être standard avec le logo de ohnous donc l'image logo.png
-les details de ohnous tel quele numéro nif :G2526655H, le RCCM : CD/KNG/RCCM/21-A-01722, l'email : contact@ohnous.store, le numéro de téléphone et WhatsApp en meme temp : +243857663333
+Je voudrais que quand on paie, qu'on puisse directement passer à la page suivante du statut du paiement, une fois arriver dans cette page il faut que un chargement se lance et que le status du paiement se mettent à jour continuellement pour permettre à ce que pendnt le chargement on recoive continuellement le statut du paiement, pour que si ça a échouer, qu'un message s'affiche pour dire que le paiement a échouer, si ça a réussit pareil, avec l'email et la facture comme implémenter.

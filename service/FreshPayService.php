@@ -389,6 +389,9 @@ class FreshPayService
             $this->sendReceiptIfConfirmed((int)$transaction['id']);
         }
 
+        $updatedTransaction = $this->transactionModel->findByReference($reference) ?: $transaction;
+        $order = only_select('commandes', "id = " . (int)$transaction['order_id'], null, null);
+
         return [
             'result' => 'ok',
             'msg' => 'Statut synchronisé.',
@@ -396,6 +399,13 @@ class FreshPayService
             'status' => $normalized['status'],
             'trans_status' => $normalized['trans_status'],
             'description' => $normalized['description'],
+            'transaction_id' => $updatedTransaction['freshpay_transaction_id'] ?? null,
+            'provider_reference' => $updatedTransaction['provider_reference'] ?? null,
+            'transaction_number' => $updatedTransaction['transaction_number'] ?? null,
+            'payment_method' => $updatedTransaction['payment_method'] ?? null,
+            'amount' => $updatedTransaction['amount'] ?? null,
+            'currency' => $updatedTransaction['currency'] ?? null,
+            'order_number' => $order['order_number'] ?? null,
         ];
     }
 

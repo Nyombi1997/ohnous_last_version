@@ -184,7 +184,7 @@
                                     <strong><span id="checkout_delivery_price">0.00</span> <?= htmlspecialchars($displayCurrency, ENT_QUOTES, 'UTF-8') ?></strong>
                                 </div>
                                 <div class="checkout-summary__line">
-                                    <span>TVA / Frais (10 %)</span>
+                                    <span>Frais d'envoie</span>
                                     <strong><span id="checkout_payment_fee"><?= number_format($initialTotals['payment_fee_amount'], 2, '.', ' ') ?></span> <?= htmlspecialchars($displayCurrency, ENT_QUOTES, 'UTF-8') ?></strong>
                                 </div>
                                 <div class="checkout-summary__line total">

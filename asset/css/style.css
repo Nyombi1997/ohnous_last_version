@@ -5579,6 +5579,145 @@ textarea{
     margin-top: 22px;
 }
 
+.payment-tracking-card{
+    padding: 28px;
+    border-radius: 10px;
+    background: var(--blanc);
+    border: 1px solid rgba(93,102,153,.12);
+    box-shadow: 0 18px 34px rgba(71, 86, 138, 0.08);
+    overflow: hidden;
+}
+
+.payment-tracking-status{
+    display: grid;
+    justify-items: center;
+    text-align: center;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.payment-tracking-status__icon{
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f5f6fb;
+    color: #4450a3;
+    position: relative;
+}
+
+.payment-tracking-status__icon i{
+    display: none;
+    font-size: 30px;
+}
+
+.payment-tracking-status__icon.is-success{
+    background: #eef8f3;
+    color: #127557;
+}
+
+.payment-tracking-status__icon.is-failed,
+.payment-tracking-status__icon.is-timeout{
+    background: #fff0f2;
+    color: #ad3a45;
+}
+
+.payment-tracking-status__icon.is-expired{
+    background: #f6f4ef;
+    color: #7b6245;
+}
+
+.payment-tracking-status__icon.is-success .fa-check,
+.payment-tracking-status__icon.is-failed .fa-xmark,
+.payment-tracking-status__icon.is-timeout .fa-xmark,
+.payment-tracking-status__icon.is-expired .fa-hourglass-end{
+    display: inline-flex;
+}
+
+.payment-tracking-status__icon:not(.is-pending) .payment-tracking-spinner{
+    display: none;
+}
+
+.payment-tracking-spinner{
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 3px solid rgba(68, 80, 163, .18);
+    border-top-color: #4450a3;
+    animation: ohnous-spin .8s linear infinite;
+}
+
+.payment-tracking-status h1{
+    color: #2d3156;
+    font-size: 1.8rem;
+    line-height: 1.2;
+}
+
+.payment-tracking-status p{
+    max-width: 560px;
+    color: #6f7392;
+    line-height: 1.6;
+}
+
+.payment-tracking-details{
+    display: grid;
+    gap: 12px;
+    padding: 18px;
+    border-radius: 10px;
+    background: #f8f9fc;
+}
+
+.payment-tracking-details .checkout-summary__line{
+    align-items: flex-start;
+}
+
+.payment-tracking-details strong{
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+.payment-tracking-details .is-muted strong{
+    color: #8a8fa8;
+    font-weight: 600;
+}
+
+.payment-tracking-progress{
+    height: 5px;
+    width: 100%;
+    margin-top: 22px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #edf0f7;
+}
+
+.payment-tracking-progress span{
+    display: block;
+    width: 42%;
+    height: 100%;
+    border-radius: inherit;
+    background: #4450a3;
+    animation: ohnous-payment-progress 1.45s ease-in-out infinite;
+}
+
+#payment_tracking_actions{
+    display: none;
+}
+
+#payment_tracking_actions.is-visible{
+    display: flex;
+}
+
+@keyframes ohnous-payment-progress{
+    0%{
+        transform: translateX(-110%);
+    }
+    100%{
+        transform: translateX(250%);
+    }
+}
+
 .admin-payment-filters{
     grid-template-columns: repeat(4, minmax(0, 1fr));
     align-items: end;

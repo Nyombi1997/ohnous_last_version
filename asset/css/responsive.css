@@ -673,6 +673,23 @@
         flex-direction: column;
         align-items: stretch;
     }
+
+    .payment-tracking-card{
+        padding: 18px;
+    }
+
+    .payment-tracking-status h1{
+        font-size: 1.45rem;
+    }
+
+    .payment-tracking-details .checkout-summary__line{
+        display: grid;
+        gap: 5px;
+    }
+
+    .payment-tracking-details strong{
+        text-align: left;
+    }
 }
 
 @media screen and (max-width: 780px) {

@@ -155,32 +155,23 @@
         updateFeedback('Paiement en cours de confirmation...', 'is-pending');
 
         $.post('/paiement-demarrer', $(form).serialize(), function (data) {
-            var resultIcon = data.result === 'ok' ? 'success' : 'error';
-            var resultText = data.reference ? ('Référence : ' + data.reference) : '';
             var technicalText = buildErrorText(data);
             // Pour masquer ce log plus tard, commente simplement cette ligne.
             //console.log('[FreshPay][startPayment]', data);
 
-            if (data.payment_status === 'pending' || data.payment_status === 'submitted') {
-                resultIcon = 'info';
-                updateFeedback('Paiement initié. Nous attendons encore la confirmation finale de FreshPay.', 'is-pending');
-            } else if (data.payment_status === 'success' || data.payment_status === 'paid' || data.payment_status === 'successful') {
-                updateFeedback('✅ Paiement réussi', 'is-success');
-            } else {
-                updateFeedback(data.msg || '❌ Paiement refusé', 'is-error');
+            if (data.result === 'ok' && data.redirect) {
+                updateFeedback('Paiement initié. Redirection vers le suivi...', 'is-pending');
+                window.location.href = data.redirect;
+                return;
             }
 
             Swal.fire({
-                icon: resultIcon,
-                title: data.msg || 'Paiement traité.',
+                icon: 'error',
+                title: data.msg || "Le paiement n'a pas pu être initié.",
                 html: technicalText !== ''
-                    ? '<p style="font-size:16px; margin-bottom:8px;">' + (resultText || '') + '</p><p style="font-size:14px; word-break:break-word;"><strong>Détail technique :</strong><br>' + technicalText + '</p>'
-                    : resultText,
+                    ? '<p style="font-size:14px; word-break:break-word;"><strong>Détail technique :</strong><br>' + technicalText + '</p>'
+                    : '',
                 confirmButtonColor: '#6775d6'
-            }).then(function () {
-                if (data.redirect) {
-                    window.location.href = data.redirect;
-                }
             });
         }, 'json').fail(function (xhr) {
             var data = xhr.responseJSON || null;
