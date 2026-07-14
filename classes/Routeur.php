@@ -50,6 +50,7 @@
                             "admin-payout" => ["controller" => 'Home', "method" => 'showAdminPayoutForm'],
                             "admin-payouts" => ["controller" => 'Home', "method" => 'showAdminPayouts'],
                             "admin-payout-details" => ["controller" => 'Home', "method" => 'showAdminPayoutDetails'],
+                            "admin-payout-suivi" => ["controller" => 'Home', "method" => 'showAdminPayoutTracking'],
                             "admin-editer-article" => ["controller" => 'Home', "method" => 'showAdminEditArticle'],
                             "admin-mot-de-passe" => ["controller" => 'Home', "method" => 'showAdminPassword'],
                             "admin-nouveau-mot-de-passe" => ["controller" => 'Home', "method" => 'showAdminNewPassword'],
@@ -67,6 +68,7 @@
                             "paiement-retour" => ["controller" => 'PaymentController', "method" => 'showReturnPage'],
                             "payout-demarrer" => ["controller" => 'PaymentController', "method" => 'startPayout'],
                             "payout-verifier" => ["controller" => 'PaymentController', "method" => 'verifyPayoutStatus'],
+                            "payout-export" => ["controller" => 'PaymentController', "method" => 'exportPayouts'],
 
                             "q" => ["controller" => 'Home', "method" => 'showSearch'],
                         ];

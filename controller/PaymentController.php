@@ -129,6 +129,12 @@ class PaymentController
         $bdd = $this->bootDependencies();
         header('Content-Type: application/json; charset=utf-8');
         try {
+            ohnous_require_payout_permission(true);
+            if (!ohnous_validate_csrf($_POST['csrf_token'] ?? '')) {
+                http_response_code(419);
+                echo json_encode(['result' => 'error', 'msg' => 'Session expirée. Rechargez la page puis réessayez.'], JSON_UNESCAPED_UNICODE);
+                exit();
+            }
             if (!$bdd instanceof PDO) {
                 throw new RuntimeException('Connexion PDO introuvable.');
             }
@@ -145,6 +151,7 @@ class PaymentController
         $bdd = $this->bootDependencies();
         header('Content-Type: application/json; charset=utf-8');
         try {
+            ohnous_require_payout_permission(true);
             if (!$bdd instanceof PDO) {
                 throw new RuntimeException('Connexion PDO introuvable.');
             }
@@ -154,6 +161,44 @@ class PaymentController
             http_response_code(500);
             echo json_encode(['result' => 'error', 'msg' => 'Vérification impossible.'], JSON_UNESCAPED_UNICODE);
         }
+        exit();
+    }
+
+    public function exportPayouts()
+    {
+        $bdd = $this->bootDependencies();
+        ohnous_require_payout_permission();
+        if (!$bdd instanceof PDO || !ohnous_table_exists('payout_transactions')) {
+            http_response_code(503);
+            echo 'Module PayOut indisponible.';
+            exit();
+        }
+
+        $filters = [
+            'q' => trim((string)($_GET['q'] ?? '')),
+            'status' => trim((string)($_GET['status'] ?? '')),
+            'operator' => trim((string)($_GET['operator'] ?? '')),
+            'date_from' => trim((string)($_GET['date_from'] ?? '')),
+            'date_to' => trim((string)($_GET['date_to'] ?? '')),
+        ];
+        $rows = (new PayoutTransaction($bdd))->search($filters, null);
+        $filename = 'rapport-payout-' . date('Y-m-d-His') . '.xls';
+        header('Content-Type: application/vnd.ms-excel; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        echo "\xEF\xBB\xBF";
+        echo '<table border="1"><thead><tr>';
+        foreach (['Référence interne','Bénéficiaire','Numéro','Opérateur','Montant','Devise','Statut','Date','Référence FreshPay','Référence opérateur','Transaction','Administrateur'] as $heading) {
+            echo '<th>' . htmlspecialchars($heading, ENT_QUOTES, 'UTF-8') . '</th>';
+        }
+        echo '</tr></thead><tbody>';
+        foreach ($rows as $row) {
+            echo '<tr>';
+            foreach ([$row['reference'], $row['beneficiary'], $row['phone_number'], $row['operator'], $row['amount'], $row['currency'], $row['status'], $row['created_at'], $row['freshpay_reference'] ?? '', $row['operator_reference'] ?? '', $row['transaction_id'] ?? '', $row['admin_name'] ?? ''] as $value) {
+                echo '<td>' . htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8') . '</td>';
+            }
+            echo '</tr>';
+        }
+        echo '</tbody></table>';
         exit();
     }
 }

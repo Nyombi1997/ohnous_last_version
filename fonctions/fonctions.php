@@ -2665,6 +2665,41 @@
         }
     }
 
+    function ohnous_can_manage_payouts()
+    {
+        $account = ohnous_get_current_account();
+        if (empty($account['connected']) || ($account['type'] ?? '') !== 'admin') return false;
+        global $bdd;
+        if (!ohnous_column_exists('admins', 'can_payout')) return (int)($account['id'] ?? 0) === 1;
+        $stmt = $bdd->prepare('SELECT can_payout FROM admins WHERE id = :id LIMIT 1');
+        $stmt->execute([':id'=>(int)$account['id']]);
+        return (int)$stmt->fetchColumn() === 1;
+    }
+
+    function ohnous_require_payout_permission($json = false)
+    {
+        if (ohnous_can_manage_payouts()) return;
+        http_response_code(403);
+        if ($json) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['result'=>'error','msg'=>'Vous n\'êtes pas autorisé à gérer les PayOut.'], JSON_UNESCAPED_UNICODE);
+        } else header('Location: /admin-login');
+        exit();
+    }
+
+    function ohnous_csrf_token()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        if (empty($_SESSION['ohnous_csrf'])) $_SESSION['ohnous_csrf'] = bin2hex(random_bytes(24));
+        return $_SESSION['ohnous_csrf'];
+    }
+
+    function ohnous_validate_csrf($token)
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        return !empty($_SESSION['ohnous_csrf']) && hash_equals($_SESSION['ohnous_csrf'], (string)$token);
+    }
+
     function ohnous_delete_imagekit_file_http($fileId, $sdkStatus = 0, $sdkError = '')
     {
         $fileId = trim((string)$fileId);

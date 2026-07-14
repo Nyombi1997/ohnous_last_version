@@ -271,6 +271,47 @@ https://ohnous.store/paiement-verifier?reference=FP-XXXX
 ## SQL à coller dans phpMyAdmin
 
 ```sql
+ALTER TABLE admins ADD COLUMN can_payout TINYINT(1) NOT NULL DEFAULT 0;
+UPDATE admins SET can_payout = 1 WHERE id = 1;
+
+CREATE TABLE IF NOT EXISTS payout_transactions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  reference VARCHAR(100) NOT NULL UNIQUE,
+  beneficiary VARCHAR(190) NOT NULL,
+  phone_number VARCHAR(32) NOT NULL,
+  operator VARCHAR(30) NOT NULL,
+  amount DECIMAL(15,2) NOT NULL,
+  currency VARCHAR(3) NOT NULL,
+  reason TEXT NOT NULL,
+  status VARCHAR(40) NOT NULL DEFAULT 'pending',
+  status_description TEXT NULL,
+  error_detail TEXT NULL,
+  freshpay_reference VARCHAR(190) NULL,
+  operator_reference VARCHAR(190) NULL,
+  transaction_id VARCHAR(190) NULL,
+  admin_id INT NOT NULL DEFAULT 0,
+  admin_name VARCHAR(190) NULL,
+  request_payload LONGTEXT NULL,
+  response_payload LONGTEXT NULL,
+  callback_payload LONGTEXT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_payout_status (status), INDEX idx_payout_created (created_at), INDEX idx_payout_admin (admin_id)
+);
+
+CREATE TABLE IF NOT EXISTS payout_status_history (
+  id INT AUTO_INCREMENT PRIMARY KEY, payout_id INT NOT NULL, status VARCHAR(40) NOT NULL,
+  description TEXT NULL, source VARCHAR(40) NOT NULL DEFAULT 'system', payload LONGTEXT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, INDEX idx_payout_history (payout_id, created_at)
+);
+
+CREATE TABLE IF NOT EXISTS payout_audit_log (
+  id INT AUTO_INCREMENT PRIMARY KEY, payout_id INT NOT NULL, admin_id INT NOT NULL DEFAULT 0,
+  admin_name VARCHAR(190) NULL, action VARCHAR(80) NOT NULL, amount DECIMAL(15,2) NOT NULL,
+  currency VARCHAR(3) NOT NULL, phone_number VARCHAR(32) NOT NULL, operator VARCHAR(30) NOT NULL,
+  ip_address VARCHAR(64) NULL, user_agent VARCHAR(500) NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_payout_audit (payout_id, created_at)
+);
 ```
 
 Si une colonne existe déjà, ne relance pas sa ligne `ADD COLUMN`.
@@ -288,9 +329,9 @@ Si une colonne existe déjà, ne relance pas sa ligne `ADD COLUMN`.
 
 - Rapport paiements pleine largeur et page détail dédiée `/admin-paiement-details?id={id}`.
 - Dashboard de détail avec ApexCharts et articles achetés.
-- Formulaire PayOut `/admin-payout`, historique `/admin-payouts` et détail `/admin-payout-details?id={id}`.
+- Formulaire PayOut `/admin-payout`, suivi temps réel `/admin-payout-suivi?reference={reference}`, historique `/admin-payouts` et détail `/admin-payout-details?id={id}`.
 - Les numéros PayOut sont validés par `intl-tel-input` puis enregistrés au format international E.164.
-- La table `payout_transactions` doit être créée avec le SQL ci-dessus.
+- Les tables `payout_transactions`, `payout_status_history`, `payout_audit_log` et la permission `admins.can_payout` doivent être créées avec le SQL ci-dessus (ou le bloc de `update_bdd.txt`).
 - L'action PayOut FreshPay vaut `credit` par défaut et peut être remplacée avec `FRESHPAY_PAYOUT_ACTION` si le contrat FreshPay de production exige une autre valeur.
 
 

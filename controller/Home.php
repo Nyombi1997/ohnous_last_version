@@ -193,20 +193,30 @@
 
         public function showAdminPayoutForm ()
         {
+            ohnous_require_payout_permission();
             $myView = new View('admin-payout');
             $myView->render('Ohnous | NOUVEAU PAYOUT');
         }
 
         public function showAdminPayouts ()
         {
+            ohnous_require_payout_permission();
             $myView = new View('admin-payouts');
             $myView->render('Ohnous | HISTORIQUE DES PAYOUTS');
         }
 
         public function showAdminPayoutDetails ()
         {
+            ohnous_require_payout_permission();
             $myView = new View('admin-payout-details');
             $myView->render('Ohnous | DÉTAIL DU PAYOUT');
+        }
+
+        public function showAdminPayoutTracking ()
+        {
+            ohnous_require_payout_permission();
+            $myView = new View('admin-payout-tracking');
+            $myView->render('Ohnous | SUIVI DU PAYOUT');
         }
 
         public function showAdminPassword ()

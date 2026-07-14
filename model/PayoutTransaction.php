@@ -12,12 +12,19 @@ class PayoutTransaction
 
     public function create(array $data)
     {
+        foreach (array_keys($data) as $column) {
+            if (function_exists('ohnous_column_exists') && !ohnous_column_exists($this->table, $column)) unset($data[$column]);
+        }
         insert_bdd($this->bdd, $this->table, $data);
         return (int)$this->bdd->lastInsertId();
     }
 
     public function updateById($id, array $data)
     {
+        foreach (array_keys($data) as $column) {
+            if (function_exists('ohnous_column_exists') && !ohnous_column_exists($this->table, $column)) unset($data[$column]);
+        }
+        if (!$data) return false;
         return update_bdd($this->bdd, $this->table, $data, "id = '" . (int)$id . "'");
     }
 
@@ -71,6 +78,28 @@ class PayoutTransaction
             $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
         }
         $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function findByAnyReference($reference)
+    {
+        $stmt = $this->bdd->prepare("SELECT * FROM {$this->table} WHERE reference = :reference OR freshpay_reference = :reference OR transaction_id = :reference OR operator_reference = :reference LIMIT 1");
+        $stmt->execute([':reference' => trim((string)$reference)]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function addStatusEvent($payoutId, $status, $description = '', $source = 'system', array $payload = [])
+    {
+        if (!function_exists('ohnous_table_exists') || !ohnous_table_exists('payout_status_history')) return false;
+        $stmt = $this->bdd->prepare("INSERT INTO payout_status_history (payout_id,status,description,source,payload,created_at) VALUES (:id,:status,:description,:source,:payload,NOW())");
+        return $stmt->execute([':id'=>(int)$payoutId,':status'=>(string)$status,':description'=>(string)$description,':source'=>(string)$source,':payload'=>$payload ? json_encode($payload, JSON_UNESCAPED_UNICODE) : null]);
+    }
+
+    public function getStatusHistory($payoutId)
+    {
+        if (!function_exists('ohnous_table_exists') || !ohnous_table_exists('payout_status_history')) return [];
+        $stmt = $this->bdd->prepare('SELECT * FROM payout_status_history WHERE payout_id = :id ORDER BY created_at ASC, id ASC');
+        $stmt->execute([':id'=>(int)$payoutId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

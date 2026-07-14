@@ -42,3 +42,45 @@ PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @sql = IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'boutique_activation_requests' AND COLUMN_NAME = 'date_ajout') = 0, 'ALTER TABLE `boutique_activation_requests` ADD COLUMN `date_ajout` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER `date_traitement`', 'SELECT 1');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+-- Module PayOut FreshPay (14 juillet 2026)
+ALTER TABLE admins ADD COLUMN can_payout TINYINT(1) NOT NULL DEFAULT 0;
+UPDATE admins SET can_payout = 1 WHERE id = 1;
+
+CREATE TABLE IF NOT EXISTS payout_transactions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  reference VARCHAR(100) NOT NULL UNIQUE,
+  beneficiary VARCHAR(190) NOT NULL,
+  phone_number VARCHAR(32) NOT NULL,
+  operator VARCHAR(30) NOT NULL,
+  amount DECIMAL(15,2) NOT NULL,
+  currency VARCHAR(3) NOT NULL,
+  reason TEXT NOT NULL,
+  status VARCHAR(40) NOT NULL DEFAULT 'pending',
+  status_description TEXT NULL,
+  error_detail TEXT NULL,
+  freshpay_reference VARCHAR(190) NULL,
+  operator_reference VARCHAR(190) NULL,
+  transaction_id VARCHAR(190) NULL,
+  admin_id INT NOT NULL DEFAULT 0,
+  admin_name VARCHAR(190) NULL,
+  request_payload LONGTEXT NULL,
+  response_payload LONGTEXT NULL,
+  callback_payload LONGTEXT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_payout_status (status), INDEX idx_payout_created (created_at), INDEX idx_payout_admin (admin_id)
+);
+
+CREATE TABLE IF NOT EXISTS payout_status_history (
+  id INT AUTO_INCREMENT PRIMARY KEY, payout_id INT NOT NULL, status VARCHAR(40) NOT NULL,
+  description TEXT NULL, source VARCHAR(40) NOT NULL DEFAULT 'system', payload LONGTEXT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, INDEX idx_payout_history (payout_id, created_at)
+);
+
+CREATE TABLE IF NOT EXISTS payout_audit_log (
+  id INT AUTO_INCREMENT PRIMARY KEY, payout_id INT NOT NULL, admin_id INT NOT NULL DEFAULT 0,
+  admin_name VARCHAR(190) NULL, action VARCHAR(80) NOT NULL, amount DECIMAL(15,2) NOT NULL,
+  currency VARCHAR(3) NOT NULL, phone_number VARCHAR(32) NOT NULL, operator VARCHAR(30) NOT NULL,
+  ip_address VARCHAR(64) NULL, user_agent VARCHAR(500) NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_payout_audit (payout_id, created_at)
+);

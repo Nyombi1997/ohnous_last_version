@@ -237,8 +237,11 @@ class FreshPayService
         if (!$this->isSupportedMobileMoneyOperator($operator)) {
             return ['result' => 'error', 'msg' => 'Opérateur Mobile Money non pris en charge.'];
         }
-        if ($amount <= 0 || $reason === '') {
-            return ['result' => 'error', 'msg' => 'Le montant et le motif sont obligatoires.'];
+        if (!in_array($currency, ['CDF', 'USD'], true)) {
+            return ['result' => 'error', 'msg' => 'La devise doit être CDF ou USD.'];
+        }
+        if ($amount <= 0 || $reason === '' || $beneficiary === '') {
+            return ['result' => 'error', 'msg' => 'Le bénéficiaire, le montant et le motif sont obligatoires.'];
         }
         if ($reference === '') {
             $reference = 'PO-' . date('YmdHis') . '-' . mt_rand(100, 999);
@@ -248,6 +251,10 @@ class FreshPayService
         }
 
         $profile = $this->resolveGatewayCustomerProfile();
+        $nameParts = preg_split('/\s+/', $beneficiary, 2);
+        $firstname = trim((string)($nameParts[0] ?? $beneficiary));
+        $lastname = trim((string)($nameParts[1] ?? $profile['lastname']));
+        $admin = ohnous_get_current_account();
         $payload = [
             'merchant_id' => (string)$this->config['freshpay']['merchant_id'],
             'merchant_secrete' => (string)$this->config['freshpay']['merchant_secret'],
@@ -255,8 +262,8 @@ class FreshPayService
             'currency' => $currency,
             'action' => (string)($this->config['freshpay']['payout']['action'] ?? 'credit'),
             'customer_number' => $phone,
-            'firstname' => $beneficiary !== '' ? $beneficiary : $profile['firstname'],
-            'lastname' => $profile['lastname'],
+            'firstname' => $firstname,
+            'lastname' => $lastname,
             'email' => $profile['email'],
             'reference' => $reference,
             'method' => $this->resolveFreshPayMethod('mobile_money', $operator),
@@ -267,16 +274,28 @@ class FreshPayService
             'reference' => $reference, 'beneficiary' => $beneficiary, 'phone_number' => $phone,
             'operator' => $operator, 'amount' => number_format($amount, 2, '.', ''), 'currency' => $currency,
             'reason' => $reason, 'status' => 'pending', 'status_description' => 'PayOut en attente de soumission.',
+            'admin_id' => (int)($admin['id'] ?? 0), 'admin_name' => (string)($admin['nom'] ?? $admin['name'] ?? $admin['email'] ?? 'Administrateur'),
             'request_payload' => json_encode($payload, JSON_UNESCAPED_UNICODE),
         ]);
-        $response = $this->sendApiRequest('initiate', $payload);
+        $this->payoutModel->addStatusEvent($id, 'submitted', 'PayOut créé par l\'administrateur.', 'admin');
+        $this->writePayoutAudit($id, 'payout_created', $admin, $payload);
+        try {
+            $response = $this->sendApiRequest('initiate', $payload);
+        } catch (Throwable $e) {
+            $this->payoutModel->updateById($id, ['status' => 'failed', 'status_description' => 'FreshPay est temporairement indisponible.', 'error_detail' => $e->getMessage()]);
+            $this->payoutModel->addStatusEvent($id, 'failed', $e->getMessage(), 'api');
+            throw $e;
+        }
         $normalized = $this->normalizeGatewayResponse($response, ['source' => 'initiate', 'default_description' => 'PayOut soumis à FreshPay.']);
         $this->payoutModel->updateById($id, [
             'status' => $normalized['trans_status'], 'status_description' => $normalized['description'],
             'freshpay_reference' => $normalized['provider_reference'], 'transaction_id' => $normalized['transaction_id'],
+            'operator_reference' => $normalized['transaction_number'],
+            'error_detail' => $normalized['result'] === 'error' ? $normalized['description'] : null,
             'response_payload' => json_encode($response, JSON_UNESCAPED_UNICODE),
         ]);
-        return ['result' => $normalized['result'], 'msg' => $normalized['frontend_message'], 'reference' => $reference, 'status' => $normalized['trans_status']];
+        $this->payoutModel->addStatusEvent($id, $normalized['trans_status'], $normalized['description'], 'freshpay', $response);
+        return ['result' => $normalized['result'], 'msg' => $normalized['frontend_message'], 'reference' => $reference, 'status' => $normalized['trans_status'], 'redirect' => '/admin-payout-suivi?reference=' . rawurlencode($reference)];
     }
 
     public function verifyPayoutStatus($reference)
@@ -299,9 +318,15 @@ class FreshPayService
             'status' => $normalized['trans_status'], 'status_description' => $normalized['description'],
             'freshpay_reference' => $normalized['provider_reference'] ?: $payout['freshpay_reference'],
             'transaction_id' => $normalized['transaction_id'] ?: $payout['transaction_id'],
+            'operator_reference' => $normalized['transaction_number'] ?: ($payout['operator_reference'] ?? null),
+            'error_detail' => $normalized['result'] === 'error' ? $normalized['description'] : ($payout['error_detail'] ?? null),
             'response_payload' => json_encode($response, JSON_UNESCAPED_UNICODE),
         ]);
-        return ['result' => 'ok', 'status' => $normalized['trans_status'], 'description' => $normalized['description'], 'reference' => $payout['reference']];
+        if (strtolower((string)$payout['status']) !== strtolower((string)$normalized['trans_status'])) {
+            $this->payoutModel->addStatusEvent((int)$payout['id'], $normalized['trans_status'], $normalized['description'], 'status_api', $response);
+        }
+        $updated = $this->payoutModel->findByReference($payout['reference']) ?: $payout;
+        return ['result' => 'ok', 'status' => $normalized['trans_status'], 'description' => $normalized['description'], 'reference' => $payout['reference'], 'freshpay_reference' => $updated['freshpay_reference'] ?? null, 'operator_reference' => $updated['operator_reference'] ?? null, 'transaction_id' => $updated['transaction_id'] ?? null, 'final' => $this->isFinalStatus($normalized['trans_status'])];
     }
 
     public function handleCallback()
@@ -377,6 +402,24 @@ class FreshPayService
                 'result' => 'error',
                 'msg' => 'Référence callback manquante.'
             ];
+        }
+
+        $payout = $this->payoutModel ? $this->payoutModel->findByAnyReference($reference) : null;
+        if ($payout) {
+            $normalized = $this->normalizeGatewayResponse($data, ['source' => 'callback', 'default_description' => 'Statut PayOut reçu par callback.']);
+            $this->payoutModel->updateById((int)$payout['id'], [
+                'status' => $normalized['trans_status'],
+                'status_description' => $normalized['description'],
+                'freshpay_reference' => $normalized['provider_reference'] ?: ($payout['freshpay_reference'] ?? null),
+                'operator_reference' => $normalized['transaction_number'] ?: ($payout['operator_reference'] ?? null),
+                'transaction_id' => $normalized['transaction_id'] ?: ($payout['transaction_id'] ?? null),
+                'error_detail' => $normalized['result'] === 'error' ? $normalized['description'] : ($payout['error_detail'] ?? null),
+                'callback_payload' => json_encode($payload, JSON_UNESCAPED_UNICODE),
+                'response_payload' => json_encode($data, JSON_UNESCAPED_UNICODE),
+            ]);
+            $this->payoutModel->addStatusEvent((int)$payout['id'], $normalized['trans_status'], $normalized['description'], 'callback', $data);
+            http_response_code(200);
+            return ['result' => 'ok', 'msg' => 'Callback PayOut FreshPay traité.', 'reference' => $payout['reference'], 'trans_status' => $normalized['trans_status']];
         }
 
         $transaction = $this->transactionModel->findByReference($reference);
@@ -745,6 +788,29 @@ class FreshPayService
     private function isSuccessStatus($status)
     {
         return in_array(strtolower((string)$status), ['success', 'successful', 'paid', 'completed'], true);
+    }
+
+    private function isFinalStatus($status)
+    {
+        return in_array(strtolower((string)$status), ['success', 'successful', 'paid', 'completed', 'failed', 'error', 'expired', 'cancelled', 'canceled', 'rejected', 'refused', 'declined'], true);
+    }
+
+    private function writePayoutAudit($payoutId, $action, array $admin, array $payload)
+    {
+        if (!ohnous_table_exists('payout_audit_log')) return false;
+        $stmt = $this->bdd->prepare('INSERT INTO payout_audit_log (payout_id,admin_id,admin_name,action,amount,currency,phone_number,operator,ip_address,user_agent,created_at) VALUES (:payout_id,:admin_id,:admin_name,:action,:amount,:currency,:phone,:operator,:ip,:agent,NOW())');
+        return $stmt->execute([
+            ':payout_id' => (int)$payoutId,
+            ':admin_id' => (int)($admin['id'] ?? 0),
+            ':admin_name' => (string)($admin['nom'] ?? $admin['name'] ?? $admin['email'] ?? 'Administrateur'),
+            ':action' => (string)$action,
+            ':amount' => (float)($payload['amount'] ?? 0),
+            ':currency' => (string)($payload['currency'] ?? ''),
+            ':phone' => (string)($payload['customer_number'] ?? ''),
+            ':operator' => (string)($payload['method'] ?? ''),
+            ':ip' => (string)($_SERVER['REMOTE_ADDR'] ?? ''),
+            ':agent' => mb_substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 500),
+        ]);
     }
 
     private function sendReceiptIfConfirmed($transactionId)
