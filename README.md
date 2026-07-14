@@ -282,7 +282,16 @@ Si une colonne existe déjà, ne relance pas sa ligne `ADD COLUMN`.
 - Historique admin disponible sur `/admin-paiements` avec recherche, filtres, détail et export CSV.
 - Enregistrement des références internes, références prestataire, identifiants de transaction, montants HT/frais/total et payloads FreshPay.
 - Reçu email envoyé uniquement après confirmation d’un statut réussi FreshPay.
-- Messages Mobile Money détaillés conservés quand FreshPay renvoie une description ou un code d’erreur.
+- Messages Mobile Money détaillés conservés quand FreshPay renvoie une description ou un code d'erreur.
+
+## Gestion paiements et PayOut du 14 juillet 2026
+
+- Rapport paiements pleine largeur et page détail dédiée `/admin-paiement-details?id={id}`.
+- Dashboard de détail avec ApexCharts et articles achetés.
+- Formulaire PayOut `/admin-payout`, historique `/admin-payouts` et détail `/admin-payout-details?id={id}`.
+- Les numéros PayOut sont validés par `intl-tel-input` puis enregistrés au format international E.164.
+- La table `payout_transactions` doit être créée avec le SQL ci-dessus.
+- L'action PayOut FreshPay vaut `credit` par défaut et peut être remplacée avec `FRESHPAY_PAYOUT_ACTION` si le contrat FreshPay de production exige une autre valeur.
 
 
 ## Vérifications avant production

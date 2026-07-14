@@ -3274,6 +3274,7 @@
             'boutiques' => ['label' => 'Boutiques', 'link' => '/admin-boutiques', 'icon' => 'fa-store'],
             'articles' => ['label' => 'Articles', 'link' => '/admin-articles', 'icon' => 'fa-tags'],
             'paiements' => ['label' => 'Paiements', 'link' => '/admin-paiements', 'icon' => 'fa-credit-card'],
+            'payouts' => ['label' => 'PayOut', 'link' => '/admin-payouts', 'icon' => 'fa-money-bill-transfer'],
             'utilisateurs' => ['label' => 'Activations', 'link' => '/admin-activation-utilisateurs', 'icon' => 'fa-user-check'],
             'livraison' => ['label' => 'Livraison', 'link' => '/admin-zones-livraison', 'icon' => 'fa-truck-fast'],
             'admins' => ['label' => 'Admins', 'link' => '/admin-admins', 'icon' => 'fa-user-shield'],

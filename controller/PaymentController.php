@@ -9,6 +9,7 @@ class PaymentController
         include_once FONCTION . 'fonctions.php';
         include_once FONCTION . 'email.php';
         include_once MODEL . 'PaymentTransaction.php';
+        include_once MODEL . 'PayoutTransaction.php';
         include_once SERVICE . 'OrderAmountService.php';
         include_once SERVICE . 'FreshPayService.php';
 
@@ -121,5 +122,38 @@ class PaymentController
 
         $view = new View('payment-return');
         $view->render('Ohnous | Retour paiement');
+    }
+
+    public function startPayout()
+    {
+        $bdd = $this->bootDependencies();
+        header('Content-Type: application/json; charset=utf-8');
+        try {
+            if (!$bdd instanceof PDO) {
+                throw new RuntimeException('Connexion PDO introuvable.');
+            }
+            echo json_encode((new FreshPayService($bdd))->initiatePayout($_POST), JSON_UNESCAPED_UNICODE);
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode($this->buildPublicErrorPayload('FreshPay startPayout', $e), JSON_UNESCAPED_UNICODE);
+        }
+        exit();
+    }
+
+    public function verifyPayoutStatus()
+    {
+        $bdd = $this->bootDependencies();
+        header('Content-Type: application/json; charset=utf-8');
+        try {
+            if (!$bdd instanceof PDO) {
+                throw new RuntimeException('Connexion PDO introuvable.');
+            }
+            $reference = trim((string)($_GET['reference'] ?? $_POST['reference'] ?? ''));
+            echo json_encode((new FreshPayService($bdd))->verifyPayoutStatus($reference), JSON_UNESCAPED_UNICODE);
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['result' => 'error', 'msg' => 'Vérification impossible.'], JSON_UNESCAPED_UNICODE);
+        }
+        exit();
     }
 }

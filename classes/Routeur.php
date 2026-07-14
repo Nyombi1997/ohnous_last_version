@@ -46,6 +46,10 @@
                             "admin-editer-photo-boutique" => ["controller" => 'Home', "method" => 'showAdminEditStoreProfile'],
                             "admin-articles" => ["controller" => 'Home', "method" => 'showAdminArticles'],
                             "admin-paiements" => ["controller" => 'Home', "method" => 'showAdminPayments'],
+                            "admin-paiement-details" => ["controller" => 'Home', "method" => 'showAdminPaymentDetails'],
+                            "admin-payout" => ["controller" => 'Home', "method" => 'showAdminPayoutForm'],
+                            "admin-payouts" => ["controller" => 'Home', "method" => 'showAdminPayouts'],
+                            "admin-payout-details" => ["controller" => 'Home', "method" => 'showAdminPayoutDetails'],
                             "admin-editer-article" => ["controller" => 'Home', "method" => 'showAdminEditArticle'],
                             "admin-mot-de-passe" => ["controller" => 'Home', "method" => 'showAdminPassword'],
                             "admin-nouveau-mot-de-passe" => ["controller" => 'Home', "method" => 'showAdminNewPassword'],
@@ -61,6 +65,8 @@
                             "payments/freshpay/callback" => ["controller" => 'PaymentController', "method" => 'handleFreshPayCallback'],
                             "paiement-verifier" => ["controller" => 'PaymentController', "method" => 'verifyPaymentStatus'],
                             "paiement-retour" => ["controller" => 'PaymentController', "method" => 'showReturnPage'],
+                            "payout-demarrer" => ["controller" => 'PaymentController', "method" => 'startPayout'],
+                            "payout-verifier" => ["controller" => 'PaymentController', "method" => 'verifyPayoutStatus'],
 
                             "q" => ["controller" => 'Home', "method" => 'showSearch'],
                         ];

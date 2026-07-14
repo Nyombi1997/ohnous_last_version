@@ -5,6 +5,7 @@ class FreshPayService
     private $bdd;
     private $config;
     private $transactionModel;
+    private $payoutModel;
     private $amountService;
 
     public function __construct(PDO $bdd)
@@ -12,6 +13,7 @@ class FreshPayService
         $this->bdd = $bdd;
         $this->config = include CONFIG . 'payment.php';
         $this->transactionModel = new PaymentTransaction($bdd);
+        $this->payoutModel = class_exists('PayoutTransaction') ? new PayoutTransaction($bdd) : null;
         $this->amountService = new OrderAmountService();
     }
 
@@ -213,6 +215,93 @@ class FreshPayService
             'transaction_id' => $normalized['transaction_id'],
             'redirect' => '/paiement-retour?reference=' . rawurlencode($reference),
         ];
+    }
+
+    public function initiatePayout(array $request)
+    {
+        if (!$this->payoutModel || !ohnous_table_exists('payout_transactions')) {
+            return ['result' => 'error', 'msg' => 'La table SQL des PayOut est manquante. Appliquez la migration du README.md.'];
+        }
+
+        $phone = preg_replace('/[^0-9+]/', '', trim((string)($request['phone_number'] ?? '')));
+        $operator = strtolower(trim((string)($request['operator'] ?? '')));
+        $amount = round((float)($request['amount'] ?? 0), 2);
+        $currency = strtoupper(trim((string)($request['currency'] ?? $this->config['currency'])));
+        $reason = trim((string)($request['reason'] ?? ''));
+        $beneficiary = trim((string)($request['beneficiary'] ?? ''));
+        $reference = trim((string)($request['reference'] ?? ''));
+
+        if (!preg_match('/^\+[1-9][0-9]{7,14}$/', $phone)) {
+            return ['result' => 'error', 'msg' => 'Le numéro doit être valide et au format international.'];
+        }
+        if (!$this->isSupportedMobileMoneyOperator($operator)) {
+            return ['result' => 'error', 'msg' => 'Opérateur Mobile Money non pris en charge.'];
+        }
+        if ($amount <= 0 || $reason === '') {
+            return ['result' => 'error', 'msg' => 'Le montant et le motif sont obligatoires.'];
+        }
+        if ($reference === '') {
+            $reference = 'PO-' . date('YmdHis') . '-' . mt_rand(100, 999);
+        }
+        if ($this->payoutModel->findByReference($reference)) {
+            return ['result' => 'error', 'msg' => 'Cette référence existe déjà.'];
+        }
+
+        $profile = $this->resolveGatewayCustomerProfile();
+        $payload = [
+            'merchant_id' => (string)$this->config['freshpay']['merchant_id'],
+            'merchant_secrete' => (string)$this->config['freshpay']['merchant_secret'],
+            'amount' => $this->formatFreshPayAmount($amount),
+            'currency' => $currency,
+            'action' => (string)($this->config['freshpay']['payout']['action'] ?? 'credit'),
+            'customer_number' => $phone,
+            'firstname' => $beneficiary !== '' ? $beneficiary : $profile['firstname'],
+            'lastname' => $profile['lastname'],
+            'email' => $profile['email'],
+            'reference' => $reference,
+            'method' => $this->resolveFreshPayMethod('mobile_money', $operator),
+            'callback_url' => $this->resolveCallbackUrl(),
+            'description' => $reason,
+        ];
+        $id = $this->payoutModel->create([
+            'reference' => $reference, 'beneficiary' => $beneficiary, 'phone_number' => $phone,
+            'operator' => $operator, 'amount' => number_format($amount, 2, '.', ''), 'currency' => $currency,
+            'reason' => $reason, 'status' => 'pending', 'status_description' => 'PayOut en attente de soumission.',
+            'request_payload' => json_encode($payload, JSON_UNESCAPED_UNICODE),
+        ]);
+        $response = $this->sendApiRequest('initiate', $payload);
+        $normalized = $this->normalizeGatewayResponse($response, ['source' => 'initiate', 'default_description' => 'PayOut soumis à FreshPay.']);
+        $this->payoutModel->updateById($id, [
+            'status' => $normalized['trans_status'], 'status_description' => $normalized['description'],
+            'freshpay_reference' => $normalized['provider_reference'], 'transaction_id' => $normalized['transaction_id'],
+            'response_payload' => json_encode($response, JSON_UNESCAPED_UNICODE),
+        ]);
+        return ['result' => $normalized['result'], 'msg' => $normalized['frontend_message'], 'reference' => $reference, 'status' => $normalized['trans_status']];
+    }
+
+    public function verifyPayoutStatus($reference)
+    {
+        if (!$this->payoutModel || !ohnous_table_exists('payout_transactions')) {
+            return ['result' => 'error', 'msg' => 'Module PayOut indisponible.'];
+        }
+        $payout = $this->payoutModel->findByReference(trim((string)$reference));
+        if (!$payout) {
+            return ['result' => 'error', 'msg' => 'PayOut introuvable.'];
+        }
+        $payload = [
+            'merchant_id' => (string)$this->config['freshpay']['merchant_id'],
+            'merchant_secrete' => (string)$this->config['freshpay']['merchant_secret'],
+            'action' => 'verify', 'reference' => $payout['reference'],
+        ];
+        $response = $this->sendApiRequest('status', $payload);
+        $normalized = $this->normalizeGatewayResponse($response, ['source' => 'verify', 'default_description' => 'Statut PayOut synchronisé.']);
+        $this->payoutModel->updateById((int)$payout['id'], [
+            'status' => $normalized['trans_status'], 'status_description' => $normalized['description'],
+            'freshpay_reference' => $normalized['provider_reference'] ?: $payout['freshpay_reference'],
+            'transaction_id' => $normalized['transaction_id'] ?: $payout['transaction_id'],
+            'response_payload' => json_encode($response, JSON_UNESCAPED_UNICODE),
+        ]);
+        return ['result' => 'ok', 'status' => $normalized['trans_status'], 'description' => $normalized['description'], 'reference' => $payout['reference']];
     }
 
     public function handleCallback()
@@ -612,7 +701,7 @@ class FreshPayService
         }
 
         $isSuccess = in_array($transStatus, ['success', 'successful', 'paid', 'completed'], true);
-        $isFailed = in_array($transStatus, ['failed', 'cancelled', 'canceled', 'rejected', 'refused', 'declined', 'error'], true);
+        $isFailed = in_array($transStatus, ['failed', 'cancelled', 'canceled', 'rejected', 'refused', 'declined', 'error', 'expired', 'refunded'], true);
         $statusAcknowledged = in_array($status, ['success', 'submitted', 'accepted'], true);
         $description = $this->resolveGatewayDescription($description, $response);
 

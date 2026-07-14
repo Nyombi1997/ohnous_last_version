@@ -16,7 +16,7 @@
     var maxAttempts = 90;
     var intervalDelay = 4000;
     var successStates = ['success', 'successful', 'paid', 'completed'];
-    var failedStates = ['failed', 'rejected', 'error', 'cancelled', 'canceled', 'refused', 'declined'];
+    var failedStates = ['failed', 'rejected', 'error', 'cancelled', 'canceled', 'refused', 'declined', 'refunded'];
     var expiredStates = ['expired', 'timeout', 'timed_out'];
 
     if (!page || reference === '') {

@@ -64,5 +64,8 @@ return [
             'enabled' => false,
             'shared_initiate_endpoint' => true,
         ],
+        'payout' => [
+            'action' => getenv('FRESHPAY_PAYOUT_ACTION') ?: 'credit',
+        ],
     ],
 ];

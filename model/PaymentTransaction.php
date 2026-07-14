@@ -65,9 +65,12 @@ class PaymentTransaction
         $status = trim((string)($filters['status'] ?? ''));
         if ($status !== '') {
             $statusGroups = [
-                'pending' => ['pending', 'submitted'],
+                'pending' => ['pending'],
+                'submitted' => ['submitted'],
+                'processing' => ['processing', 'in_progress'],
                 'success' => ['success', 'successful', 'paid', 'completed'],
                 'failed' => ['failed', 'error', 'rejected', 'refused', 'declined'],
+                'expired' => ['expired', 'timeout', 'timed_out'],
                 'cancelled' => ['cancelled', 'canceled'],
                 'refunded' => ['refunded'],
             ];

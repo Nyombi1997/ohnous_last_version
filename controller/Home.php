@@ -185,6 +185,30 @@
             $myView->render('Ohnous | GESTION DES PAIEMENTS');
         }
 
+        public function showAdminPaymentDetails ()
+        {
+            $myView = new View('admin-paiement-details');
+            $myView->render('Ohnous | DÉTAIL DU PAIEMENT');
+        }
+
+        public function showAdminPayoutForm ()
+        {
+            $myView = new View('admin-payout');
+            $myView->render('Ohnous | NOUVEAU PAYOUT');
+        }
+
+        public function showAdminPayouts ()
+        {
+            $myView = new View('admin-payouts');
+            $myView->render('Ohnous | HISTORIQUE DES PAYOUTS');
+        }
+
+        public function showAdminPayoutDetails ()
+        {
+            $myView = new View('admin-payout-details');
+            $myView->render('Ohnous | DÉTAIL DU PAYOUT');
+        }
+
         public function showAdminPassword ()
         {
             $myView = new View('admin-password');
