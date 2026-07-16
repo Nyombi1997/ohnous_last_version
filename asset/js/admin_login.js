@@ -25,10 +25,9 @@
         button.setAttribute('disabled', '');
         button.innerHTML = '<i class="fa-solid fa-circle-notch rotate"></i>';
 
-        $.post('/fonctions/admin_login.php', {
-            email: email.value.trim(),
-            mdp: password.value
-        }, function(data){
+        $.post('/fonctions/admin_login.php', $(form).serialize()
+            + '&email=' + encodeURIComponent(email.value.trim())
+            + '&mdp=' + encodeURIComponent(password.value), function(data){
             if(data.result !== 'ok'){
                 Swal.fire({
                     icon: 'error',

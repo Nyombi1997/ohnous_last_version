@@ -5,6 +5,10 @@
 
     header('Content-Type: application/json; charset=utf-8');
 
+    if (!validateHoneypot('nouveau_mot_de_passe_admin')) {
+        ohnous_honeypot_neutral_json();
+    }
+
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }

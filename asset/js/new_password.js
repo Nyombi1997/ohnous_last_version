@@ -46,9 +46,7 @@ form.addEventListener("submit",function(e){
 
     /* si c'est une incription boutique */
     $.post("fonctions/new_password.php",
-        {
-            mdp: password[0].value,
-        },
+        $(form).serialize() + "&mdp=" + encodeURIComponent(password[0].value),
         function(data){
             if(data.result == "error")
             {

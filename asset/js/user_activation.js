@@ -56,13 +56,12 @@ if(userActivationForm){
         button.setAttribute('disabled', '');
         button.innerHTML = `<i class="fa-solid fa-circle-notch rotate"></i>`;
 
-        $.post('/fonctions/user_activation_request.php', {
-            whatsapp: whatsapp || '',
-            telephone: telephone || '',
-            instagram: instagram,
-            facebook: facebook,
-            tiktok: tiktok,
-        }, function(data){
+        $.post('/fonctions/user_activation_request.php', $(userActivationForm).serialize()
+            + '&whatsapp=' + encodeURIComponent(whatsapp || '')
+            + '&telephone=' + encodeURIComponent(telephone || '')
+            + '&instagram=' + encodeURIComponent(instagram)
+            + '&facebook=' + encodeURIComponent(facebook)
+            + '&tiktok=' + encodeURIComponent(tiktok), function(data){
             Swal.fire({
                 icon: data.result === 'ok' ? 'success' : 'error',
                 title: data.msg,

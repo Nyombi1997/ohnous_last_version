@@ -1,4 +1,5 @@
-<?php 
+<?php
+    include_once __DIR__.'/honeypot.php';
     /* add number of days */
     function ajouter_jours($date, $nb_jours)
     {

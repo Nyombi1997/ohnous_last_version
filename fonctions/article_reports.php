@@ -6,6 +6,10 @@
 
     header('Content-Type: application/json; charset=utf-8');
 
+    if (!validateHoneypot('signalement_article')) {
+        ohnous_honeypot_neutral_json();
+    }
+
     $currentAccount = ohnous_get_current_account();
     if(empty($currentAccount['connected']))
     {

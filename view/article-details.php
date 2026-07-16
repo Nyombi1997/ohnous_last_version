@@ -129,6 +129,7 @@
                     </button>
                 </div>
                 <form class="article-report-form liquid-panel" id="article_report_form">
+                    <?php renderHoneypot('signalement_article'); ?>
                     <input type="hidden" name="article_id" value="<?= (int)$article['id'] ?>">
                     <div class="article-report-form__head">
                         <strong>Signaler cet article</strong>
@@ -246,6 +247,7 @@
         <div class="div_details notes js_note_vu_article null">
             <div class="content">
                 <div class="rating-container liquid-review-box" id="article-review-app">
+                    <div id="article_review_security"><?php renderHoneypot('avis_article'); ?></div>
                     <div class="liquid-review-box__intro">
                         <div>
                             <h3>Les avis sur cet article</h3>

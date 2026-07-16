@@ -316,3 +316,33 @@ Si une colonne existe déjà, ne relance pas sa ligne `ADD COLUMN`.
 
 ```sql
 ```
+# Protection Honeypot des formulaires publics
+
+La protection antibot est centralisée dans `fonctions/honeypot.php`, chargé automatiquement par `fonctions/fonctions.php`. Elle associe à chaque formulaire un champ leurre hors écran, un jeton aléatoire conservé en session, l’heure de création côté serveur et le token CSRF existant. Une soumission est neutralisée avant tout traitement métier si le champ leurre est rempli, si le jeton ou le CSRF est invalide, si le formulaire a expiré ou s’il est envoyé en moins d’une seconde.
+
+Les blocages sont écrits au format JSON, une ligne par événement, dans `logs/security-honeypot.log`. Le journal contient uniquement la date, l’heure, le formulaire, la route, l’adresse IP, le User-Agent et la raison. Il ne contient aucune donnée de formulaire, aucun mot de passe et aucun token. Le fichier peut être archivé ou supprimé périodiquement selon la politique de conservation du serveur.
+
+## Ajouter la protection à un formulaire
+
+Dans la vue, à l’intérieur du formulaire :
+
+```php
+<?php renderHoneypot('nom_unique_du_formulaire'); ?>
+```
+
+Dans le point d’entrée PHP, immédiatement après le chargement de `fonctions.php` et avant toute lecture métier, écriture, API ou envoi d’e-mail :
+
+```php
+if (!validateHoneypot('nom_unique_du_formulaire')) {
+    ohnous_honeypot_neutral_json();
+}
+```
+
+Le nom doit être strictement identique des deux côtés. Avec AJAX, transmettre le formulaire avec `$(form).serialize()` afin d’inclure automatiquement `website_contact`, `ohnous_hp_token` et `csrf_token`. Pour un formulaire construit en JavaScript, sérialiser le conteneur des champs de sécurité et concaténer les champs métier encodés.
+
+## Tester
+
+1. Charger le formulaire, attendre au moins deux secondes et le soumettre normalement : le traitement existant doit continuer.
+2. Renseigner `website_contact` depuis les outils développeur puis soumettre : la réponse doit rester neutre et aucune action métier ne doit être exécutée.
+3. Soumettre immédiatement après le chargement, supprimer `ohnous_hp_token`, modifier `csrf_token` ou réutiliser un jeton expiré : la requête doit être neutralisée.
+4. Vérifier que `logs/security-honeypot.log` contient uniquement les métadonnées de sécurité prévues.

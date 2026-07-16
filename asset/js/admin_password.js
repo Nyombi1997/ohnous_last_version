@@ -23,9 +23,8 @@
         button.setAttribute('disabled', '');
         button.innerHTML = '<i class="fa-solid fa-circle-notch rotate"></i>';
 
-        $.post('/fonctions/admin_password_request.php', {
-            email: email
-        }, function(data){
+        $.post('/fonctions/admin_password_request.php', $(form).serialize()
+            + '&email=' + encodeURIComponent(email), function(data){
             Swal.fire({
                 icon: data.result === 'ok' ? 'success' : 'error',
                 title: data.msg,

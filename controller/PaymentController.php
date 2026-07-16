@@ -37,6 +37,10 @@ class PaymentController
         $bdd = $this->bootDependencies();
         header('Content-Type: application/json; charset=utf-8');
 
+        if (!validateHoneypot('checkout')) {
+            ohnous_honeypot_neutral_json();
+        }
+
         try {
             if (!$bdd instanceof PDO) {
                 throw new RuntimeException("Connexion PDO introuvable après chargement de model/bdd.php.");

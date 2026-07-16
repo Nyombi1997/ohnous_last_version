@@ -18,6 +18,7 @@
                     Connectez-vous à l’espace d’administration OhNous.
                 </div>
                 <form method="POST" action="" id="admin_login_form" class="div_form_ohnous">
+                    <?php renderHoneypot('connexion_admin'); ?>
                     <div class="form_ohnous">
                         <i class="fa-solid fa-envelope"></i>
                         <input type="email" id="admin_email" placeholder="Email admin">

@@ -283,12 +283,10 @@ document.addEventListener("DOMContentLoaded", function(){
         const tempBtn = $submitBtn.html();
         $submitBtn.html('<i class="fa-solid fa-circle-notch rotate"></i>');
 
-        $.post("/fonctions/article_reviews.php", {
-            action: "create",
-            article_id: config.articleId,
-            note: selectedRating,
-            commentaire: commentaire
-        }, function(data){
+        $.post("/fonctions/article_reviews.php", $("#article_review_security :input").serialize()
+            + "&action=create&article_id=" + encodeURIComponent(config.articleId)
+            + "&note=" + encodeURIComponent(selectedRating)
+            + "&commentaire=" + encodeURIComponent(commentaire), function(data){
             if (data.result === "auth_required") {
                 openAuthPopup();
                 return;

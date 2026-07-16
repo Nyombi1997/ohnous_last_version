@@ -60,6 +60,7 @@
                 <?php endif; ?>
 
                 <form id="checkout_form" class="checkout-form">
+                    <?php renderHoneypot('checkout'); ?>
                     <input type="hidden" name="mode" value="<?= htmlspecialchars($checkoutContext['mode'], ENT_QUOTES, 'UTF-8') ?>">
 
                     <div class="checkout-form__grid">

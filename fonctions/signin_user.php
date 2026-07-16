@@ -5,6 +5,10 @@
     include_once "email.php";
     header('Content-Type: application/json; charset=utf-8');
 
+    if (!validateHoneypot('inscription_utilisateur')) {
+        ohnous_honeypot_neutral_json();
+    }
+
     $user_name = html_entity_decode(filter_var($_POST['user_name'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $email = html_entity_decode(filter_var($_POST['email'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $unique_id = uniqid('user_', true);

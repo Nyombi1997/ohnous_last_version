@@ -9,6 +9,10 @@
         session_start();
     }
 
+    if (!validateHoneypot('activation_compte')) {
+        ohnous_honeypot_neutral_json();
+    }
+
     if(!isset($_SESSION['user_ohnous_987654321']))
     {
         echo json_encode([

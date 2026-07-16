@@ -17,6 +17,7 @@
                         Inscription
                     </div>
                     <form method="POST" action="" class="div_form_ohnous" id="form">
+                        <?php renderHoneypot('inscription_utilisateur'); ?>
                         <div class="form_ohnous">
                             <i class="fa-solid fa-user"></i>
                             <input type="text" name="" id="nom" autocomplete="off" placeholder="Nom utilisateur" required>
@@ -50,4 +51,4 @@
 	</div>
 
     <!-- script signin -->
-	<script src="/asset/js/signin_check_user.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/signin_check_user.js") ?>" defer></script> 
+	<script src="/asset/js/signin_check_user.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/signin_check_user.js") ?>" defer></script>

@@ -9,6 +9,10 @@
         session_start();
     }
 
+    if (!validateHoneypot('connexion')) {
+        ohnous_honeypot_neutral_json();
+    }
+
     $email = html_entity_decode(filter_var($_POST['email'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     // Hachage du mot de passe
     $mdp = password_hash(

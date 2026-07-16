@@ -12,9 +12,7 @@ form.addEventListener("submit",function(e){
 
     /* si c'est une incription boutique */
     $.post("fonctions/code_password_recovery.php",
-        {
-            code: code.value.trim()
-        },
+        $(form).serialize() + "&code=" + encodeURIComponent(code.value.trim()),
         function(data){
             if(data.result == "error")
             {

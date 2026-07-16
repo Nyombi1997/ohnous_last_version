@@ -10,6 +10,10 @@
         session_start();
     }
 
+    if (!validateHoneypot('activation_boutique')) {
+        ohnous_honeypot_neutral_json();
+    }
+
     if(!isset($_SESSION['store_ohnous_987654321']))
     {
         echo json_encode([

@@ -18,6 +18,7 @@
                     Nouveau mot de passe admin
                 </div>
                 <form method="POST" action="" id="admin_new_password_form" class="div_form_ohnous" data-token="<?= htmlspecialchars($token, ENT_QUOTES, 'UTF-8') ?>">
+                    <?php renderHoneypot('nouveau_mot_de_passe_admin'); ?>
                     <div class="form_ohnous password">
                         <i class="fa-solid fa-lock"></i>
                         <i class="fa-solid fa-eye-slash vu_password_form_ohnous"></i>

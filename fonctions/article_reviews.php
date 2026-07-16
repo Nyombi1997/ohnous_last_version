@@ -12,6 +12,10 @@
     $action = html_entity_decode(filter_var($_POST['action'] ?? 'fetch', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $articleId = (int)html_entity_decode(filter_var($_POST['article_id'] ?? 0, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 
+    if ($action === 'create' && !validateHoneypot('avis_article')) {
+        ohnous_honeypot_neutral_json();
+    }
+
     if($articleId <= 0)
     {
         echo json_encode([

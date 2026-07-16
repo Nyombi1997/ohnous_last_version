@@ -43,10 +43,9 @@
         button.setAttribute('disabled', '');
         button.innerHTML = '<i class="fa-solid fa-circle-notch rotate"></i>';
 
-        $.post('/fonctions/admin_password_reset.php', {
-            token: token,
-            mdp: password.value
-        }, function(data){
+        $.post('/fonctions/admin_password_reset.php', $(form).serialize()
+            + '&token=' + encodeURIComponent(token)
+            + '&mdp=' + encodeURIComponent(password.value), function(data){
             if(data.result !== 'ok'){
                 Swal.fire({
                     icon: 'error',

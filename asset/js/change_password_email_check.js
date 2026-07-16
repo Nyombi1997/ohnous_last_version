@@ -47,9 +47,7 @@ form.addEventListener("submit",function(e){
 
     /* si c'est une incription boutique */
     $.post("fonctions/email_code_password_recovery.php",
-        {
-            email: email.value.trim()
-        },
+        $(form).serialize() + "&email=" + encodeURIComponent(email.value.trim()),
         function(data){
             if(data.result == "error")
             {

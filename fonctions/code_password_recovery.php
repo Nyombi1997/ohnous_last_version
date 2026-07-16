@@ -1,9 +1,14 @@
 <?php
     include_once "../model/bdd.php";
     include_once "../model/select.php";
+    include_once "fonctions.php";
     header('Content-Type: application/json; charset=utf-8');
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
+    }
+
+    if (!validateHoneypot('verification_code')) {
+        ohnous_honeypot_neutral_json();
     }
     if(isset($_SESSION['email_ohnous_987654321']))
     {

@@ -30,6 +30,7 @@
                         Entrez le code à 6 chiffres envoyer via email
                     </div>
                     <form method="POST" action="" id="form" class="div_form_ohnous">
+                        <?php renderHoneypot('verification_code'); ?>
                         <div class="form_ohnous">
                             <i class="fa-solid fa-key"></i>
                             <input type="number" name="code_ohnous" id="code" placeholder="Code de vérification">
@@ -44,4 +45,4 @@
 	</div>
 
 <!-- script signin -->
-<script src="/asset/js/verification-code.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/verification-code.js") ?>" defer></script> 
+<script src="/asset/js/verification-code.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/verification-code.js") ?>" defer></script>

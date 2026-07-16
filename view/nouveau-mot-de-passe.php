@@ -47,6 +47,7 @@
                         Nouveau mot de passe
                     </div>
                     <form method="POST" action="" class="div_form_ohnous" id="form">
+                        <?php renderHoneypot('nouveau_mot_de_passe'); ?>
                         <div class="form_ohnous password">
                             <i class="fa-solid fa-lock"></i>
                             <i class="fa-solid fa-eye-slash vu_password_form_ohnous"></i>
@@ -67,4 +68,4 @@
 	</div>
 
     <!-- script signin -->
-	<script src="/asset/js/new_password.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/new_password.js") ?>" defer></script> 
+	<script src="/asset/js/new_password.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/new_password.js") ?>" defer></script>

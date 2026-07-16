@@ -1,10 +1,15 @@
 <?php
     include_once "../model/bdd.php";
     include_once "../model/select.php";
+    include_once "fonctions.php";
     header('Content-Type: application/json; charset=utf-8');
     // reset l'email adresse qui était utiliser avant
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
+    }
+
+    if (!validateHoneypot('nouveau_mot_de_passe')) {
+        ohnous_honeypot_neutral_json();
     }
     if(isset($_SESSION['email_ohnous_987654321']))
     {

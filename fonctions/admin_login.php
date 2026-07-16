@@ -6,6 +6,10 @@
 
     header('Content-Type: application/json; charset=utf-8');
 
+    if (!validateHoneypot('connexion_admin')) {
+        ohnous_honeypot_neutral_json();
+    }
+
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }

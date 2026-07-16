@@ -18,6 +18,7 @@
                         Connexion
                     </div>
                     <form method="POST" action="" id="form" class="div_form_ohnous">
+                        <?php renderHoneypot('connexion'); ?>
                         <div class="form_ohnous">
                             <i class="fa-solid fa-envelope"></i>
                             <input type="email" name="email_ohnous" id="email" placeholder="email">

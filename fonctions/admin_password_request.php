@@ -6,6 +6,10 @@
 
     header('Content-Type: application/json; charset=utf-8');
 
+    if (!validateHoneypot('mot_de_passe_admin_oublie')) {
+        ohnous_honeypot_neutral_json();
+    }
+
     $email = trim((string)html_entity_decode(filter_var($_POST['email'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS)));
 
     if($email === '')

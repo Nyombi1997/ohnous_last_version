@@ -18,6 +18,7 @@
                     Entrez l’email présent dans votre table <strong>admins</strong>.
                 </div>
                 <form method="POST" action="" id="admin_password_request_form" class="div_form_ohnous">
+                    <?php renderHoneypot('mot_de_passe_admin_oublie'); ?>
                     <div class="form_ohnous">
                         <i class="fa-solid fa-envelope"></i>
                         <input type="email" id="admin_password_email" placeholder="Email admin">

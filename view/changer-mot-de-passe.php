@@ -30,6 +30,7 @@
                         Entrez votre adresse email
                     </div>
                     <form method="POST" action="" id="form" class="div_form_ohnous">
+                        <?php renderHoneypot('mot_de_passe_oublie'); ?>
                         <div class="form_ohnous">
                             <i class="fa-solid fa-envelope"></i>
                             <input type="email" name="email_ohnous" id="email" placeholder="email">
@@ -47,4 +48,4 @@
 	</div>
 
 <!-- script signin -->
-<script src="/asset/js/change_password_email_check.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/change_password_email_check.js") ?>" defer></script> 
+<script src="/asset/js/change_password_email_check.js?<?= filemtime($_SERVER['DOCUMENT_ROOT']."/asset/js/change_password_email_check.js") ?>" defer></script>

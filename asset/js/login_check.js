@@ -76,10 +76,7 @@ form.addEventListener("submit",function(e){
 
     /* si c'est une incription boutique */
     $.post("fonctions/login.php",
-        {
-            email: email.value.trim(),
-            mdp: password[0].value,
-        },
+        $(form).serialize() + "&email=" + encodeURIComponent(email.value.trim()) + "&mdp=" + encodeURIComponent(password[0].value),
         function(data){
             console.log(data);
             if(data.result == "error")

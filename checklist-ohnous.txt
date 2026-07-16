@@ -420,3 +420,149 @@ Fais uniquement ce qui est demandé.
 Ne modifie rien d’autre.
 Ne crée aucune fonctionnalité non demandée.
 Si une modification SQL est nécessaire, ajoute-la uniquement dans README avec le SQL prêt à coller dans phpMyAdmin.
+
+
+
+## SÉCURITÉ ANTIBOT ET HONEYPOT
+
+Le projet doit utiliser un système Honeypot sur tous les formulaires publics ou accessibles sans authentification.
+
+Le Honeypot doit être intégré par défaut dans :
+
+* inscription ;
+* connexion ;
+* mot de passe oublié ;
+* commentaires ;
+* avis ;
+* formulaires de contact ;
+* demandes d’activation ;
+* création de boutique ;
+* checkout ;
+* newsletter ;
+* recherche sensible ;
+* tout nouveau formulaire public ajouté au projet.
+
+### Fonctionnement obligatoire
+
+* Ajouter au formulaire un champ leurre destiné aux robots.
+* Ce champ ne doit jamais être visible ni utilisable par un utilisateur normal.
+* Ne pas masquer le champ uniquement avec `display: none`.
+* Le placer hors de la zone visible, tout en le gardant accessible dans le HTML.
+* Utiliser un nom de champ crédible, mais différent des véritables champs métier.
+* Ajouter `autocomplete="off"` et `tabindex="-1"`.
+* Ajouter `aria-hidden="true"` sur son conteneur.
+
+Si le champ Honeypot contient une valeur :
+
+* bloquer immédiatement la soumission ;
+* ne pas exécuter le traitement métier ;
+* ne pas enregistrer les données principales ;
+* ne pas envoyer d’email ;
+* ne pas appeler une API externe ;
+* ne pas révéler au bot que le Honeypot a été détecté ;
+* retourner une réponse neutre ou simuler une soumission réussie selon la logique existante.
+
+### Vérification côté serveur
+
+La vérification doit obligatoirement être effectuée côté PHP.
+
+Une vérification JavaScript seule est interdite.
+
+Créer ou réutiliser une fonction centrale dans `fonctions/` afin d’éviter de dupliquer la logique Honeypot dans chaque formulaire.
+
+Tous les contrôleurs traitant des formulaires publics doivent appeler cette fonction avant toute autre opération.
+
+### Protection temporelle
+
+Ajouter également une vérification du temps de remplissage :
+
+* enregistrer un timestamp sécurisé lors de l’affichage du formulaire ;
+* refuser ou neutraliser les soumissions effectuées anormalement vite ;
+* ne pas utiliser uniquement une valeur modifiable librement dans le navigateur ;
+* utiliser la session existante ou un jeton signé lorsque cela est nécessaire.
+
+Le seuil doit rester raisonnable afin de ne pas bloquer les utilisateurs légitimes.
+
+### CSRF
+
+Le Honeypot ne remplace pas la protection CSRF.
+
+Tous les formulaires sensibles doivent conserver ou recevoir :
+
+* un token CSRF ;
+* une validation côté serveur ;
+* une expiration du token ;
+* une régénération correcte après soumission.
+
+### Limitation des abus
+
+Lorsque cela est pertinent, combiner le Honeypot avec :
+
+* limitation du nombre de tentatives ;
+* contrôle de l’adresse IP sans stocker inutilement des données personnelles ;
+* contrôle de session ;
+* validation stricte des champs ;
+* journalisation des tentatives suspectes.
+
+Ne jamais bloquer un utilisateur uniquement sur la base du JavaScript.
+
+### Journalisation
+
+Enregistrer les détections Honeypot dans un journal de sécurité séparé, avec uniquement les informations utiles :
+
+* date et heure ;
+* formulaire concerné ;
+* route ;
+* adresse IP si nécessaire ;
+* user-agent ;
+* raison du blocage.
+
+Ne jamais enregistrer :
+
+* mot de passe ;
+* token ;
+* secret ;
+* numéro de carte ;
+* données sensibles inutiles.
+
+### Réponse utilisateur
+
+Ne pas afficher de message technique comme :
+
+* “Bot détecté” ;
+* “Honeypot déclenché” ;
+* “Soumission automatisée bloquée”.
+
+Retourner une réponse neutre afin de ne pas aider le robot à contourner la protection.
+
+### Architecture
+
+* Réutiliser une fonction centrale.
+* Ne pas dupliquer le Honeypot dans plusieurs fichiers.
+* Respecter l’architecture MVC existante.
+* Placer la logique PHP dans `fonctions/`.
+* Placer le JavaScript éventuel dans `asset/js/`.
+* Placer les styles dans `asset/css/`.
+* Ne pas modifier `model/bdd.php`.
+
+### Base de données
+
+Si une table de journalisation est nécessaire :
+
+* ajouter le SQL dans `README` ;
+* fournir du SQL directement exécutable dans phpMyAdmin ;
+* prévoir une politique de nettoyage des anciennes entrées ;
+* ne pas conserver indéfiniment les journaux inutiles.
+
+### Règle permanente
+
+À chaque création ou modification d’un formulaire public :
+
+1. vérifier si le Honeypot est déjà présent ;
+2. l’ajouter s’il manque ;
+3. vérifier la validation côté serveur ;
+4. vérifier la protection CSRF ;
+5. vérifier que la soumission normale continue de fonctionner ;
+6. vérifier que les bots ne peuvent pas contourner la protection en désactivant JavaScript.
+
+Aucun nouveau formulaire public ne doit être considéré comme terminé sans Honeypot et validation côté serveur.

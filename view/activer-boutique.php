@@ -41,6 +41,7 @@
                 <?php endif; ?>
             </div>
             <form id="store_activation_form" class="activation-user-form">
+                <?php renderHoneypot('activation_boutique'); ?>
                 <div class="admin-form-grid">
                     <div class="form_group_ajout_image">
                         <label class="label_ajout_image" for="store_activation_whatsapp">WhatsApp</label>

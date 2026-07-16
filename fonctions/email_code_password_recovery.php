@@ -3,10 +3,15 @@
     include_once "../model/select.php";
     include_once "../fonctions/dependances.php";
     include_once "../fonctions/email.php";
+    include_once "fonctions.php";
     header('Content-Type: application/json; charset=utf-8');
 
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
+    }
+
+    if (!validateHoneypot('mot_de_passe_oublie')) {
+        ohnous_honeypot_neutral_json();
     }
 
     $email = html_entity_decode(filter_var($_POST['email'], FILTER_SANITIZE_FULL_SPECIAL_CHARS));
