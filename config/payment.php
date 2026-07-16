@@ -66,6 +66,8 @@ return [
         ],
         'payout' => [
             'action' => getenv('FRESHPAY_PAYOUT_ACTION') ?: 'credit',
+            'callback_url' => getenv('FRESHPAY_PAYOUT_CALLBACK_URL') ?: 'https://ohnous.store/payments/freshpay/callback',
+            'debug' => getenv('FRESHPAY_PAYOUT_DEBUG') === '1',
         ],
     ],
 ];

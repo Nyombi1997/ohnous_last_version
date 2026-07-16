@@ -293,6 +293,34 @@ Si une colonne existe déjà, ne relance pas sa ligne `ADD COLUMN`.
 - Les tables `payout_transactions`, `payout_status_history`, `payout_audit_log` et la permission `admins.can_payout` doivent être créées avec le SQL ci-dessus (ou le bloc de `update_bdd.txt`).
 - L'action PayOut FreshPay vaut `credit` par défaut et peut être remplacée avec `FRESHPAY_PAYOUT_ACTION` si le contrat FreshPay de production exige une autre valeur.
 
+## Correctif suivi PayOut FreshPay
+
+Le Check Status FreshPay attend dans `reference` le `Transaction_id` (`PD...`) retourné à l'initiation, et non la référence interne OHNOUS (`PO-...`). Le numéro reste enregistré en E.164 mais est envoyé à FreshPay sans le signe `+`. Le PayOut transmet `https://ohnous.store/payments/freshpay/callback`, surchargeable avec `FRESHPAY_PAYOUT_CALLBACK_URL`. Active temporairement le journal et les payloads administrateur avec `FRESHPAY_PAYOUT_DEBUG=1`; le fichier produit est `logs/freshpay-payout-debug.log` et les secrets y sont masqués.
+
+Le dump `u577654037_ohnous(20).sql` ne contient pas toutes les colonnes utilisées par le module ni les tables de suivi. Exécuter une seule fois dans phpMyAdmin si elles sont absentes :
+
+```sql
+ALTER TABLE payout_transactions
+  ADD COLUMN error_detail TEXT NULL AFTER status_description,
+  ADD COLUMN operator_reference VARCHAR(190) NULL AFTER freshpay_reference,
+  ADD COLUMN admin_id INT NOT NULL DEFAULT 0 AFTER transaction_id,
+  ADD COLUMN admin_name VARCHAR(190) NULL AFTER admin_id;
+
+CREATE TABLE IF NOT EXISTS payout_status_history (
+  id INT AUTO_INCREMENT PRIMARY KEY, payout_id INT NOT NULL, status VARCHAR(40) NOT NULL,
+  description TEXT NULL, source VARCHAR(40) NOT NULL DEFAULT 'system', payload LONGTEXT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, INDEX idx_payout_history (payout_id, created_at)
+);
+
+CREATE TABLE IF NOT EXISTS payout_audit_log (
+  id INT AUTO_INCREMENT PRIMARY KEY, payout_id INT NOT NULL, admin_id INT NOT NULL DEFAULT 0,
+  admin_name VARCHAR(190) NULL, action VARCHAR(80) NOT NULL, amount DECIMAL(15,2) NOT NULL,
+  currency VARCHAR(3) NOT NULL, phone_number VARCHAR(32) NOT NULL, operator VARCHAR(30) NOT NULL,
+  ip_address VARCHAR(64) NULL, user_agent VARCHAR(500) NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_payout_audit (payout_id, created_at)
+);
+```
+
 
 ## Vérifications avant production
 
