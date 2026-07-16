@@ -1,6 +1,15 @@
 <?php
     class home
     {
+        private function requirePayoutPermission()
+        {
+            include_once MODEL . 'bdd.php';
+            include_once MODEL . 'select.php';
+            include_once FONCTION . 'fonctions.php';
+
+            ohnous_require_payout_permission();
+        }
+
         public function showHome ()
         {
             $myView = new View('accueil');
@@ -193,28 +202,28 @@
 
         public function showAdminPayoutForm ()
         {
-            ohnous_require_payout_permission();
+            $this->requirePayoutPermission();
             $myView = new View('admin-payout');
             $myView->render('Ohnous | NOUVEAU PAYOUT');
         }
 
         public function showAdminPayouts ()
         {
-            ohnous_require_payout_permission();
+            $this->requirePayoutPermission();
             $myView = new View('admin-payouts');
             $myView->render('Ohnous | HISTORIQUE DES PAYOUTS');
         }
 
         public function showAdminPayoutDetails ()
         {
-            ohnous_require_payout_permission();
+            $this->requirePayoutPermission();
             $myView = new View('admin-payout-details');
             $myView->render('Ohnous | DÉTAIL DU PAYOUT');
         }
 
         public function showAdminPayoutTracking ()
         {
-            ohnous_require_payout_permission();
+            $this->requirePayoutPermission();
             $myView = new View('admin-payout-tracking');
             $myView->render('Ohnous | SUIVI DU PAYOUT');
         }
