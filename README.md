@@ -297,6 +297,8 @@ Si une colonne existe déjà, ne relance pas sa ligne `ADD COLUMN`.
 
 Le Check Status FreshPay attend dans `reference` le `Transaction_id` (`PD...`) retourné à l'initiation, et non la référence interne OHNOUS (`PO-...`). Le numéro reste enregistré en E.164 mais est envoyé à FreshPay sans le signe `+`. Le PayOut transmet `https://ohnous.store/payments/freshpay/callback`, surchargeable avec `FRESHPAY_PAYOUT_CALLBACK_URL`. Active temporairement le journal et les payloads administrateur avec `FRESHPAY_PAYOUT_DEBUG=1`; le fichier produit est `logs/freshpay-payout-debug.log` et les secrets y sont masqués.
 
+Lorsqu'une erreur PayOut est retournée par FreshPay, un rapport partageable est automatiquement ajouté dans `logs/freshpay-payout-support.log`. Il contient la réponse HTTP brute, la réponse JSON décodée, l'endpoint et la requête, avec les secrets, signatures et numéros sensibles masqués.
+
 Le dump `u577654037_ohnous(20).sql` ne contient pas toutes les colonnes utilisées par le module ni les tables de suivi. Exécuter une seule fois dans phpMyAdmin si elles sont absentes :
 
 ```sql

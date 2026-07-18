@@ -280,10 +280,11 @@ class FreshPayService
         $this->writePayoutAudit($id, 'payout_created', $admin, $payload);
         try {
             $this->logPayoutDebug('initiate_request', ['payout_id' => $id, 'request' => $payload]);
-            $response = $this->sendApiRequest('initiate', $payload);
+            $response = $this->sendApiRequest('initiate', $payload, true);
             $this->logPayoutDebug('initiate_response', ['payout_id' => $id, 'response' => $response]);
         } catch (Throwable $e) {
             $this->logPayoutDebug('php_error', ['payout_id' => $id, 'stage' => 'initiate', 'error' => $e->getMessage()]);
+            $this->logPayoutSupportError('initiate', $reference, $payload, ['_http_status' => 0, '_transport_error' => $e->getMessage()]);
             $this->payoutModel->updateById($id, ['status' => 'failed', 'status_description' => 'FreshPay est temporairement indisponible.', 'error_detail' => $e->getMessage()]);
             $this->payoutModel->addStatusEvent($id, 'failed', $e->getMessage(), 'api');
             throw $e;
@@ -294,6 +295,7 @@ class FreshPayService
             $normalized['result'] = 'error';
             if (!$this->isFinalStatus($normalized['trans_status'])) $normalized['trans_status'] = 'failed';
             $normalized['frontend_message'] = $normalized['description'];
+            $this->logPayoutSupportError('initiate', $reference, $payload, $response);
         }
         $this->payoutModel->updateById($id, [
             'status' => $normalized['trans_status'], 'status_description' => $normalized['description'],
@@ -331,15 +333,19 @@ class FreshPayService
         ];
         $this->logPayoutDebug('status_request', ['payout_id' => (int)$payout['id'], 'request' => $payload]);
         try {
-            $response = $this->sendApiRequest('status', $payload);
+            $response = $this->sendApiRequest('status', $payload, true);
         } catch (Throwable $e) {
             $this->logPayoutDebug('php_error', ['payout_id' => (int)$payout['id'], 'stage' => 'status', 'error' => $e->getMessage()]);
+            $this->logPayoutSupportError('status', $payout['reference'], $payload, ['_http_status' => 0, '_transport_error' => $e->getMessage()]);
             throw $e;
         }
         $this->logPayoutDebug('status_response', ['payout_id' => (int)$payout['id'], 'response' => $response]);
         $normalized = $this->normalizeGatewayResponse($response, ['source' => 'verify', 'default_description' => 'Statut PayOut synchronisé.']);
         $normalized['description'] = $this->resolvePayoutDescription($normalized['description'], $response);
-        if ($this->isPayoutErrorResponse($response)) $normalized['result'] = 'error';
+        if ($this->isPayoutErrorResponse($response)) {
+            $normalized['result'] = 'error';
+            $this->logPayoutSupportError('status', $payout['reference'], $payload, $response);
+        }
         $this->payoutModel->updateById((int)$payout['id'], [
             'status' => $normalized['trans_status'], 'status_description' => $normalized['description'],
             'freshpay_reference' => $normalized['provider_reference'] ?: $payout['freshpay_reference'],
@@ -691,7 +697,7 @@ class FreshPayService
         );
     }
 
-    private function sendApiRequest($type, array $payload)
+    private function sendApiRequest($type, array $payload, $captureRawBody = false)
     {
         $mode = $this->config['freshpay']['mode'] === 'production' ? 'production' : 'test';
         $url = trim((string)($this->config['freshpay']['endpoints'][$mode][$type] ?? ''));
@@ -734,6 +740,7 @@ class FreshPayService
         $decoded = json_decode($responseBody, true);
         if (is_array($decoded)) {
             $decoded['_http_status'] = $statusCode;
+            if ($captureRawBody) $decoded['_raw_body'] = $responseBody;
             if ($statusCode >= 400 && empty($decoded['Status']) && empty($decoded['status'])) {
                 $decoded['Status'] = 'error';
             }
@@ -843,6 +850,24 @@ class FreshPayService
         if (empty($this->config['freshpay']['payout']['debug'])) return;
         $entry = ['logged_at' => date('c'), 'stage' => (string)$stage, 'data' => $this->sanitizeDebugData($data)];
         error_log(json_encode($entry, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL, 3, ROOT . 'logs/freshpay-payout-debug.log');
+    }
+
+    private function logPayoutSupportError($stage, $reference, array $request, array $response)
+    {
+        $mode = $this->config['freshpay']['mode'] === 'production' ? 'production' : 'test';
+        $endpointType = $stage === 'status' ? 'status' : 'initiate';
+        $entry = [
+            'logged_at' => date('c'),
+            'environment' => $mode,
+            'stage' => (string)$stage,
+            'endpoint' => (string)($this->config['freshpay']['endpoints'][$mode][$endpointType] ?? ''),
+            'ohnous_reference' => (string)$reference,
+            'http_status' => (int)($response['_http_status'] ?? 0),
+            'request' => $this->sanitizeDebugData($request),
+            'raw_freshpay_response' => (string)($response['_raw_body'] ?? json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)),
+            'decoded_freshpay_response' => $response,
+        ];
+        error_log(json_encode($entry, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) . PHP_EOL . PHP_EOL, 3, ROOT . 'logs/freshpay-payout-support.log');
     }
 
     private function sanitizeDebugData($data)
