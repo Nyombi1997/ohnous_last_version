@@ -856,3 +856,5 @@
         padding: 11px 12px;
     }
 }
+@media (max-width: 991px){.payout-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width: 575px){.payout-stats-grid{grid-template-columns:1fr}.payout-stats-chart{grid-column:auto}}

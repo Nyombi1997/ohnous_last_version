@@ -15,7 +15,7 @@ return [
         'customer_profile' => [
             // Profil figé validé par FreshPay : ne pas le remplacer par les champs saisis au checkout.
             'firstname' => 'Edo',
-            'lastname' => 'systeme',
+            'lastname' => 'Systeme',
             'email' => 'edosysteme@gmail.com',
         ],
 
@@ -65,9 +65,9 @@ return [
             'shared_initiate_endpoint' => true,
         ],
         'payout' => [
-            'action' => getenv('FRESHPAY_PAYOUT_ACTION') ?: 'credit',
+            'action' => 'credit',
             'callback_url' => getenv('FRESHPAY_PAYOUT_CALLBACK_URL') ?: 'https://ohnous.store/payments/freshpay/callback',
-            'debug' => getenv('FRESHPAY_PAYOUT_DEBUG') === '1',
+            'debug' => getenv('FRESHPAY_PAYOUT_DEBUG') !== '0',
         ],
     ],
 ];

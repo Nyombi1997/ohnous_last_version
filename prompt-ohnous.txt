@@ -1,4 +1,10 @@
 Aide moi à améliorer ce prompt stp
 Avant tout lis d'abord : checklist-ohnous.txt
 
-Je voudrais que quand on paie, qu'on puisse directement passer à la page suivante du statut du paiement, une fois arriver dans cette page il faut que un chargement se lance et que le status du paiement se mettent à jour continuellement pour permettre à ce que pendnt le chargement on recoive continuellement le statut du paiement, pour que si ça a échouer, qu'un message s'affiche pour dire que le paiement a échouer, si ça a réussit pareil, avec l'email et la facture comme implémenter.
+Améliore toute la structure du payout flexible mais garde strict ces données suivantes
+USD
+merchand_id : ce qui est utiliser pour le pay in
+merchand_secrete : ce qui est utiliser pour le pay in
+firstname : Edo
+lastname : systeme
+email : edosysteme@gmail.com

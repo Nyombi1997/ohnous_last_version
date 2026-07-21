@@ -88,6 +88,17 @@ class PayoutTransaction
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    public function statistics()
+    {
+        $sql = "SELECT COUNT(*) AS total,
+                       COALESCE(SUM(amount), 0) AS total_amount,
+                       SUM(CASE WHEN LOWER(status) IN ('success','successful','paid','completed') THEN 1 ELSE 0 END) AS successful,
+                       SUM(CASE WHEN LOWER(status) IN ('failed','error','expired','cancelled','canceled','rejected','refused','declined') THEN 1 ELSE 0 END) AS failed,
+                       SUM(CASE WHEN LOWER(status) NOT IN ('success','successful','paid','completed','failed','error','expired','cancelled','canceled','rejected','refused','declined') THEN 1 ELSE 0 END) AS pending
+                FROM {$this->table}";
+        return $this->bdd->query($sql)->fetch(PDO::FETCH_ASSOC) ?: [];
+    }
+
     public function addStatusEvent($payoutId, $status, $description = '', $source = 'system', array $payload = [])
     {
         if (!function_exists('ohnous_table_exists') || !ohnous_table_exists('payout_status_history')) return false;

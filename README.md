@@ -291,11 +291,11 @@ Si une colonne existe déjà, ne relance pas sa ligne `ADD COLUMN`.
 - Formulaire PayOut `/admin-payout`, suivi temps réel `/admin-payout-suivi?reference={reference}`, historique `/admin-payouts` et détail `/admin-payout-details?id={id}`.
 - Les numéros PayOut sont validés par `intl-tel-input` puis enregistrés au format international E.164.
 - Les tables `payout_transactions`, `payout_status_history`, `payout_audit_log` et la permission `admins.can_payout` doivent être créées avec le SQL ci-dessus (ou le bloc de `update_bdd.txt`).
-- L'action PayOut FreshPay vaut `credit` par défaut et peut être remplacée avec `FRESHPAY_PAYOUT_ACTION` si le contrat FreshPay de production exige une autre valeur.
+- L'action PayOut FreshPay est fixée à `credit`, la devise à `USD` et le profil API à `Edo Systeme / edosysteme@gmail.com`.
 
 ## Correctif suivi PayOut FreshPay
 
-Le Check Status FreshPay attend dans `reference` le `Transaction_id` (`PD...`) retourné à l'initiation, et non la référence interne OHNOUS (`PO-...`). Le numéro reste enregistré en E.164 mais est envoyé à FreshPay sans le signe `+`. Le PayOut transmet `https://ohnous.store/payments/freshpay/callback`, surchargeable avec `FRESHPAY_PAYOUT_CALLBACK_URL`. Active temporairement le journal et les payloads administrateur avec `FRESHPAY_PAYOUT_DEBUG=1`; le fichier produit est `logs/freshpay-payout-debug.log` et les secrets y sont masqués.
+Le Check Status FreshPay attend dans `reference` le `Transaction_id` (`PD...`) retourné à l'initiation, et non la référence interne OHNOUS (`PAYOUT-...`). Le numéro reste enregistré en E.164 mais est envoyé à FreshPay sans le signe `+`. Le PayOut transmet `https://ohnous.store/payments/freshpay/callback`, surchargeable avec `FRESHPAY_PAYOUT_CALLBACK_URL`. Le journal temporaire `logs/freshpay-payout-debug.log` est actif par défaut et masque les secrets ; définir `FRESHPAY_PAYOUT_DEBUG=0` après validation en production.
 
 Lorsqu'une erreur PayOut est retournée par FreshPay, un rapport partageable est automatiquement ajouté dans `logs/freshpay-payout-support.log`. Il contient la réponse HTTP brute, la réponse JSON décodée, l'endpoint et la requête, avec les secrets, signatures et numéros sensibles masqués.
 

@@ -226,7 +226,7 @@ class FreshPayService
         $phone = preg_replace('/[^0-9+]/', '', trim((string)($request['phone_number'] ?? '')));
         $operator = strtolower(trim((string)($request['operator'] ?? '')));
         $amount = round((float)($request['amount'] ?? 0), 2);
-        $currency = strtoupper(trim((string)($request['currency'] ?? $this->config['currency'])));
+        $currency = 'USD';
         $reason = trim((string)($request['reason'] ?? ''));
         $beneficiary = trim((string)($request['beneficiary'] ?? ''));
         $reference = trim((string)($request['reference'] ?? ''));
@@ -237,23 +237,22 @@ class FreshPayService
         if (!$this->isSupportedMobileMoneyOperator($operator)) {
             return ['result' => 'error', 'msg' => 'Opérateur Mobile Money non pris en charge.'];
         }
-        if (!in_array($currency, ['CDF', 'USD'], true)) {
-            return ['result' => 'error', 'msg' => 'La devise doit être CDF ou USD.'];
-        }
         if ($amount <= 0 || $reason === '' || $beneficiary === '') {
             return ['result' => 'error', 'msg' => 'Le bénéficiaire, le montant et le motif sont obligatoires.'];
         }
         if ($reference === '') {
-            $reference = 'PO-' . date('YmdHis') . '-' . mt_rand(100, 999);
+            do {
+                $reference = 'PAYOUT-' . date('Ymd-His') . '-' . strtoupper(substr(bin2hex(random_bytes(3)), 0, 5));
+            } while ($this->payoutModel->findByReference($reference));
+        }
+        if (!preg_match('/^[A-Za-z0-9._-]{4,120}$/', $reference)) {
+            return ['result' => 'error', 'msg' => 'La référence doit contenir entre 4 et 120 caractères : lettres, chiffres, point, tiret ou underscore.'];
         }
         if ($this->payoutModel->findByReference($reference)) {
             return ['result' => 'error', 'msg' => 'Cette référence existe déjà.'];
         }
 
         $profile = $this->resolveGatewayCustomerProfile();
-        $nameParts = preg_split('/\s+/', $beneficiary, 2);
-        $firstname = trim((string)($nameParts[0] ?? $beneficiary));
-        $lastname = trim((string)($nameParts[1] ?? $profile['lastname']));
         $admin = ohnous_get_current_account();
         $payload = [
             'merchant_id' => (string)$this->config['freshpay']['merchant_id'],
@@ -262,8 +261,8 @@ class FreshPayService
             'currency' => $currency,
             'action' => (string)($this->config['freshpay']['payout']['action'] ?? 'credit'),
             'customer_number' => ltrim($phone, '+'),
-            'firstname' => $firstname,
-            'lastname' => $lastname,
+            'firstname' => $profile['firstname'],
+            'lastname' => $profile['lastname'],
             'email' => $profile['email'],
             'reference' => $reference,
             'method' => $this->resolveFreshPayMethod('mobile_money', $operator),
@@ -664,7 +663,7 @@ class FreshPayService
 
         return [
             'firstname' => trim((string)($profile['firstname'] ?? 'Edo')),
-            'lastname' => trim((string)($profile['lastname'] ?? 'systeme')),
+            'lastname' => trim((string)($profile['lastname'] ?? 'Systeme')),
             'email' => trim((string)($profile['email'] ?? 'edosysteme@gmail.com')),
         ];
     }
@@ -685,9 +684,9 @@ class FreshPayService
             'http_status' => (int)$httpStatus,
             'request_uri' => $_SERVER['REQUEST_URI'] ?? '',
             'remote_addr' => $_SERVER['REMOTE_ADDR'] ?? '',
-            'raw_body' => $rawBody,
-            'decoded_body' => $decodedBody,
-            'context' => $context,
+            'raw_body' => is_array($decodedBody) ? null : mb_substr((string)$rawBody, 0, 2000),
+            'decoded_body' => is_array($decodedBody) ? $this->sanitizeDebugData($decodedBody) : null,
+            'context' => $this->sanitizeDebugData($context),
         ];
 
         error_log(

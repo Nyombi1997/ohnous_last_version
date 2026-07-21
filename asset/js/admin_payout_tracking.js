@@ -6,7 +6,11 @@
     function poll() {
         attempts++;
         $.get('/payout-verifier', {reference: reference}, function (data) {
-            if (data.result !== 'ok') return;
+            if (data.result !== 'ok') {
+                $('#payout_tracking_message').text(data.msg || data.description || 'Vérification FreshPay impossible.');
+                if (data.final) clearInterval(timer);
+                return;
+            }
             var status = String(data.status || 'pending').toLowerCase();
             $('#payout_tracking_status').text(labels[status] || status);
             $('#payout_tracking_message').text(data.description || 'Traitement en cours.');

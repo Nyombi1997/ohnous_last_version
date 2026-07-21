@@ -163,7 +163,7 @@ class PaymentController
             echo json_encode((new FreshPayService($bdd))->verifyPayoutStatus($reference), JSON_UNESCAPED_UNICODE);
         } catch (Throwable $e) {
             http_response_code(500);
-            echo json_encode(['result' => 'error', 'msg' => 'Vérification impossible.'], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['result' => 'error', 'msg' => trim($e->getMessage()) ?: 'Vérification FreshPay impossible.'], JSON_UNESCAPED_UNICODE);
         }
         exit();
     }
