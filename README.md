@@ -1,5 +1,124 @@
 # Checkout, FreshPay, filtres, formulaires et multi-admin
 
+## PayOut Moko — installation du 7 septembre 2026
+
+Cette section remplace les anciennes instructions FreshPay **pour les nouveaux PayOut uniquement**. Le checkout reste FreshPay et les anciens PayOut restent consultables et vérifiables avec leur prestataire d'origine.
+
+Intégration fondée sur `Moko_Payout_API_Guide_Marchand.pdf`, version 1.0, juin 2026, 23 pages, et sur les tables du fichier `u577654037_ohnous.sql` fourni. Le PDF est la référence du protocole ; ses exemples ne sont pas des identifiants de votre compte. Aucune clé, aucun appel réel ni aucun versement ne sont fournis par l'installation.
+
+### 1. Préparer le compte Moko
+
+Demander au support Moko les éléments suivants pour votre compte marchand actif :
+
+- `public_key` et `secret_key` de l'API **Payout** (distinctes des anciens identifiants FreshPay du checkout) ;
+- le secret de signature des webhooks `webhook_secret` ;
+- l'activation des opérateurs/devises nécessaires, les plafonds et les modalités d'approvisionnement ;
+- si disponible, un environnement de test avec ses propres clés et son URL. Le guide ne fournit qu'une URL : `https://payouts.gofreshpay.com`. Ne pas supposer qu'elle est une sandbox.
+
+Support indiqué dans le document : `henock.barakael@mokoafrika.com`. Console marchand : `https://cd.merchants.gofreshpay.com`. La collection Postman et le schéma OpenAPI sont à demander au support ; ils ne figuraient pas parmi les pièces jointes. En particulier, faire confirmer le format complet des réponses bénéficiaire avant mise en service : le client exige les coordonnées et l'identifiant marchand retournés pour vérifier un rattachement.
+
+### 2. Mettre à jour la base dans phpMyAdmin
+
+Sauvegarder la base du site, sélectionner cette base dans phpMyAdmin, ouvrir **Importer**, choisir `data base/20260907_001_moko_payout.sql`, conserver le format **SQL**, puis cliquer sur **Importer**. **Ne pas réimporter le dump complet sur une base contenant déjà des données.** Ce SQL est prévu pour MariaDB, comme le dump joint ; il a été exécuté deux fois sur une base de test reconstruite à partir de ses trois tables payout.
+
+Les prochaines migrations seront livrées dans le dossier `data base/`, sous la forme `AAAAMMJJ_NNN_description.sql`. Importer les fichiers nécessaires dans l'ordre de leur nom en respectant les prérequis indiqués en commentaire.
+
+Les anciennes lignes sont identifiées comme `freshpay`. Les nouvelles lignes Moko stockent séparément l'identifiant bénéficiaire et le payout ID, sans réutiliser une colonne FreshPay pour ces identifiants.
+
+Migration à importer : [20260907_001_moko_payout.sql](<data base/20260907_001_moko_payout.sql>).
+
+Les tables `payout_transactions`, `payout_status_history`, `payout_audit_log` et le champ `admins.can_payout` existent déjà dans la base jointe. La migration les complète sans importer de comptes ni de données clients. Le droit d'accès reste celui du projet : administrateur connecté et `can_payout = 1`. Pour autoriser un compte, modifier uniquement la cellule `can_payout` de cet administrateur dans phpMyAdmin après avoir vérifié son ID.
+
+### 3. Configurer PHP sur l'hébergement
+
+PHP 8.0 ou supérieur, extensions PDO MySQL et cURL, certificats CA valides, accès HTTPS sortant et horloge synchronisée sont nécessaires. Le code lit `getenv()` : **un fichier `.env` seul n'est pas chargé par ce projet**. Définir ces variables dans le panneau d'hébergement, le VirtualHost ou l'environnement PHP ; elles doivent aussi être accessibles au PHP CLI de la tâche cron.
+
+```text
+MOKO_PAYOUT_ENABLED=0
+MOKO_BASE_URL=https://payouts.gofreshpay.com
+MOKO_PUBLIC_KEY=VOTRE_CLE_PUBLIQUE_PAYOUT
+MOKO_SECRET_KEY=VOTRE_CLE_SECRETE_PAYOUT
+MOKO_WEBHOOK_SECRET=VOTRE_SECRET_WEBHOOK
+MOKO_CALLBACK_URL=https://ohnous.store/payout-callback-moko
+```
+
+Adapter le domaine au site déployé. Déclarer cette URL HTTPS chez Moko également. Le endpoint reçoit des POST JSON signés, sans connexion administrateur ni CSRF navigateur. La vérification HMAC est obligatoire. Une réponse 401 indique une signature invalide ; 503 indique qu'il faut réessayer, notamment si la base n'est pas accessible.
+
+Ne pas commiter les valeurs des clés. La rotation décrite dans le guide offre 24 h de coexistence : demander les nouvelles clés au support, modifier l'environnement, redémarrer PHP si nécessaire. Le code n'enregistre pas les clés ni les en-têtes d'authentification dans les historiques.
+
+### 4. Vérifier la connexion puis activer
+
+Depuis le terminal du serveur, à la racine du projet :
+
+```bash
+php scripts/moko.php diagnostic
+```
+
+Cette commande effectue seulement `GET /v1/health` et `GET /v1/balance`. Vérifier les codes HTTP 200, le `merchant_code` attendu et le solde par opérateur/devise. Elle fonctionne même avec `MOKO_PAYOUT_ENABLED=0`. Elle ne déclenche aucun payout. Les identifiants DB sont ceux de `model/bdd.php`, qui n'a pas été modifié.
+
+Après installation et vérification des paramètres, définir `MOKO_PAYOUT_ENABLED=1`. Le module ne bascule jamais automatiquement sur FreshPay si Moko échoue.
+
+### 5. Effectuer un versement
+
+1. Se connecter avec l'administrateur autorisé et ouvrir `/admin-payout`.
+2. Renseigner le nom exact du bénéficiaire et son identifiant stable, par exemple `vendor_42` pour la boutique 42. Réutiliser cet identifiant pour tous ses versements.
+3. Renseigner son numéro RDC `+243` suivi de 9 chiffres et son opérateur : M-Pesa, Airtel, Orange ou Afrimoney.
+4. La référence KYC est facultative : utiliser la référence interne d'un dossier, pas le numéro brut d'une pièce d'identité.
+5. Choisir CDF ou USD et saisir le montant. Aucune conversion ni majoration du checkout n'est appliquée au payout.
+6. Saisir une référence **propre à cette intention de versement**, par exemple `reversement-commande-123-vendeur-42`. Conserver la même référence après une erreur ou une coupure réseau. Elle est normalisée en minuscules et n'est jamais recyclée localement.
+7. Renseigner le motif et cliquer sur « Effectuer le PayOut ». Cette action peut transférer de l'argent réel lorsque les clés sont actives.
+
+Le premier envoi enregistre le bénéficiaire chez Moko et conserve son `recipient_id`. Les suivants relisent son état chez Moko avant un nouveau versement. Un bénéficiaire `PENDING_KYC`, archivé ou en tout autre état que `ACTIVE` ne reçoit pas de payout par ce module.
+
+Si le bénéficiaire existe déjà chez Moko mais que son ID n'a pas été enregistré localement (par exemple après une coupure), retrouver le `rec_...` dans la console ou la liste paginée `GET /v1/recipients`, puis le saisir dans « ID Moko existant ». Le serveur vérifie ses coordonnées et son `merchant_recipient_id` avant de le rattacher. Les modifications sensibles du bénéficiaire se traitent chez Moko et peuvent entraîner le délai de sécurité de 24 h décrit dans le guide.
+
+Le guide propose 100 CDF comme exemple de test : faire ce premier versement uniquement vers un bénéficiaire contrôlé, avec un solde disponible et en sachant qu'il peut être réel. Le site ne comporte pas de bouton simulant un transfert Moko.
+
+### 6. Suivi et récupération automatique
+
+L'historique est accessible sur `/admin-payouts`, puis via le détail ou `/admin-payout-suivi?reference=VOTRE_REFERENCE`. Les listes et exports conservent chaque devise. L'acceptation HTTP 202 ne signifie pas que le bénéficiaire est crédité.
+
+| Statut Moko | Sens |
+| --- | --- |
+| RESERVED | Fonds réservés, attente |
+| HOLD_REVIEW | Validation du backoffice Moko nécessaire |
+| DISPATCHED / WAITING_CALLBACK | Traitement en cours |
+| COMPLETED | Bénéficiaire crédité |
+| FAILED / EXPIRED | Échec ou expiration ; fonds restitués selon le guide |
+| RELEASED | Annulation par le backoffice Moko |
+
+Le statut Moko exact est conservé dans `moko_status`, la réponse API et la chronologie. Les états internes « Résultat incertain » et « À rapprocher » ne prouvent ni un échec ni un crédit.
+
+Configurer une tâche cron toutes les minutes, avec les mêmes variables Moko que PHP web. Exemple à adapter au chemin réel et au binaire PHP de l'hébergeur :
+
+```cron
+* * * * * /usr/bin/php /chemin/du/site/scripts/moko.php reconcile
+```
+
+Le job traite au plus 50 dossiers par passage, vérifie les payouts connus et reprend les envois incertains avec le **payload enregistré** et la **même référence**. Les lectures du navigateur ne déclenchent jamais de nouvel envoi. Les reprises réseau sont espacées (2 puis 4 minutes), avec trois tentatives au total. Les erreurs 4xx, sauf 429, ne sont pas retentées automatiquement. Après une tentative antérieure incertaine, un refus exige un rapprochement.
+
+Le guide mentionne une possible réutilisation de référence après 24 h : par prudence le module bloque toute reprise après 23 h et conserve la référence indéfiniment en base. Il ne faut jamais supprimer une ligne ni changer sa référence pour « forcer » une reprise. Après trois tentatives ou en état « À rapprocher », rechercher l'opération chez Moko avec la référence marchand. Si elle existe, rattacher son ID, sans nouveau transfert :
+
+```bash
+php scripts/moko.php recover reversement-commande-123-vendeur-42 PAY-IDENTIFIANT_RETOURNE_PAR_MOKO
+```
+
+Le rattachement exige que l'API confirme référence, bénéficiaire, devise et montant. Si Moko confirme l'absence de transfert, décider manuellement de la suite avec le support ; il n'existe pas de reprise automatique illimitée.
+
+Les webhooks sont vérifiés sur leurs octets bruts, conservés durablement et dédupliqués. Un webhook reçu avant la réponse de création est conservé puis traité après le rattachement du payout. Les états terminaux ne régressent pas si un ancien événement arrive ensuite. Le guide ne définit pas de fenêtre de fraîcheur des webhooks : aucune limite arbitraire de cinq minutes n'est appliquée, pour permettre ses livraisons retardées. Garder une politique de conservation adaptée pour l'audit et les événements ; ne pas supprimer la référence d'idempotence.
+
+### 7. Tests et limites de validation
+
+```bash
+php tests/moko_payout_test.php
+```
+
+Les tests de signature et de transitions ne contactent pas Moko. Pour les tests DB, définir `MOKO_TEST_DSN=mysql:host=127.0.0.1;port=3307;charset=utf8mb4`, `MOKO_TEST_USER`, `MOKO_TEST_PASSWORD` et éventuellement `MOKO_TEST_DUMP` vers le dump fourni. Le script crée et supprime uniquement une base temporaire nommée `ohnous_moko_test_...` ; il nécessite les droits correspondants sur un serveur local.
+
+Tests réalisés : migration rejouable sur les tables jointes, signature HMAC et nonce UUID v4, tri des paramètres GET, création bénéficiaire, unicité et conflit de référence, timeout, backoff et borne des tentatives, limite d'ancienneté, refus 4xx, webhook anticipé/dupliqué/falsifié, non-régression des états et recherche SQL avec préparations natives. Tous les appels Moko de cette suite sont simulés.
+
+La base du site n'a pas été migrée et aucun test réel chez Moko n'a été effectué. Il reste à appliquer le SQL, installer les clés, vérifier la réponse réelle des endpoints, configurer le cron et le callback HTTPS, puis valider un premier versement contrôlé. Les métriques et alertes externes évoquées par le guide ne sont pas installées par ce module ; surveiller l'historique, les sorties cron et les dossiers à rapprocher.
+
 ## Correctifs FreshPay production du 18 avril 2026
 
 - Mode FreshPay par défaut passé en `production`.

@@ -60,8 +60,14 @@ BASE DE DONNÉES :
 * Ne jamais supposer l’existence d’une table.
 * Ne jamais supposer l’existence d’une colonne.
 * Vérifier avant utilisation.
-* Si une modification SQL est nécessaire, l’ajouter dans README.
-* Le SQL doit être directement exécutable dans phpMyAdmin.
+* Toute création ou modification SQL doit être livrée dans un fichier `.sql` du dossier `data base/` à la racine du projet.
+* Nommer les fichiers dans l'ordre d'application : `AAAAMMJJ_NNN_description.sql` (exemple : `20260907_001_moko_payout.sql`).
+* Les fichiers doivent être directement importables dans phpMyAdmin, sans copier de SQL depuis le README ni modifier le script manuellement.
+* Vérifier la structure et la version MySQL/MariaDB de la base fournie avant d'écrire une migration ; privilégier des migrations rejouables lorsque le moteur le permet.
+* Indiquer en commentaires SQL l'objectif, les prérequis, la compatibilité et l'ordre d'import si plusieurs fichiers dépendent les uns des autres.
+* Ne pas imposer un nom de base avec `CREATE DATABASE` ou `USE` : l'utilisateur sélectionne la base cible dans phpMyAdmin.
+* Le README doit expliquer l'import et contenir des liens vers les fichiers `.sql` ; ne pas y dupliquer le SQL des nouvelles migrations.
+* Ne pas inclure de secrets ni de données personnelles dans les migrations. Ne pas importer une base complète pour une simple mise à jour.
 * Ne pas supprimer ni altérer les données existantes.
 
 SESSIONS ET AUTHENTIFICATION :
@@ -114,7 +120,7 @@ DESIGN UX :
 
 DOCUMENTATION :
 
-* Toutes les explications techniques, choix d'architecture, modifications importantes, dépendances installées, commandes à exécuter, migrations SQL et informations destinées au développeur doivent être ajoutées dans le README.
+* Toutes les explications techniques, choix d'architecture, modifications importantes, dépendances installées, commandes à exécuter et informations destinées au développeur doivent être ajoutées dans le README. Les migrations SQL doivent être livrées dans `data base/*.sql`, avec leurs liens, prérequis et instructions d'import dans le README.
 * Le frontend doit rester le plus épuré possible.
 * Ne pas afficher de notes techniques, de textes destinés au développeur ou d'explications inutiles dans l'interface utilisateur.
 * Si une fonctionnalité nécessite une explication détaillée, la documenter dans le README plutôt que dans l'application.
@@ -419,7 +425,7 @@ IMPORTANT :
 Fais uniquement ce qui est demandé.
 Ne modifie rien d’autre.
 Ne crée aucune fonctionnalité non demandée.
-Si une modification SQL est nécessaire, ajoute-la uniquement dans README avec le SQL prêt à coller dans phpMyAdmin.
+Si une modification SQL est nécessaire, créer un fichier `.sql` dans `data base/`, directement importable dans phpMyAdmin, et documenter son import dans le README.
 
 
 
@@ -549,7 +555,7 @@ Retourner une réponse neutre afin de ne pas aider le robot à contourner la pro
 
 Si une table de journalisation est nécessaire :
 
-* ajouter le SQL dans `README` ;
+* créer le fichier `.sql` dans `data base/` et documenter son import dans `README` ;
 * fournir du SQL directement exécutable dans phpMyAdmin ;
 * prévoir une politique de nettoyage des anciennes entrées ;
 * ne pas conserver indéfiniment les journaux inutiles.

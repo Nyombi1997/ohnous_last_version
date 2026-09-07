@@ -436,7 +436,7 @@ class FreshPayService
         }
 
         $payout = $this->payoutModel ? $this->payoutModel->findByAnyReference($reference) : null;
-        if ($payout) {
+        if ($payout && ($payout['provider'] ?? 'freshpay') === 'freshpay') {
             $normalized = $this->normalizeGatewayResponse($data, ['source' => 'callback', 'default_description' => 'Statut PayOut reçu par callback.']);
             $this->payoutModel->updateById((int)$payout['id'], [
                 'status' => $normalized['trans_status'],

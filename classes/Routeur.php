@@ -67,6 +67,7 @@
                             "paiement-verifier" => ["controller" => 'PaymentController', "method" => 'verifyPaymentStatus'],
                             "paiement-retour" => ["controller" => 'PaymentController', "method" => 'showReturnPage'],
                             "payout-demarrer" => ["controller" => 'PaymentController', "method" => 'startPayout'],
+                            "payout-callback-moko" => ["controller" => 'PaymentController', "method" => 'handleMokoCallback'],
                             "payout-verifier" => ["controller" => 'PaymentController', "method" => 'verifyPayoutStatus'],
                             "payout-export" => ["controller" => 'PaymentController', "method" => 'exportPayouts'],
 

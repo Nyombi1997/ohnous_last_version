@@ -55,8 +55,13 @@ class PayoutTransaction
         }
         $q = trim((string)($filters['q'] ?? ''));
         if ($q !== '') {
-            $where[] = '(reference LIKE :q OR beneficiary LIKE :q OR phone_number LIKE :q OR freshpay_reference LIKE :q)';
-            $params[':q'] = '%' . $q . '%';
+            $searchColumns = ['reference', 'beneficiary', 'phone_number', 'freshpay_reference', 'transaction_id'];
+            $parts = [];
+            foreach ($searchColumns as $index => $column) {
+                $parts[] = $column . ' LIKE :q' . $index;
+                $params[':q' . $index] = '%' . $q . '%';
+            }
+            $where[] = '(' . implode(' OR ', $parts) . ')';
         }
         if (!empty($filters['date_from'])) {
             $where[] = 'DATE(created_at) >= :date_from';
@@ -93,8 +98,8 @@ class PayoutTransaction
         $sql = "SELECT COUNT(*) AS total,
                        COALESCE(SUM(amount), 0) AS total_amount,
                        SUM(CASE WHEN LOWER(status) IN ('success','successful','paid','completed') THEN 1 ELSE 0 END) AS successful,
-                       SUM(CASE WHEN LOWER(status) IN ('failed','error','expired','cancelled','canceled','rejected','refused','declined') THEN 1 ELSE 0 END) AS failed,
-                       SUM(CASE WHEN LOWER(status) NOT IN ('success','successful','paid','completed','failed','error','expired','cancelled','canceled','rejected','refused','declined') THEN 1 ELSE 0 END) AS pending
+                       SUM(CASE WHEN LOWER(status) IN ('failed','error','expired','cancelled','canceled','rejected','refused','declined','send_rejected') THEN 1 ELSE 0 END) AS failed,
+                       SUM(CASE WHEN LOWER(status) NOT IN ('success','successful','paid','completed','failed','error','expired','cancelled','canceled','rejected','refused','declined','send_rejected') THEN 1 ELSE 0 END) AS pending
                 FROM {$this->table}";
         return $this->bdd->query($sql)->fetch(PDO::FETCH_ASSOC) ?: [];
     }

@@ -12,6 +12,8 @@ class PaymentController
         include_once MODEL . 'PayoutTransaction.php';
         include_once SERVICE . 'OrderAmountService.php';
         include_once SERVICE . 'FreshPayService.php';
+        include_once SERVICE . 'MokoClient.php';
+        include_once SERVICE . 'MokoPayoutService.php';
 
         return $GLOBALS['bdd'] ?? null;
     }
@@ -134,6 +136,12 @@ class PaymentController
         header('Content-Type: application/json; charset=utf-8');
         try {
             ohnous_require_payout_permission(true);
+            if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+                http_response_code(405);
+                header('Allow: POST');
+                echo json_encode(['result'=>'error','msg'=>'Méthode POST requise.']);
+                exit();
+            }
             if (!ohnous_validate_csrf($_POST['csrf_token'] ?? '')) {
                 http_response_code(419);
                 echo json_encode(['result' => 'error', 'msg' => 'Session expirée. Rechargez la page puis réessayez.'], JSON_UNESCAPED_UNICODE);
@@ -142,10 +150,11 @@ class PaymentController
             if (!$bdd instanceof PDO) {
                 throw new RuntimeException('Connexion PDO introuvable.');
             }
-            echo json_encode((new FreshPayService($bdd))->initiatePayout($_POST), JSON_UNESCAPED_UNICODE);
+            echo json_encode((new MokoPayoutService($bdd))->initiatePayout($_POST), JSON_UNESCAPED_UNICODE);
         } catch (Throwable $e) {
-            http_response_code(500);
-            echo json_encode($this->buildPublicErrorPayload('FreshPay startPayout', $e), JSON_UNESCAPED_UNICODE);
+            http_response_code($e instanceof InvalidArgumentException ? 422 : 503);
+            error_log('Moko startPayout: '.get_class($e));
+            echo json_encode(['result'=>'error','msg'=>$e instanceof PDOException ? 'Base payout indisponible. Vérifiez la migration SQL.' : $e->getMessage()], JSON_UNESCAPED_UNICODE);
         }
         exit();
     }
@@ -160,10 +169,34 @@ class PaymentController
                 throw new RuntimeException('Connexion PDO introuvable.');
             }
             $reference = trim((string)($_GET['reference'] ?? $_POST['reference'] ?? ''));
-            echo json_encode((new FreshPayService($bdd))->verifyPayoutStatus($reference), JSON_UNESCAPED_UNICODE);
+            $row = (new PayoutTransaction($bdd))->findByReference($reference);
+            $service = ($row['provider'] ?? 'freshpay') === 'moko' ? new MokoPayoutService($bdd) : new FreshPayService($bdd);
+            echo json_encode($service->verifyPayoutStatus($reference), JSON_UNESCAPED_UNICODE);
         } catch (Throwable $e) {
             http_response_code(500);
             echo json_encode(['result' => 'error', 'msg' => trim($e->getMessage()) ?: 'Vérification FreshPay impossible.'], JSON_UNESCAPED_UNICODE);
+        }
+        exit();
+    }
+
+    public function handleMokoCallback()
+    {
+        $bdd = $this->bootDependencies();
+        header('Content-Type: application/json; charset=utf-8');
+        if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+            http_response_code(405); header('Allow: POST'); echo '{"result":"error"}'; exit();
+        }
+        try {
+            $raw = file_get_contents('php://input', false, null, 0, 262145);
+            if ($raw === false || strlen($raw) > 262144) throw new InvalidArgumentException('Payload invalide.');
+            echo json_encode((new MokoPayoutService($bdd))->handleWebhook($raw, $_SERVER['HTTP_X_MOKO_WEBHOOK_SIGNATURE'] ?? ''));
+        } catch (UnexpectedValueException $e) {
+            http_response_code(401); echo '{"result":"error"}';
+        } catch (InvalidArgumentException | JsonException $e) {
+            http_response_code(400); echo '{"result":"error"}';
+        } catch (Throwable $e) {
+            error_log('Moko webhook persistence failed: '.get_class($e));
+            http_response_code(503); echo '{"result":"error"}';
         }
         exit();
     }
@@ -191,13 +224,13 @@ class PaymentController
         header('Content-Disposition: attachment; filename="' . $filename . '"');
         echo "\xEF\xBB\xBF";
         echo '<table border="1"><thead><tr>';
-        foreach (['Référence interne','Bénéficiaire','Numéro','Opérateur','Montant','Devise','Statut','Date','Référence FreshPay','Référence opérateur','Transaction','Administrateur'] as $heading) {
+        foreach (['Référence interne','Bénéficiaire','Numéro','Opérateur','Montant','Devise','Statut','Date','Référence prestataire','Référence opérateur','Transaction','Administrateur'] as $heading) {
             echo '<th>' . htmlspecialchars($heading, ENT_QUOTES, 'UTF-8') . '</th>';
         }
         echo '</tr></thead><tbody>';
         foreach ($rows as $row) {
             echo '<tr>';
-            foreach ([$row['reference'], $row['beneficiary'], $row['phone_number'], $row['operator'], $row['amount'], $row['currency'], $row['status'], $row['created_at'], $row['freshpay_reference'] ?? '', $row['operator_reference'] ?? '', $row['transaction_id'] ?? '', $row['admin_name'] ?? ''] as $value) {
+            foreach ([$row['reference'], $row['beneficiary'], $row['phone_number'], $row['operator'], $row['amount'], $row['currency'], $row['status'], $row['created_at'], $row['moko_payout_id'] ?? $row['freshpay_reference'] ?? '', $row['operator_reference'] ?? '', $row['transaction_id'] ?? '', $row['admin_name'] ?? ''] as $value) {
                 echo '<td>' . htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8') . '</td>';
             }
             echo '</tr>';
