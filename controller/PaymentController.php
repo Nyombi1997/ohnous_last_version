@@ -130,6 +130,21 @@ class PaymentController
         $view->render('Ohnous | Retour paiement');
     }
 
+    public function payoutBoutique()
+    {
+        $bdd = $this->bootDependencies();
+        ohnous_require_payout_permission(true);
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+        try {
+            echo json_encode(['result'=>'ok'] + (new PayoutTransaction($bdd))->boutiqueContext((int)($_GET['boutique_id'] ?? 0)), JSON_UNESCAPED_UNICODE);
+        } catch (Throwable $e) {
+            http_response_code(503);
+            echo json_encode(['result'=>'error','msg'=>'Coordonnées indisponibles. Vérifiez la migration boutique PayOut.'], JSON_UNESCAPED_UNICODE);
+        }
+        exit();
+    }
+
     public function startPayout()
     {
         $bdd = $this->bootDependencies();
@@ -142,7 +157,7 @@ class PaymentController
                 echo json_encode(['result'=>'error','msg'=>'Méthode POST requise.']);
                 exit();
             }
-            if (!ohnous_validate_csrf($_POST['csrf_token'] ?? '')) {
+            if (!ohnous_validate_csrf($_POST['csrf_token'] ?? '') || time() - (int)($_SESSION['admin_payout_csrf_at'] ?? 0) > 7200) {
                 http_response_code(419);
                 echo json_encode(['result' => 'error', 'msg' => 'Session expirée. Rechargez la page puis réessayez.'], JSON_UNESCAPED_UNICODE);
                 exit();
@@ -150,6 +165,8 @@ class PaymentController
             if (!$bdd instanceof PDO) {
                 throw new RuntimeException('Connexion PDO introuvable.');
             }
+            if (!filter_var($_POST['boutique_id'] ?? '', FILTER_VALIDATE_INT, ['options'=>['min_range'=>1]])) throw new InvalidArgumentException('Choisissez une boutique.');
+            if (!ohnous_table_exists('boutique_payout_profiles') || !ohnous_table_exists('boutique_payout_links')) throw new RuntimeException('Module boutique PayOut indisponible. Appliquez la migration documentée dans le README.');
             echo json_encode((new MokoPayoutService($bdd))->initiatePayout($_POST), JSON_UNESCAPED_UNICODE);
         } catch (Throwable $e) {
             http_response_code($e instanceof InvalidArgumentException ? 422 : 503);
@@ -212,6 +229,7 @@ class PaymentController
         }
 
         $filters = [
+            'boutique_id' => max(0, (int)($_GET['boutique_id'] ?? 0)),
             'q' => trim((string)($_GET['q'] ?? '')),
             'status' => trim((string)($_GET['status'] ?? '')),
             'operator' => trim((string)($_GET['operator'] ?? '')),

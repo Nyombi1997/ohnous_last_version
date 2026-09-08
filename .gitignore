@@ -1,0 +1,4 @@
+# Configuration privée locale et variantes de déploiement.
+.env
+.env.*
+!.env.example

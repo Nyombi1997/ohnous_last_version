@@ -46,6 +46,10 @@ class PayoutTransaction
     {
         $where = [];
         $params = [];
+        if (!empty($filters['boutique_id'])) {
+            $where[] = 'EXISTS (SELECT 1 FROM boutique_payout_links l WHERE l.payout_id = payout_transactions.id AND l.boutique_id = :boutique_id)';
+            $params[':boutique_id'] = (int)$filters['boutique_id'];
+        }
         foreach (['status', 'operator'] as $field) {
             $value = trim((string)($filters[$field] ?? ''));
             if ($value !== '') {
@@ -93,7 +97,27 @@ class PayoutTransaction
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function statistics()
+    public function boutiques()
+    {
+        return $this->bdd->query('SELECT id, nom FROM boutiques ORDER BY nom, id')->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function boutiqueContext($id)
+    {
+        $stmt = $this->bdd->prepare('SELECT * FROM boutique_payout_profiles WHERE boutique_id = ?');
+        $stmt->execute([(int)$id]);
+        $profile = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+$stmt = $this->bdd->prepare('SELECT p.phone_number, p.operator, p.beneficiary, r.merchant_recipient_id, r.kyc_reference, r.recipient_id AS existing_recipient_id FROM payout_transactions p INNER JOIN boutique_payout_links l ON l.payout_id = p.id LEFT JOIN moko_recipients r ON r.recipient_id = CONVERT(p.moko_recipient_id USING utf8mb4) COLLATE utf8mb4_general_ci WHERE l.boutique_id = ? ORDER BY p.created_at DESC, p.id DESC');
+        $stmt->execute([(int)$id]);
+        $phones = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (!isset($phones[$row['phone_number']])) $phones[$row['phone_number']] = $row;
+        }
+        if ($profile && !isset($phones[$profile['phone_number']])) $phones[$profile['phone_number']] = $profile;
+        return ['profile'=>$profile, 'phones'=>array_values($phones)];
+    }
+
+    public function statistics($boutiqueId = 0)
     {
         $sql = "SELECT COUNT(*) AS total,
                        COALESCE(SUM(amount), 0) AS total_amount,
@@ -101,7 +125,19 @@ class PayoutTransaction
                        SUM(CASE WHEN LOWER(status) IN ('failed','error','expired','cancelled','canceled','rejected','refused','declined','send_rejected') THEN 1 ELSE 0 END) AS failed,
                        SUM(CASE WHEN LOWER(status) NOT IN ('success','successful','paid','completed','failed','error','expired','cancelled','canceled','rejected','refused','declined','send_rejected') THEN 1 ELSE 0 END) AS pending
                 FROM {$this->table}";
-        return $this->bdd->query($sql)->fetch(PDO::FETCH_ASSOC) ?: [];
+        if ($boutiqueId) $sql .= ' WHERE EXISTS (SELECT 1 FROM boutique_payout_links l WHERE l.payout_id = payout_transactions.id AND l.boutique_id = :boutique_id)';
+        $stmt = $this->bdd->prepare($sql);
+        $stmt->execute($boutiqueId ? [':boutique_id'=>(int)$boutiqueId] : []);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function amountsByCurrency($boutiqueId = 0)
+    {
+        $sql = "SELECT currency, SUM(amount) AS requested, SUM(CASE WHEN LOWER(status) IN ('success','successful','paid','completed') THEN amount ELSE 0 END) AS paid FROM payout_transactions";
+        if ($boutiqueId) $sql .= ' WHERE EXISTS (SELECT 1 FROM boutique_payout_links l WHERE l.payout_id=payout_transactions.id AND l.boutique_id=?)';
+        $stmt = $this->bdd->prepare($sql.' GROUP BY currency ORDER BY currency');
+        $stmt->execute($boutiqueId ? [(int)$boutiqueId] : []);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function addStatusEvent($payoutId, $status, $description = '', $source = 'system', array $payload = [])

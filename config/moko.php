@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__.'/env.php';
 return [
     'enabled' => getenv('MOKO_PAYOUT_ENABLED') === '1',
     'base_url' => rtrim(getenv('MOKO_BASE_URL') ?: 'https://payouts.gofreshpay.com', '/'),

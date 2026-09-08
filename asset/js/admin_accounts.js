@@ -3,6 +3,19 @@
     var autoPassword = document.getElementById('admin_auto_password');
     var manualWrapper = document.getElementById('admin_manual_password_wrapper');
     var manualPassword = document.getElementById('admin_account_password');
+    $('.admin-reset-password').on('click', function () {
+        var button = $(this);
+        button.prop('disabled', true);
+        $.post('/fonctions/admin_accounts.php', {
+            action: 'reset_admin_password',
+            admin_id: button.attr('data-admin-id'),
+            csrf_token: $(form).find('[name="csrf_token"]').val()
+        }, function (data) {
+            Swal.fire({icon:data.result === 'ok' ? 'success' : 'error',text:data.msg});
+        }, 'json').fail(function (xhr) {
+            Swal.fire({icon:'error',text:(xhr.responseJSON || {}).msg || 'Envoi impossible. Réessayez.'});
+        }).always(function () { button.prop('disabled', false); });
+    });
 
     function syncPasswordMode() {
         var automatic = !autoPassword || autoPassword.checked;

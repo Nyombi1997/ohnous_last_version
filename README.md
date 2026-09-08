@@ -1,5 +1,16 @@
 # Checkout, FreshPay, filtres, formulaires et multi-admin
 
+## Administrateurs et payouts par boutique — 8 septembre 2026
+
+Dans phpMyAdmin, sélectionner la base du site puis importer [20260908_001_admin_boutique_payout.sql](data%20base/20260908_001_admin_boutique_payout.sql). Ce fichier rejouable est compatible avec MySQL 9.1 (version du dump fourni), MySQL 8 et MariaDB 10.6+. Il suppose que le module Moko existant est déjà installé. Le dump fourni ne contient pas les tables payout : cette migration complète une installation payout existante, sans importer le dump ni modifier ses données. La migration Moko antérieure est [20260907_001_moko_payout.sql](data%20base/20260907_001_moko_payout.sql) ; son utilisation de `IF NOT EXISTS` sur les colonnes exige MariaDB.
+
+- Dans « Gestion des admins », « Réinitialiser le mot de passe » envoie au compte sélectionné un code aléatoire à usage unique valable 30 minutes. Seul son condensat est enregistré. L’administrateur saisit ce code depuis le lien de l’email puis choisit son mot de passe. Le mot de passe actuel reste valable tant que le remplacement n’a pas réussi. L’envoi est limité à une demande par minute et par compte ; la consommation est transactionnelle et invalide les autres demandes du compte. Le formulaire public conserve le Honeypot, la vérification temporelle et le CSRF existants.
+- Chaque nouveau payout exige une boutique. Les premières coordonnées validées par Moko sont mémorisées avec l’intention de versement, avant son envoi, puis préremplies aux prochains payouts. Elles ne sont pas remplacées lorsqu’un autre numéro est utilisé. Les contraintes d’identité et de validation KYC Moko restent applicables : un autre bénéficiaire doit avoir son propre identifiant Moko.
+- Les suggestions apparaissent dès le premier chiffre (numéro international ou local), uniquement pour la boutique sélectionnée. Choisir une suggestion reprend ses coordonnées et le dernier opérateur enregistré pour ce numéro.
+- `/admin-payouts?boutique_id=ID` affiche le rapport de la boutique ; l’export Excel reprend le filtre boutique et les filtres de recherche. Les compteurs portent sur tous les payouts de cette boutique ; le tableau affiche les 250 plus récents correspondant aux filtres et l’export contient toutes les lignes. Les anciens payouts restent dans le rapport global : aucun rattachement n’est déduit d’un nom ou d’un téléphone.
+
+Validation locale : `php tests/boutique_payout_test.php` teste sur MySQL local une base jetable (créée puis supprimée), le double import SQL, les profils stables, le dernier opérateur, l’isolation des rapports, les devises, l’idempotence et la réinitialisation à usage unique. Le test utilise `MOKO_TEST_USER` et `MOKO_TEST_PASSWORD` (par défaut `root` sans mot de passe), sans charger `model/bdd.php`. `php tests/moko_payout_test.php` couvre aussi les signatures et transitions Moko. Aucun email ni versement réel n’est déclenché. Vérifier en recette la réception SMTP et l’affichage mobile des formulaires et suggestions. Les formulaires admin modifiés expirent après deux heures ; le formulaire public de réinitialisation conserve son expiration Honeypot et renouvelle la session et le CSRF après réussite.
+
 ## PayOut Moko — installation du 7 septembre 2026
 
 Cette section remplace les anciennes instructions FreshPay **pour les nouveaux PayOut uniquement**. Le checkout reste FreshPay et les anciens PayOut restent consultables et vérifiables avec leur prestataire d'origine.
@@ -31,7 +42,7 @@ Les tables `payout_transactions`, `payout_status_history`, `payout_audit_log` et
 
 ### 3. Configurer PHP sur l'hébergement
 
-PHP 8.0 ou supérieur, extensions PDO MySQL et cURL, certificats CA valides, accès HTTPS sortant et horloge synchronisée sont nécessaires. Le code lit `getenv()` : **un fichier `.env` seul n'est pas chargé par ce projet**. Définir ces variables dans le panneau d'hébergement, le VirtualHost ou l'environnement PHP ; elles doivent aussi être accessibles au PHP CLI de la tâche cron.
+PHP 8.0 ou supérieur, extensions PDO MySQL et cURL, certificats CA valides, accès HTTPS sortant et horloge synchronisée sont nécessaires. Le fichier `.env` à la racine est désormais chargé par `config/env.php` lorsque la configuration Moko ou FreshPay est lue, aussi bien sur le site que dans le cron PHP. Renseigner les variables suivantes dans `.env` ; les variables déjà définies par l'hébergeur restent prioritaires.
 
 ```text
 MOKO_PAYOUT_ENABLED=0
@@ -43,6 +54,10 @@ MOKO_CALLBACK_URL=https://ohnous.store/payout-callback-moko
 ```
 
 Adapter le domaine au site déployé. Déclarer cette URL HTTPS chez Moko également. Le endpoint reçoit des POST JSON signés, sans connexion administrateur ni CSRF navigateur. La vérification HMAC est obligatoire. Une réponse 401 indique une signature invalide ; 503 indique qu'il faut réessayer, notamment si la base n'est pas accessible.
+
+Le `.env` local est créé avec les clés vides et les versements désactivés. Sur le serveur, créer séparément `.env` à partir de `.env.example`, renseigner les clés et mettre `MOKO_PAYOUT_ENABLED=1` une fois la configuration terminée. `.env` est exclu de Git ; déployer également `config/env.php`, les configurations mises à jour et le `.htaccess`, qui interdit l'accès HTTP aux fichiers `.env`. Avec un serveur autre qu'Apache, configurer cette interdiction dans ce serveur avant déploiement.
+
+Format pris en charge : une variable `NOM=valeur` par ligne, lignes vides et commentaires sur des lignes commençant par `#`. Les guillemets simples ou doubles entourant une valeur sont facultatifs et retirés ; le contenu reste littéral, sans interpolation `${VARIABLE}` ni valeurs multilignes. Ne pas ajouter de commentaire à la fin d'une valeur. Le chargement ne journalise pas les valeurs. Si une ancienne variable serveur vaut `0`, la modifier ou la retirer pour que le `1` du `.env` prenne effet.
 
 Ne pas commiter les valeurs des clés. La rotation décrite dans le guide offre 24 h de coexistence : demander les nouvelles clés au support, modifier l'environnement, redémarrer PHP si nécessaire. Le code n'enregistre pas les clés ni les en-têtes d'authentification dans les historiques.
 
@@ -243,8 +258,7 @@ FRESHPAY_VISA_SHARED_ENDPOINT=1
 
 ## Ou creer ces variables
 
-Ce projet ne charge pas automatiquement un fichier `.env`.
-`config/payment.php` utilise directement `getenv(...)`.
+Ce projet charge désormais le fichier `.env` de la racine via `config/env.php` avant la lecture des configurations de paiement. Les variables déjà présentes dans l'environnement PHP restent prioritaires ; `getenv(...)` peut ensuite lire les valeurs chargées.
 
 Concretement, pour que le systeme fonctionne, il faut definir ces variables dans l'environnement PHP du serveur qui execute le site.
 
@@ -305,8 +319,8 @@ Exemple dans la configuration Apache du site :
 
 Si tu developpes en local sous Windows :
 
-1. N'ecris pas seulement un fichier `.env`, car il ne sera pas lu tout seul.
-2. Definis les variables dans Apache, dans ton terminal avant de lancer PHP, ou ajoute ensuite un vrai chargeur `.env` au projet.
+1. Renseigne le fichier `.env` à la racine du projet ; il est chargé automatiquement par les configurations de paiement.
+2. Les variables définies dans Apache ou dans le terminal restent prioritaires sur ce fichier.
 
 Verification rapide :
 

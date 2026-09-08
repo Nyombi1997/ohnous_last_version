@@ -70,6 +70,8 @@ class MokoPayoutService
     {
         $this->enabled();
         $reference = strtolower(self::field($input, 'reference', 120));
+        $boutiqueId = (int)self::field($input, 'boutique_id', 10, false);
+        if ($boutiqueId && !$this->query('SELECT id FROM boutiques WHERE id=?', [$boutiqueId])->fetchColumn()) throw new InvalidArgumentException('Boutique introuvable.');
         $merchantId = self::field($input, 'merchant_recipient_id', 128);
         $name = self::field($input, 'beneficiary', 190);
         $phone = self::field($input, 'phone_number', 30);
@@ -79,14 +81,19 @@ class MokoPayoutService
         $reason = self::field($input, 'reason', 255);
         $kyc = self::field($input, 'kyc_reference', 128, false);
         $importId = self::field($input, 'existing_recipient_id', 64, false);
+        if ($boutiqueId) {
+            $owner = $this->query('SELECT boutique_id FROM boutique_payout_profiles WHERE merchant_recipient_id=?', [$merchantId])->fetchColumn();
+            if ($owner && (int)$owner !== $boutiqueId) throw new InvalidArgumentException('Ce bénéficiaire est déjà rattaché à une autre boutique.');
+        }
         if (!preg_match('/^[a-z0-9._-]{4,120}$/D', $reference) || !preg_match('/^[a-zA-Z0-9_-]{1,128}$/D', $merchantId)) throw new InvalidArgumentException('Référence ou identifiant bénéficiaire invalide.');
         if (!preg_match('/^\+243[0-9]{9}$/D', $phone)) throw new InvalidArgumentException('Le numéro doit être au format +243 suivi de 9 chiffres.');
         if (preg_match_all('/./us', $name) < 2 || !in_array($operator, ['mpesa','airtel','orange','afrimoney'], true) || !in_array($currency, ['USD','CDF'], true)) throw new InvalidArgumentException('Bénéficiaire, opérateur ou devise invalide.');
         if (!preg_match('/^(?:0|[1-9][0-9]{0,9})(?:\.[0-9]{1,2})?$/D', $amount) || (float)$amount <= 0) throw new InvalidArgumentException('Montant positif requis, avec au plus deux décimales.');
         $amount = number_format((float)$amount, 2, '.', '');
-        return $this->lock('payout:'.$reference, function () use ($reference,$merchantId,$name,$phone,$operator,$currency,$amount,$reason,$kyc,$importId) {
+        return $this->lock('payout:'.$reference, function () use ($reference,$merchantId,$name,$phone,$operator,$currency,$amount,$reason,$kyc,$importId,$boutiqueId) {
             $row = $this->model->findByReference($reference);
             if ($row) {
+                if ($boutiqueId && (int)$this->query('SELECT boutique_id FROM boutique_payout_links WHERE payout_id=?', [$row['id']])->fetchColumn() !== $boutiqueId) throw new InvalidArgumentException('Cette référence appartient à un autre versement.');
                 if (($row['provider'] ?? '') !== 'moko' || $row['phone_number'] !== $phone || $row['operator'] !== $operator || $row['currency'] !== $currency || $row['amount'] !== $amount || $row['reason'] !== $reason || $row['beneficiary'] !== $name) throw new InvalidArgumentException('Cette référence désigne déjà un autre versement.');
                 $storedMerchant = $this->query('SELECT merchant_recipient_id FROM moko_recipients WHERE recipient_id=?', [$row['moko_recipient_id']])->fetchColumn();
                 if (strcasecmp((string)$storedMerchant, $merchantId) !== 0) throw new InvalidArgumentException('Cette référence appartient à un autre bénéficiaire.');
@@ -101,6 +108,13 @@ class MokoPayoutService
                 $this->query('INSERT INTO payout_transactions (provider,reference,beneficiary,phone_number,operator,amount,currency,reason,status,status_description,moko_recipient_id,request_payload,admin_id,admin_name) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
                     ['moko',$reference,$name,$phone,$operator,$amount,$currency,$reason,'pending_send','Prêt à être envoyé à Moko.',$recipient['recipient_id'],json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),(int)($admin['id']??0),$adminName]);
                 $id = (int)$this->db->lastInsertId();
+                if ($boutiqueId) {
+                    $this->query('INSERT INTO boutique_payout_links (payout_id,boutique_id) VALUES (?,?)', [$id,$boutiqueId]);
+                    // Le premier profil reste stable, même si un autre numéro est utilisé ensuite.
+                    $this->query('INSERT INTO boutique_payout_profiles (boutique_id,merchant_recipient_id,beneficiary,phone_number,operator,kyc_reference,existing_recipient_id) VALUES (?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE boutique_id=boutique_id', [$boutiqueId,$merchantId,$name,$phone,$operator,$kyc ?: null,$recipient['recipient_id']]);
+                    $owner = $this->query('SELECT boutique_id FROM boutique_payout_profiles WHERE merchant_recipient_id=?', [$merchantId])->fetchColumn();
+                    if ($owner && (int)$owner !== $boutiqueId) throw new InvalidArgumentException('Ce bénéficiaire est déjà rattaché à une autre boutique.');
+                }
                 $this->model->addStatusEvent($id, 'pending_send', 'Intention enregistrée avant envoi.', 'admin');
                 $this->query('INSERT INTO payout_audit_log (payout_id,admin_id,admin_name,action,amount,currency,phone_number,operator,ip_address,user_agent) VALUES (?,?,?,?,?,?,?,?,?,?)',
                     [$id,(int)($admin['id']??0),$adminName,'moko_payout_created',$amount,$currency,$phone,$operator,substr($_SERVER['REMOTE_ADDR']??'',0,64),substr($_SERVER['HTTP_USER_AGENT']??'',0,500)]);

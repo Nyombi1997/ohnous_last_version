@@ -5966,3 +5966,8 @@ textarea{
     opacity: 0 !important;
     pointer-events: none !important;
 }
+
+.payout-phone-suggestions { display: grid; gap: 8px; }
+.payout-phone-suggestions[hidden], #payout_boutique_report[hidden] { display: none; }
+.payout-phone-suggestion { width: 100%; padding: 12px; border: 1px solid #dfe3eb; border-radius: 8px; background: #fff; color: #30364d; text-align: left; font-size: 16px; cursor: pointer; transition: background .2s; }
+.payout-phone-suggestion:hover, .payout-phone-suggestion:focus-visible { background: #f8f9fb; }

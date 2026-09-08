@@ -421,7 +421,7 @@ function ohnous_send_message_notification_email($email = "", $senderName = "", $
 }
 
 /* email de réinitialisation admin */
-function ohnous_send_admin_password_reset_email($resetUrl = "")
+function ohnous_send_admin_password_reset_email($resetUrl = "", $recipientEmail = 'edosysteme@gmail.com', $oneTimeCode = '')
 {
     $mail = ohnous_build_mailer();
     if ($mail === false || trim($resetUrl) === '') {
@@ -437,7 +437,7 @@ function ohnous_send_admin_password_reset_email($resetUrl = "")
     $mail->Port = 465;
 
     $mail->setFrom('contact@ohnous.store', 'Ohnous');
-    $mail->addAddress('edosysteme@gmail.com');
+    $mail->addAddress($recipientEmail);
     $mail->isHTML(true);
     $mail->Subject = 'Réinitialisation du mot de passe admin OhNous';
     $mail->Body = '
@@ -445,6 +445,7 @@ function ohnous_send_admin_password_reset_email($resetUrl = "")
             <body style="font-family:Arial, Helvetica, sans-serif; background:#f5f7ff; padding:24px;">
                 <div style="max-width:680px; margin:0 auto; background:#ffffff; border-radius:24px; padding:32px; box-shadow:0 20px 60px rgba(46, 61, 104, 0.12);">
                     <h1 style="margin-top:0;">Réinitialisation admin</h1>
+                    '.($oneTimeCode !== '' ? '<p>Code à usage unique : <strong>'.htmlspecialchars($oneTimeCode, ENT_QUOTES, 'UTF-8').'</strong></p><p>Valable 30 minutes pour définir votre nouveau mot de passe.</p>' : '').'
                     <p>Une demande de réinitialisation du mot de passe admin OhNous vient d’être générée.</p>
                     <p>Si c’est bien vous, utilisez le bouton ci-dessous pour définir un nouveau mot de passe.</p>
                     <a href="'.htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8').'" style="display:inline-block; background:#6775d6; color:#ffffff; text-decoration:none; padding:14px 22px; border-radius:999px; font-weight:bold;">Définir un nouveau mot de passe</a>

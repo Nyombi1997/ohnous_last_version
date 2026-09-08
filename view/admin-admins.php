@@ -2,6 +2,7 @@
     ohnous_require_admin_or_redirect();
 
     $admins = ohnous_admin_fetch_admins();
+    $_SESSION['admin_accounts_csrf_at'] = time();
 ?>
 <div class="content_page admin-page-shell">
     <section class="admin-page-head liquid-panel">
@@ -18,6 +19,7 @@
         <section class="liquid-panel admin-account-form-panel">
             <h2>Créer un admin</h2>
             <form id="admin_account_form" class="delivery-zone-form">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(ohnous_csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
                 <div class="form_group_ajout_image">
                     <label class="label_ajout_image" for="admin_account_name">Nom complet</label>
                     <input type="text" id="admin_account_name" name="nom" class="input_ajout_image checkout-input" placeholder="Ex. : Aïcha Admin" required>
@@ -65,6 +67,7 @@
                                 </div>
                             </div>
                             <small>Créé le <?= htmlspecialchars(date('d/m/Y H:i', strtotime((string)$admin['date_ajout'])), ENT_QUOTES, 'UTF-8') ?></small>
+                            <button type="button" class="btn_ohnous second admin-reset-password" data-admin-id="<?= (int)$admin['id'] ?>">Réinitialiser le mot de passe</button>
                         </article>
                     <?php endforeach; ?>
                 </div>

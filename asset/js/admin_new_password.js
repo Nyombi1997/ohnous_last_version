@@ -11,7 +11,7 @@
         const password = document.getElementById('admin_new_password');
         const confirmPassword = document.getElementById('admin_confirm_password');
 
-        if(token === ''){
+        if(token === '' && !form.elements.one_time_code){
             Swal.fire({
                 icon: 'error',
                 title: 'Lien de réinitialisation invalide.',
