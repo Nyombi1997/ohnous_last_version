@@ -30,16 +30,24 @@
         }
         function register() {
             if (busy || !available) return;
+            var shop = form.querySelector('#payout_boutique');
+            if (shop && !shop.reportValidity()) return;
             if (!fields.prop('disabled')) {
                 var valid = true;
-                fields.find('input,select').each(function () { if (valid && !this.reportValidity()) valid = false; });
+                fields.find('input[name]:not([type="hidden"]),select[name]').each(function () { if (valid && !this.reportValidity()) valid = false; });
                 if (!valid) return;
-                if (!iti.isValidNumber()) { Swal.fire({icon:'error',title:'Numéro Mobile Money invalide.'}); return; }
-                form.elements.phone_number.value = iti.getNumber();
+                try {
+                    if (!iti.isValidNumber()) { Swal.fire({icon:'error',title:'Numéro Mobile Money invalide.'}); return; }
+                    form.elements.phone_number.value = iti.getNumber();
+                } catch (error) {
+                    Swal.fire({icon:'error',title:'Vérification du numéro indisponible',text:'Rechargez la page puis réessayez.'});
+                    return;
+                }
             }
             var payload = $(form).serialize();
             busy = true; sync();
-            $.post('/payout-beneficiaire', payload, null, 'json').done(function (data) {
+            button.attr('aria-busy', 'true').find('span').text('Enregistrement en cours…');
+            $.ajax({url:'/payout-beneficiaire',type:'POST',data:payload,dataType:'json',timeout:60000}).done(function (data) {
                 if (data.recipient_csrf) form.elements.recipient_csrf.value = data.recipient_csrf;
                 if (data.result === 'ok' && data.profile) {
                     setProfile(data.profile);
@@ -50,7 +58,11 @@
                 }
             }).fail(function (xhr) {
                 Swal.fire({icon:'error',title:'Enregistrement impossible',text:(xhr.responseJSON || {}).msg || 'Réessayez avec les mêmes coordonnées.'});
-            }).always(function () { busy = false; sync(); });
+            }).always(function () {
+                busy = false;
+                button.removeAttr('aria-busy').find('span').text(registered() ? 'Actualiser le bénéficiaire' : 'Enregistrer le bénéficiaire');
+                sync();
+            });
         }
         button.on('click', register);
         return {

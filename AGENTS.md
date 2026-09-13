@@ -254,6 +254,12 @@ Mobile :
 
 ## Espacements
 
+* Réutiliser le conteneur de page existant (`admin-page-shell` pour l’administration) et son espacement entre les blocs.
+* Réserver la hauteur de l’en-tête et de la recherche fixes avant les titres et liens de retour ; vérifier leur absence de chevauchement sur desktop, tablette et mobile.
+* Conserver un espace visible entre la navigation et la première carte, y compris lorsque les liens passent sur plusieurs lignes.
+* Tout enregistrement AJAX doit afficher un état en cours, un résultat ou une erreur, avec un délai maximal et réactivation du bouton après échec.
+* Versionner les scripts modifiés avec `filemtime`, selon la logique existante, pour que le serveur ne serve pas une ancienne version depuis le cache du navigateur.
+
 Utiliser des espacements constants.
 
 Éviter les marges ou paddings arbitraires.

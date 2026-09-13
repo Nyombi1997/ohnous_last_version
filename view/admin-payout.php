@@ -4,7 +4,7 @@ require_once FONCTION . 'moko_recipient.php';
 $payoutBoutiques = (new PayoutTransaction($bdd))->boutiques();
 $_SESSION['admin_payout_csrf_at'] = time();
 ?>
-<main class="admin-shell admin-detail-page">
+<main class="admin-shell admin-detail-page admin-page-shell admin-payout-page">
     <a class="admin-back-link" href="/admin-payouts"><i class="fa-solid fa-arrow-left"></i> Retour à l’historique des PayOut</a>
     <?= ohnous_render_admin_nav('payouts') ?>
     <section class="admin-detail-card payout-form-card"><div class="admin-detail-heading"><div><span class="admin-hero__eyebrow">Moko</span><h1>Nouveau PayOut</h1></div></div>
@@ -23,4 +23,4 @@ $_SESSION['admin_payout_csrf_at'] = time();
         </form>
     </section>
 </main>
-<link rel="stylesheet" href="/asset/css/intlTelInput.min.css"><link rel="stylesheet" href="/asset/css/intl-tel-input-fix.css"><script src="/asset/js/intlTelInputWithUtils.min.js"></script><script src="/asset/js/moko_recipient.js" defer></script><script src="/asset/js/admin_payout.js" defer></script>
+<link rel="stylesheet" href="/asset/css/intlTelInput.min.css"><link rel="stylesheet" href="/asset/css/intl-tel-input-fix.css"><script src="/asset/js/intlTelInputWithUtils.min.js"></script><script src="/asset/js/moko_recipient.js?v=<?= filemtime(__DIR__.'/../asset/js/moko_recipient.js') ?>" defer></script><script src="/asset/js/admin_payout.js?v=<?= filemtime(__DIR__.'/../asset/js/admin_payout.js') ?>" defer></script>

@@ -3938,6 +3938,20 @@ span
     padding: 28px 18px 60px;
 }
 
+.admin-payout-page.admin-page-shell{
+    padding-top: 54px;
+}
+.admin-payout-page > .admin-back-link{
+    margin-bottom: 0;
+    align-self: flex-start;
+}
+.admin-payout-page > .payout-form-card{
+    width: 100%;
+}
+.admin-payout-page .admin-liquid-nav__link{
+    text-decoration: none;
+}
+
 .admin-hero,
 .admin-page-head{
     display: flex;

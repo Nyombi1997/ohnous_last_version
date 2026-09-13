@@ -1,5 +1,11 @@
 # Checkout, FreshPay, filtres, formulaires et multi-admin
 
+## Correctif du formulaire PayOut — 13 septembre 2026
+
+La page `/admin-payout` réutilise `admin-page-shell` pour espacer la navigation et la carte, avec un dégagement sous la recherche fixe. L’enregistrement valide uniquement les champs métier du bénéficiaire et la boutique sélectionnée, affiche une progression et limite l’attente AJAX à 60 secondes. Les erreurs de validation téléphonique sont affichées. Les validations PHP, CSRF et Honeypot existantes restent actives.
+
+Déployer `view/admin-payout.php`, `asset/js/moko_recipient.js` et `asset/css/style.css` sur le serveur. La vue versionne les scripts avec `filemtime` pour renouveler le cache navigateur. Aucune migration SQL. Après déploiement, vérifier l’enregistrement d’un bénéficiaire sur le serveur et le dégagement de la page sur mobile et desktop ; aucun appel réel à Moko n’a été effectué depuis le poste local.
+
 ## Bénéficiaires Moko — 12 septembre 2026
 
 Référence : [Guide marchand Moko](Moko_Payout_API_Guide_Marchand.pdf), version 1.0, sections 2.2–2.3, 8.2 et 9.2. L’enregistrement et le versement sont deux actions distinctes. Dans `/admin-payout`, sélectionner une boutique, compléter son nom de titulaire, son numéro RDC et son opérateur, puis cliquer sur « Enregistrer le bénéficiaire ». Une confirmation s’affiche après enregistrement. Les champs de coordonnées disparaissent au profit du bénéficiaire mémorisé ; seuls les détails du versement restent à saisir. « Actualiser le bénéficiaire » relit son état chez Moko. Le bouton de versement exige le statut `ACTIVE`, qui est revérifié côté serveur.
