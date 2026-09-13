@@ -137,7 +137,10 @@ class PaymentController
         header('Content-Type: application/json; charset=utf-8');
         header('Cache-Control: no-store');
         try {
-            echo json_encode(['result'=>'ok'] + (new PayoutTransaction($bdd))->boutiqueContext((int)($_GET['boutique_id'] ?? 0)), JSON_UNESCAPED_UNICODE);
+            $model = new PayoutTransaction($bdd);
+            $boutiqueId = (int)($_GET['boutique_id'] ?? 0);
+            $client = new MokoClient(require CONFIG.'moko.php');
+            echo json_encode(['result'=>'ok','technical'=>$client->redact($model->recipientExchange($boutiqueId))] + $model->boutiqueContext($boutiqueId), JSON_UNESCAPED_UNICODE);
         } catch (Throwable $e) {
             http_response_code(503);
             echo json_encode(['result'=>'error','msg'=>'Coordonnées indisponibles. Vérifiez la migration boutique PayOut.'], JSON_UNESCAPED_UNICODE);
@@ -181,6 +184,33 @@ class PaymentController
             echo json_encode(['result'=>'error','msg'=>$e instanceof PDOException ? 'Service indisponible. Réessayez plus tard.' : $e->getMessage()], JSON_UNESCAPED_UNICODE);
         }
         exit();
+    }
+
+    public function payoutDiagnostic()
+    {
+        $bdd = $this->bootDependencies();
+        ohnous_require_payout_permission(true);
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+        try {
+            if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+                http_response_code(405); header('Allow: POST'); echo '{"result":"error"}'; exit;
+            }
+            require_once FONCTION.'moko_recipient.php';
+            if (!ohnous_validate_recipient_csrf($_POST['recipient_csrf'] ?? null)) {
+                http_response_code(419); echo json_encode(['result'=>'error','msg'=>'Session expirée. Rechargez la page.']); exit;
+            }
+            if (time() - (int)($_SESSION['moko_diagnostic_at'] ?? 0) < 5) {
+                http_response_code(429); echo json_encode(['result'=>'error','msg'=>'Veuillez patienter quelques secondes.']); exit;
+            }
+            $_SESSION['moko_diagnostic_at'] = time();
+            $result = (new MokoPayoutService($bdd))->diagnostic();
+            echo json_encode(['result'=>'ok','diagnostic'=>$result,'recipient_csrf'=>ohnous_recipient_csrf(true)], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+        } catch (Throwable $e) {
+            http_response_code(503);
+            echo json_encode(['result'=>'error','msg'=>$e instanceof PDOException ? 'Service Moko indisponible.' : $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        }
+        exit;
     }
 
     public function startPayout()

@@ -7,4 +7,5 @@ return [
     'secret_key' => getenv('MOKO_SECRET_KEY') ?: '',
     'webhook_secret' => getenv('MOKO_WEBHOOK_SECRET') ?: '',
     'callback_url' => getenv('MOKO_CALLBACK_URL') ?: '',
+    'debug' => getenv('MOKO_PAYOUT_DEBUG') === '1',
 ];

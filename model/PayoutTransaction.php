@@ -129,9 +129,37 @@ $stmt = $this->bdd->prepare('SELECT p.phone_number, p.operator, p.beneficiary, r
                 'phone_number'=>$recipient['phone'], 'operator'=>$recipient['operator'],
                 'kyc_reference'=>$recipient['kyc_reference'], 'existing_recipient_id'=>$recipient['recipient_id'],
                 'recipient_status'=>$recipient['status'],
+                'country'=>$recipient['country'] ?? 'CD', 'last_sync_at'=>$recipient['last_sync_at'] ?? null,
             ]);
         }
         return $profile;
+    }
+
+    public function recipients()
+    {
+        return $this->bdd->query('SELECT b.id AS boutique_id,b.nom AS boutique,p.beneficiary,p.phone_number,p.operator,p.merchant_recipient_id,r.recipient_id,r.status,r.last_sync_at FROM boutiques b LEFT JOIN boutique_payout_profiles p ON p.boutique_id=b.id LEFT JOIN moko_recipients r ON r.merchant_recipient_id=p.merchant_recipient_id ORDER BY b.nom,b.id')->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function recipientExchange($boutiqueId)
+    {
+        $stmt = $this->bdd->prepare('SELECT r.last_api_exchange FROM moko_recipients r INNER JOIN boutique_payout_profiles p ON p.merchant_recipient_id=r.merchant_recipient_id WHERE p.boutique_id=?');
+        $stmt->execute([(int)$boutiqueId]);
+        return json_decode((string)$stmt->fetchColumn(), true);
+    }
+
+    public function payoutBoutique($payoutId)
+    {
+        $stmt = $this->bdd->prepare('SELECT b.id,b.nom,p.merchant_recipient_id FROM boutique_payout_links l INNER JOIN boutiques b ON b.id=l.boutique_id LEFT JOIN boutique_payout_profiles p ON p.boutique_id=b.id WHERE l.payout_id=?');
+        $stmt->execute([(int)$payoutId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function payoutBoutiqueNames(array $ids)
+    {
+        if (!$ids) return [];
+        $stmt = $this->bdd->prepare('SELECT l.payout_id,b.nom FROM boutique_payout_links l INNER JOIN boutiques b ON b.id=l.boutique_id WHERE l.payout_id IN ('.implode(',', array_fill(0, count($ids), '?')).')');
+        $stmt->execute(array_map('intval', $ids));
+        return $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
     }
 
     public function statistics($boutiqueId = 0)

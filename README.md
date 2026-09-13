@@ -1,5 +1,63 @@
 # Checkout, FreshPay, filtres, formulaires et multi-admin
 
+## Audit et correction Moko PayOut — 13 septembre 2026
+
+Le [guide marchand Moko PayOut](Moko_Payout_API_Guide_Marchand.pdf), version 1.0, a été lu intégralement. Cette section remplace les indications historiques ci-dessous pour le correctif courant. Le PayIn, sa configuration, son service, son checkout et ses callbacks ne sont pas modifiés.
+
+### Cause vérifiée
+
+`MokoPayoutService::recipient()` comparait strictement `merchant_recipient_id`, `full_name`, `phone` et `operator` avec les valeurs locales. Le contrôle refusait aussi un champ absent. Il intervenait avant la sauvegarde de `recipient_id` : une création acquise chez Moko pouvait donc rester sans identifiant local et produire ensuite `409 recipient_already_exists`.
+
+Les lectures réelles `GET /v1/recipients?page=1&page_size=100` et `GET /v1/recipients/{recipient_id}` ont confirmé un bénéficiaire `ACTIVE`, un identifiant marchand stable et un téléphone **`243…` sans le signe `+`**. OHNOUS attendait **`+243…`**. Cette différence de représentation explique le rejet. La liste réelle utilise `items`, `page`, `page_size` et `total` ; le détail est un objet JSON direct, sans enveloppe `data`. Le JSON du POST initial n’avait pas été conservé par l’ancien client : il n’est pas présenté comme une capture disponible.
+
+Le correctif normalise le numéro local et le numéro renvoyé en E.164 avant comparaison. Le POST continue d’envoyer `+243…`. Les autres contrôles restent stricts ; un numéro réellement différent, un autre nom, opérateur, pays ou identifiant est refusé. Un écho incomplet nécessite une lecture du détail ; des coordonnées toujours absentes après cette lecture bloquent le rattachement. Aucun rapprochement n’est effectué sur le seul téléphone.
+
+### Échanges, synchronisation et versements
+
+- Le client construit une seule chaîne JSON UTF-8, signe son SHA-256 et transmet ces mêmes octets. Il utilise exclusivement les clés PayOut et `X-Moko-Key`, `X-Moko-Timestamp`, `X-Moko-Nonce`, `X-Moko-Signature`. Méthode en majuscules, query triée, timestamp UTC en millisecondes, nonce UUID v4 neuf à chaque tentative. TLS reste vérifié.
+- `boutique_<id>` reste l’identifiant marchand stable déjà utilisé par OHNOUS. Aucun changement vers `vendor_<id>` sur les bénéficiaires existants. Un `rec_<32 hex>` mémorisé entraîne uniquement un GET ; un ancien ID introuvable est recherché dans la liste sans nouveau POST. Seul `409` accompagné de `recipient_already_exists` déclenche la récupération automatique. L’administrateur reçoit une confirmation explicite de resynchronisation.
+- Les tables `moko_recipients` et `boutique_payout_profiles` sont réutilisées. Les coordonnées, pays, statut, dates et dernière synchronisation sont associés à la boutique. Les nouvelles références KYC non vides utilisent `VENDOR-KYC-…` ; sans dossier KYC, laisser le champ vide (`NULL`). Les références internes historiques restent inchangées.
+- USD est sélectionné par défaut. Le PayOut utilise exclusivement le `recipient_id` Moko actif. La référence métier saisie (ex. `ohnous-vendor-42-settlement-123`), le payload et le rattachement boutique sont persistés **avant** le POST. Un retry reprend exactement cette référence et ce payload. Les suivis utilisent `GET /v1/payouts/{moko_payout_id}`, jamais la référence OHNOUS. Dans le code audité, ce suivi Moko était déjà correct ; l’ancien `TRANSACTION_NOT_FOUND` FreshPay ne peut pas être attribué à Moko sans trace historique correspondante.
+- GET et création de bénéficiaire : au plus trois tentatives sur timeout/5xx/429, avec attente exponentielle de 250 puis 500 ms et nonce neuf. Aucun retry automatique des autres 4xx. Les retries de création PayOut restent exclusivement gérés par le service et son cron : trois tentatives au total, référence inchangée, délais de 2 puis 4 minutes, arrêt prudent avant expiration de la fenêtre de 24 heures.
+- Les huit statuts Moko sont conservés. Seul `COMPLETED` signifie un crédit réussi. `finalized_at` trace également la terminaison `FAILED`, `EXPIRED` ou `RELEASED`, tandis que `completed_at` reste réservé au succès. Les webhooks vérifient le HMAC du RAW BODY avant persistance, contrôlent le couple événement/statut, identifient l’opération par `data.payout_id` et restent idempotents, y compris en cas d’arrivée anticipée.
+
+### Administration et journal temporaire
+
+`/admin-payout` affiche les bénéficiaires, leurs deux identifiants, leur statut et dernière synchronisation. La sélection d’une boutique donne accès à l’enregistrement, à la synchronisation et au détail technique ; le bouton de versement exige `ACTIVE`. Le bouton « Tester la connexion et actualiser le solde » appelle la route administrative `/payout-diagnostic` avec session, permission PayOut, CSRF expirant/renouvelé et limitation de fréquence. Le solde utilise la structure réellement observée : `wallets[]` avec `method`, `currency`, `available`, `reserved`, `total`, et `as_of`. Aucune agrégation entre devises n’est faite.
+
+Le détail PayOut affiche boutique, identifiants, statut Moko et date de finalisation. L’historique ajoute la boutique, la description et la finalisation. Les échanges techniques sont réservés aux administrateurs autorisés ; ils ne sont pas inclus dans le profil JSON retourné aux boutiques. Les scripts modifiés sont versionnés par `filemtime` et les requêtes ont un délai maximal avec réactivation des boutons.
+
+Les colonnes `last_api_exchange` conservent l’endpoint, le code HTTP, la date UTC, les identifiants métier/Moko, les erreurs originales, le diagnostic cURL, la date HTTP distante, le hash du body, les headers masqués et les JSON envoyés/reçus. Les cinq échanges précédents restent disponibles pour comprendre POST → 409 → liste → détail. Les champs incohérents sont explicitement nommés. Les secrets et signatures sont masqués ; le JSON brut est conservé avec ces seules occultations nécessaires.
+
+Pour activer temporairement le journal fichier, définir `MOKO_PAYOUT_DEBUG=1` dans `.env` : il sera créé dans **`logs/moko-payout-debug.log`** au prochain appel. `logs/.htaccess` interdit son téléchargement Apache. Vérifier un blocage équivalent si le serveur utilise Nginx. Le fichier est borné à environ 5 Mio et tronqué à la rotation. Après diagnostic, désactiver ce flag et supprimer le journal via l’outil d’administration de l’hébergement ; ne pas conserver ces coordonnées et traces temporaires au-delà du diagnostic. Les colonnes techniques ne doivent pas être exportées dans des rapports publics. Aucun secret n’est requis dans le navigateur ou dans les commandes.
+
+Variables `.env` utilisées, **noms uniquement** : `MOKO_PAYOUT_ENABLED`, `MOKO_BASE_URL`, `MOKO_PUBLIC_KEY`, `MOKO_SECRET_KEY`, `MOKO_WEBHOOK_SECRET`, `MOKO_CALLBACK_URL`, `MOKO_PAYOUT_DEBUG`. Aucune nouvelle dépendance installée.
+
+### SQL à importer manuellement
+
+Le dump fourni `u577654037_ohnous(3).sql` annonce **MariaDB 11.8.9** et contient déjà les tables PayOut, bénéficiaires et liens boutiques. Importer uniquement [20260913_001_moko_payout_diagnostics.sql](data%20base/20260913_001_moko_payout_diagnostics.sql) dans la base sélectionnée dans phpMyAdmin, puis déployer le code. Cette migration complète, rejouable, compatible MariaDB 10.6+, ajoute `country`, `last_sync_at`, `last_api_exchange` à `moko_recipients`, et `last_api_exchange`, `finalized_at` à `payout_transactions`. Aucun `CREATE DATABASE`, `USE`, import de données ni modification de `model/bdd.php`. Les migrations antérieures sont nécessaires seulement sur une installation qui ne possède pas encore leurs tables. Le SQL est livré dans `data base/`, avec ce lien conformément à AGENTS.md ; il n’est pas dupliqué dans le README. **Aucune migration n’a été exécutée sur la base du site.**
+
+### Validation et limites de recette
+
+Tests exécutés sur PHP 8.3 et MariaDB 11.4 dans des bases locales jetables, avec extraction de la structure du dump fourni et double import de la migration :
+
+```text
+php tests/moko_client_test.php
+php tests/moko_payout_test.php
+php tests/boutique_payout_test.php
+php tests/moko_recipient_security_test.php
+```
+
+Pour les deux suites DB, définir `MOKO_TEST_DSN` vers un serveur local sans `dbname`, ainsi que `MOKO_TEST_USER`, `MOKO_TEST_PASSWORD` si nécessaires et `MOKO_TEST_DUMP` vers le dump fourni. Les suites créent/suppriment uniquement leurs bases de test, sans charger `model/bdd.php`.
+
+Couverture : health/solde, HTTP 201 et sauvegarde du `rec_…`, téléphone renvoyé sans `+`, contrôles d’identité négatifs, doublons, timeout → 409 → resynchronisation, absence de recréation après 404, bénéficiaire non actif, persistance préalable du versement et corps identique en retry, GET par `PAY-…`, erreurs 4xx, backoff/bornes, les huit statuts, webhooks signés/falsifiés/dupliqués/anticipés, finalisation, CSRF et Honeypot sans JavaScript. Les tests de signature comparent aussi les headers aux octets réellement transmis par le transport simulé. Syntaxe PHP/JS vérifiée ; navigateur Edge headless avec vues/scripts réels et API fictive : bénéficiaire chargé, USD par défaut, solde `wallets`, réactivation du diagnostic, aucune erreur JS ni débordement aux largeurs 1440, 768 et 390 px. Cette recette locale de vue ne remplace pas le contrôle de l’en-tête complet sur le site déployé.
+
+Les GET réels ont identifié deux conditions du poste de diagnostic : cURL nécessitait le magasin CA local, puis l’API refusait l’heure UTC locale avec HTTP 401, `auth_signature_invalid` / `timestamp_out_of_window`. La date HTTPS Moko présentait un écart d’environ **+3600 secondes**. Un diagnostic de lecture isolé, signé avec l’heure distante, a obtenu HTTP 200 pour health, balance, liste et détail bénéficiaire et confirmé la cause téléphonique. **Aucun décalage d’horloge automatique n’est ajouté au code livré** : vérifier NTP et comparer les heures OHNOUS/Moko avec le support pour retrouver la tolérance documentée de ±60 secondes. Le certificat n’a jamais été désactivé. Les clés sont donc acceptées dans ce diagnostic ; le health standard doit encore être confirmé sur l’hébergement.
+
+Le service FreshPay PayIn, sa configuration, son modèle, le calcul checkout et ses scripts sont inchangés, de même que les méthodes PayIn du contrôleur partagé. Aucun PayIn réel ni débit/versement réel n’a été déclenché. Après import SQL et déploiement : tester le health standard, resynchroniser la boutique existante, vérifier le callback HTTPS public et le cron, puis valider un versement contrôlé et son crédit `COMPLETED`. Le parcours financier réel de bout en bout reste à effectuer par l’administrateur.
+
+Fichiers concernés : `service/MokoClient.php`, `service/MokoPayoutService.php`, `config/moko.php`, `model/PayoutTransaction.php`, `controller/PaymentController.php`, `classes/Routeur.php`, `view/admin-payout.php`, `view/admin-payouts.php`, `view/admin-payout-details.php`, `view/composants/recipient-fields.php`, `asset/js/admin_payout.js`, `asset/js/moko_recipient.js`, `asset/css/style.css`, `asset/css/responsive.css`, les trois suites `tests/moko_client_test.php`, `tests/moko_payout_test.php`, `tests/boutique_payout_test.php`, la migration liée ci-dessus et ce README.
+
 ## Correctif du formulaire PayOut — 13 septembre 2026
 
 La page `/admin-payout` réutilise `admin-page-shell` pour espacer la navigation et la carte, avec un dégagement sous la recherche fixe. L’enregistrement valide uniquement les champs métier du bénéficiaire et la boutique sélectionnée, affiche une progression et limite l’attente AJAX à 60 secondes. Les erreurs de validation téléphonique sont affichées. Les validations PHP, CSRF et Honeypot existantes restent actives.

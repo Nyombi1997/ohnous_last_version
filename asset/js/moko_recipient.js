@@ -9,6 +9,7 @@
             var locked = !!(profile && (profile.existing_recipient_id || profile.recipient_status));
             fields.prop('hidden', registered()).prop('disabled', busy || locked || !available);
             button.prop('disabled', busy || !available);
+            $('#moko_diagnostic').prop('disabled', busy);
             $(form).find('#payout_boutique').prop('disabled', busy);
             $(form).find('[type="submit"]').prop('disabled', busy || !available || !registered() || profile.recipient_status !== 'ACTIVE');
         }
@@ -21,6 +22,9 @@
                 $('<strong>').text(profile.beneficiary).appendTo(summary);
                 $('<span>').text(profile.phone_number + ' · ' + profile.operator).appendTo(summary);
                 $('<span>').text('Identifiant Moko : ' + profile.existing_recipient_id).appendTo(summary);
+                $('<span>').text('Identifiant OHNOUS : ' + profile.merchant_recipient_id).appendTo(summary);
+                $('<span>').text('Statut Moko : ' + profile.recipient_status).appendTo(summary);
+                $('<span>').text('Dernière synchronisation : ' + (profile.last_sync_at || '—')).appendTo(summary);
                 $('<span>').text(profile.recipient_status === 'ACTIVE' ? 'Bénéficiaire actif.' : 'Validation Moko nécessaire avant le versement.').appendTo(summary);
             } else if (profile && profile.recipient_status) {
                 $('<span>').text('Enregistrement à finaliser. Réessayez avec les coordonnées déjà transmises.').appendTo(summary);
@@ -47,7 +51,7 @@
             var payload = $(form).serialize();
             busy = true; sync();
             button.attr('aria-busy', 'true').find('span').text('Enregistrement en cours…');
-            $.ajax({url:'/payout-beneficiaire',type:'POST',data:payload,dataType:'json',timeout:60000}).done(function (data) {
+            $.ajax({url:'/payout-beneficiaire',type:'POST',data:payload,dataType:'json',timeout:90000}).done(function (data) {
                 if (data.recipient_csrf) form.elements.recipient_csrf.value = data.recipient_csrf;
                 if (data.result === 'ok' && data.profile) {
                     setProfile(data.profile);
@@ -62,6 +66,7 @@
                 busy = false;
                 button.removeAttr('aria-busy').find('span').text(registered() ? 'Actualiser le bénéficiaire' : 'Enregistrer le bénéficiaire');
                 sync();
+                $(form).trigger('recipient:updated');
             });
         }
         button.on('click', register);

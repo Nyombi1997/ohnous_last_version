@@ -3952,6 +3952,33 @@ span
     text-decoration: none;
 }
 
+.admin-payout-page .moko-diagnostic .admin-detail-heading{
+    flex-wrap: wrap;
+}
+.admin-payout-page .admin-data-table{
+    min-width: 0;
+}
+.admin-payout-page .admin-hero{
+    border-radius: 10px;
+    background: #fff;
+}
+.admin-payout-page details{
+    margin-top: 18px;
+}
+.admin-payout-page details summary{
+    cursor: pointer;
+    font-weight: 600;
+}
+.admin-payout-page .moko-diagnostic .btn_ohnous{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    border-radius: 8px;
+    white-space: normal;
+}
+
 .admin-hero,
 .admin-page-head{
     display: flex;

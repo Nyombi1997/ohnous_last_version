@@ -432,6 +432,7 @@
 }
 
 @media (max-width: 768px){
+    .admin-payout-page .admin-data-table table{min-width:0}
     .admin-payment-page{width:100%;padding-left:10px;padding-right:10px;box-sizing:border-box;overflow:hidden}
     .admin-payment-page .admin-payment-filters{position:static}
     .admin-data-table{border:0;box-shadow:none;background:transparent}

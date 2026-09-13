@@ -25,11 +25,12 @@ class MokoPayoutService
         $this->model = new PayoutTransaction($db);
         try {
             $this->query('SELECT provider,moko_recipient_id,moko_payout_id,moko_status,operator_reference,admin_id,admin_name,error_detail,send_attempts,first_attempt_at,next_attempt_at,last_checked_at,completed_at FROM payout_transactions LIMIT 0');
-            $this->query('SELECT merchant_recipient_id,recipient_id,full_name,phone,operator,kyc_reference,status FROM moko_recipients LIMIT 0');
+            $this->query('SELECT merchant_recipient_id,recipient_id,full_name,phone,operator,kyc_reference,status,country,last_sync_at,last_api_exchange FROM moko_recipients LIMIT 0');
+            $this->query('SELECT last_api_exchange,finalized_at FROM payout_transactions LIMIT 0');
             $this->query('SELECT event_hash,payout_id,payload,processed_at FROM moko_webhook_events LIMIT 0');
             $this->query('SELECT payout_id,status,description,source,payload,created_at FROM payout_status_history LIMIT 0');
             $this->query('SELECT payout_id,admin_id,admin_name,action,amount,currency,phone_number,operator,ip_address,user_agent FROM payout_audit_log LIMIT 0');
-        } catch (PDOException $e) { throw new RuntimeException('Module Moko indisponible : appliquez le SQL Moko du README dans la base du site.', 0, $e); }
+        } catch (PDOException $e) { throw new RuntimeException('Module Moko indisponible : appliquez la migration Moko du 13 septembre 2026 indiquée dans le README.', 0, $e); }
     }
 
     private function query($sql, array $params = [])
@@ -66,6 +67,35 @@ class MokoPayoutService
         return $value;
     }
 
+    public static function normalizePhone($phone)
+    {
+        if (!is_string($phone)) throw new InvalidArgumentException('Numéro Mobile Money invalide.');
+        $phone = preg_replace('/[\s().-]+/u', '', trim($phone));
+        if (preg_match('/^0[0-9]{9}$/D', $phone)) $phone = '+243'.substr($phone, 1);
+        elseif (preg_match('/^243[0-9]{9}$/D', $phone)) $phone = '+'.$phone;
+        elseif (preg_match('/^00243[0-9]{9}$/D', $phone)) $phone = '+'.substr($phone, 2);
+        if (!preg_match('/^\+243[0-9]{9}$/D', $phone)) throw new InvalidArgumentException('Le numéro doit être au format +243 suivi de 9 chiffres.');
+        return $phone;
+    }
+
+    public static function validRecipientId($id)
+    {
+        return is_string($id) && preg_match('/^rec_[a-f0-9]{32}$/D', $id) === 1;
+    }
+
+    private function exchange($table, $id, array $context = [])
+    {
+        $trace = array_merge($this->client->lastExchange(), $context);
+        $previous = json_decode((string)$this->query('SELECT last_api_exchange FROM '.$table.' WHERE id=?', [$id])->fetchColumn(), true);
+        if (is_array($previous)) {
+            $history = $previous['previous_exchanges'] ?? [];
+            unset($previous['previous_exchanges']);
+            $history[] = $previous;
+            $trace['previous_exchanges'] = array_slice($history, -5);
+        }
+        $this->query('UPDATE '.$table.' SET last_api_exchange=? WHERE id=?', [json_encode($this->client->redact($trace), JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE), $id]);
+    }
+
     public function initiatePayout(array $input)
     {
         $this->enabled();
@@ -79,9 +109,9 @@ class MokoPayoutService
         }
         $merchantId = self::field($input, 'merchant_recipient_id', 128);
         $name = self::field($input, 'beneficiary', 190);
-        $phone = self::field($input, 'phone_number', 30);
+        $phone = self::normalizePhone(self::field($input, 'phone_number', 30));
         $operator = self::field($input, 'operator', 16);
-        $currency = self::field($input, 'currency', 3);
+        $currency = self::field($input + ['currency'=>'USD'], 'currency', 3);
         $amount = self::field($input, 'amount', 13);
         $reason = self::field($input, 'reason', 255);
         $kyc = self::field($input, 'kyc_reference', 128, false);
@@ -141,9 +171,10 @@ class MokoPayoutService
             $stored = $profile && (!empty($profile['existing_recipient_id']) || isset($profile['recipient_status']));
             $details = $stored ? $profile : array_merge($profile ?? [], $input);
             $name = self::field($details, 'beneficiary', 190);
-            $phone = self::field($details, 'phone_number', 30);
+            $phone = self::normalizePhone(self::field($details, 'phone_number', 30));
             $operator = self::field($details, 'operator', 16);
             $kyc = self::field($details, 'kyc_reference', 128, false);
+            if (!$stored && $kyc !== '' && $kyc !== ($profile['kyc_reference'] ?? '') && !preg_match('/^VENDOR-KYC-[A-Za-z0-9_-]+$/D', $kyc)) throw new InvalidArgumentException('Utilisez une référence interne VENDOR-KYC-… ou laissez ce champ vide.');
             if (preg_match_all('/./us', $name) < 2) throw new InvalidArgumentException('Renseignez le nom complet du titulaire du compte Mobile Money.');
             if (!preg_match('/^\+243[0-9]{9}$/D', $phone)) throw new InvalidArgumentException('Le numéro doit être au format +243 suivi de 9 chiffres.');
             if (!in_array($operator, ['mpesa','airtel','orange','afrimoney'], true)) throw new InvalidArgumentException('Choisissez un opérateur Mobile Money.');
@@ -155,7 +186,7 @@ class MokoPayoutService
             $this->enabled();
             $recipient = $this->recipient($merchantId,$name,$phone,$operator,$kyc,(string)($profile['existing_recipient_id'] ?? ''),false);
             $this->query('UPDATE boutique_payout_profiles SET existing_recipient_id=? WHERE boutique_id=?', [$recipient['recipient_id'],$boutiqueId]);
-            return ['result'=>'ok','registered'=>true,'msg'=>$recipient['status'] === 'ACTIVE' ? 'Bénéficiaire enregistré chez Moko.' : 'Bénéficiaire enregistré. Sa validation par Moko est encore nécessaire.', 'profile'=>$this->model->recipientProfile($boutiqueId)];
+            return ['result'=>'ok','registered'=>true,'resynchronized'=>!empty($recipient['resynchronized']),'msg'=>!empty($recipient['resynchronized']) ? 'Le bénéficiaire existait déjà chez Moko et a été resynchronisé.' : ($recipient['status'] === 'ACTIVE' ? 'Bénéficiaire enregistré chez Moko.' : 'Bénéficiaire enregistré. Sa validation par Moko est encore nécessaire.'), 'profile'=>$this->model->recipientProfile($boutiqueId)];
         });
     }
 
@@ -169,51 +200,99 @@ class MokoPayoutService
                 $row = $this->query('SELECT * FROM moko_recipients WHERE merchant_recipient_id=?', [$merchantId])->fetch(PDO::FETCH_ASSOC);
             }
             $id = $row['recipient_id'] ?: $importId;
-            if ($id !== '') {
+            $resynchronized = false;
+            if (self::validRecipientId($id)) {
                 $response = $this->client->request('GET', '/v1/recipients/'.rawurlencode($id));
-                if (!$requireActive && $response['http'] === 404 && ($response['data']['detail']['code'] ?? '') === 'recipient_not_found') {
-                    $response = $this->client->request('POST', '/v1/recipients', ['merchant_recipient_id'=>$merchantId,'full_name'=>$name,'phone'=>$phone,'operator'=>$operator,'country'=>'CD','kyc_reference'=>$kyc ?: null]);
+                $this->exchange('moko_recipients', $row['id'], ['merchant_recipient_id'=>$merchantId]);
+                if ($response['http'] === 404 && ($response['data']['detail']['code'] ?? '') === 'recipient_not_found') {
+                    $response = $this->findRecipient($merchantId, $row['id']);
+                    $resynchronized = true;
                 }
+            } elseif ($id !== '') {
+                $response = $this->findRecipient($merchantId, $row['id']);
+                $resynchronized = true;
             } else {
                 $response = $this->client->request('POST', '/v1/recipients', ['merchant_recipient_id'=>$merchantId,'full_name'=>$name,'phone'=>$phone,'operator'=>$operator,'country'=>'CD','kyc_reference'=>$kyc ?: null]);
+                $this->exchange('moko_recipients', $row['id'], ['merchant_recipient_id'=>$merchantId]);
             }
-            if ($response['http'] === 409 && !$requireActive) $response = $this->findRecipient($merchantId);
-            if ($response['http'] === 409) throw new RuntimeException('Bénéficiaire déjà enregistré chez Moko. Enregistrez à nouveau le bénéficiaire pour le rattacher.');
+            if ($response['http'] === 409 && ($response['data']['detail']['code'] ?? '') === 'recipient_already_exists') {
+                $response = $this->findRecipient($merchantId, $row['id']);
+                $resynchronized = true;
+            }
             $data = $response['data'];
-            if (!in_array($response['http'], [200,201], true) || empty($data['recipient_id']) || empty($data['status'])) throw new RuntimeException('Enregistrement bénéficiaire : '.$this->error($response));
-            foreach (['merchant_recipient_id'=>$merchantId,'full_name'=>$name,'phone'=>$phone,'operator'=>$operator] as $key=>$expected) {
-                if (!isset($data[$key]) || $data[$key] !== $expected) throw new RuntimeException('Les coordonnées retournées par Moko ne correspondent pas au bénéficiaire demandé.');
+            if (!in_array($response['http'], [200,201], true) || !self::validRecipientId($data['recipient_id'] ?? null) || !is_string($data['status'] ?? null) || !preg_match('/^[A-Z_]{1,32}$/D', $data['status'])) throw new RuntimeException('Enregistrement bénéficiaire : '.$this->error($response));
+            // Un écho incomplet est complété par GET avant les contrôles d’identité.
+            if (!isset($data['merchant_recipient_id'], $data['full_name'], $data['phone'], $data['operator'])) {
+                $detail = $this->client->request('GET', '/v1/recipients/'.rawurlencode($data['recipient_id']));
+                $this->exchange('moko_recipients', $row['id'], ['merchant_recipient_id'=>$merchantId, 'previous_response'=>$this->client->redact($response['data'])]);
+                if ($detail['http'] !== 200 || ($detail['data']['recipient_id'] ?? '') !== $data['recipient_id']) throw new RuntimeException('Vérification bénéficiaire : '.$this->error($detail));
+                foreach ($detail['data'] as $key=>$value) {
+                    if (array_key_exists($key, $data) && in_array($key, ['merchant_recipient_id','full_name','phone','operator','country'], true)) {
+                        $same = $key === 'phone' ? self::normalizePhone($data[$key]) === self::normalizePhone($value) : $data[$key] === $value;
+                        if (!$same) throw new RuntimeException('Réponses Moko contradictoires pour le bénéficiaire.');
+                    }
+                }
+                $data = array_merge($data, $detail['data']);
             }
-            $this->query('UPDATE moko_recipients SET recipient_id=?, status=? WHERE id=?', [$data['recipient_id'],$data['status'],$row['id']]);
+            $mismatch = [];
+            if (self::validRecipientId($id) && !$resynchronized && $data['recipient_id'] !== $id) $mismatch[] = 'recipient_id';
+            if (($data['merchant_recipient_id'] ?? null) !== $merchantId) $mismatch[] = 'merchant_recipient_id';
+            foreach (['full_name'=>$name,'phone'=>$phone,'operator'=>$operator,'country'=>'CD'] as $key=>$expected) {
+                if (!array_key_exists($key, $data)) {
+                    if ($key !== 'country') $mismatch[] = $key;
+                    continue;
+                }
+                $actual = $data[$key];
+                if ($key === 'phone') {
+                    try { $actual = self::normalizePhone($actual); } catch (InvalidArgumentException $e) { $actual = null; }
+                }
+                if ($actual !== $expected) $mismatch[] = $key;
+            }
+            if ($mismatch) {
+                $this->exchange('moko_recipients', $row['id'], ['merchant_recipient_id'=>$merchantId,'mismatched_fields'=>$mismatch]);
+                throw new RuntimeException('Les coordonnées retournées par Moko ne correspondent pas au bénéficiaire demandé.');
+            }
+            if (!is_string($data['status'] ?? null) || !preg_match('/^[A-Z_]{1,32}$/D', $data['status'])) throw new RuntimeException('Statut bénéficiaire Moko invalide.');
+            $this->query('UPDATE moko_recipients SET recipient_id=?, status=?,last_sync_at=UTC_TIMESTAMP() WHERE id=?', [$data['recipient_id'],$data['status'],$row['id']]);
             if ($requireActive && $data['status'] !== 'ACTIVE') throw new RuntimeException('Bénéficiaire Moko non actif : '.$data['status'].'. Faites valider son dossier avant de verser.');
+            $data['resynchronized'] = $resynchronized;
             return $data;
         });
     }
 
-    private function findRecipient($merchantId)
+    private function findRecipient($merchantId, $localId)
     {
         // Après un timeout ou un doublon, retrouver le même bénéficiaire sans changer son identifiant marchand.
         for ($page = 1; $page <= 100; $page++) {
             $response = $this->client->request('GET', '/v1/recipients', null, ['page'=>$page,'page_size'=>100]);
+            $this->exchange('moko_recipients', $localId, ['merchant_recipient_id'=>$merchantId]);
             if ($response['http'] !== 200) throw new RuntimeException('Recherche du bénéficiaire : '.$this->error($response));
             $data = $response['data'];
             $items = $data['items'] ?? $data['recipients'] ?? (($data === [] || array_keys($data) === range(0, count($data) - 1)) ? $data : null);
             if (!is_array($items)) throw new RuntimeException('Liste des bénéficiaires Moko non exploitable. Contactez le support.');
             foreach ($items as $item) {
-                if (is_array($item) && ($item['merchant_recipient_id'] ?? '') === $merchantId && !empty($item['recipient_id'])) {
-                    return $this->client->request('GET', '/v1/recipients/'.rawurlencode($item['recipient_id']));
+                if (is_array($item) && ($item['merchant_recipient_id'] ?? '') === $merchantId && self::validRecipientId($item['recipient_id'] ?? null)) {
+                    $detail = $this->client->request('GET', '/v1/recipients/'.rawurlencode($item['recipient_id']));
+                    $this->exchange('moko_recipients', $localId, ['merchant_recipient_id'=>$merchantId]);
+                    if (($detail['data']['recipient_id'] ?? '') !== $item['recipient_id']) throw new RuntimeException('Identifiant bénéficiaire Moko incohérent lors de la synchronisation.');
+                    return $detail;
                 }
             }
-            if (!$items || (isset($data['total']) && $page * 100 >= (int)$data['total'])) break;
+            if (count($items) < 100 || (isset($data['total']) && $page * 100 >= (int)$data['total'])) break;
         }
         throw new RuntimeException('Bénéficiaire déjà présent chez Moko, mais introuvable dans la liste. Contactez le support Moko pour vérifier son rattachement.');
     }
 
-    private function error(array $response)
+    public function error(array $response)
     {
         $detail = $response['data']['detail'] ?? [];
-        $code = is_array($detail) ? ($detail['code'] ?? '') : '';
-        $messages = ['insufficient_balance'=>'Solde Moko insuffisant. Approvisionnez le portefeuille.', 'recipient_cooldown'=>'Bénéficiaire en période de sécurité de 24 h.', 'auth_signature_invalid'=>'Authentification refusée : vérifiez les clés et l’horloge du serveur.'];
+        $code = is_array($detail) && is_string($detail['code'] ?? null) ? $detail['code'] : '';
+        $messages = ['insufficient_balance'=>'Solde Moko insuffisant. Approvisionnez le portefeuille.', 'recipient_cooldown'=>'Bénéficiaire en période de sécurité de 24 h.', 'auth_signature_invalid'=>'Authentification refusée : vérifiez les clés et l’horloge du serveur.', 'auth_nonce_replay'=>'Authentification refusée : identifiant de requête déjà utilisé. Réessayez.', 'recipient_phone_invalid'=>'Moko a refusé le numéro Mobile Money. Vérifiez son format international.', 'recipient_already_exists'=>'Ce bénéficiaire existe déjà chez Moko. Synchronisez son dossier.'];
+        if ($code === 'auth_signature_invalid' && ($detail['message'] ?? '') === 'timestamp_out_of_window') return 'L’horloge du serveur est hors de la tolérance Moko (60 secondes). Vérifiez sa synchronisation UTC.';
+        if (strpos($code, 'limit_amount_per_') === 0) return 'Le plafond de versement Moko est atteint. Contactez le support Moko.';
+        if ($response['http'] === 429) return 'Moko reçoit trop de requêtes. Nouvelle tentative différée.';
+        if (($response['transport_code'] ?? 0) === 60) return 'Connexion sécurisée Moko impossible : vérifiez les certificats CA du serveur.';
+        if ($response['http'] === 0) return 'Moko est momentanément inaccessible. Conservez les mêmes références pour réessayer.';
         return $messages[$code] ?? ($code !== '' ? 'Erreur Moko : '.$code : 'Réponse Moko non exploitable (HTTP '.(int)$response['http'].').');
     }
 
@@ -230,8 +309,9 @@ class MokoPayoutService
         $this->query("UPDATE payout_transactions SET status='send_unknown', first_attempt_at=COALESCE(first_attempt_at,UTC_TIMESTAMP()), send_attempts=send_attempts+1, next_attempt_at=DATE_ADD(UTC_TIMESTAMP(), INTERVAL 60 SECOND) WHERE id=?", [$row['id']]);
         try { $response = $this->client->request('POST', '/v1/payouts', json_decode($row['request_payload'], true, 512, JSON_THROW_ON_ERROR)); }
         catch (Throwable $e) { $response = ['http'=>0,'data'=>[],'valid'=>false]; }
+        $this->exchange('payout_transactions', $row['id'], ['merchant_reference'=>$row['reference'], 'recipient_id'=>$row['moko_recipient_id']]);
         $data = $response['data'];
-        if (in_array($response['http'], [200,202], true) && !empty($data['payout_id']) && isset(self::STATUSES[$data['status'] ?? ''])) {
+        if (in_array($response['http'], [200,202], true) && is_string($data['payout_id'] ?? null) && preg_match('/^PAY-[A-Za-z0-9-]{1,60}$/D', $data['payout_id']) && isset(self::STATUSES[$data['status'] ?? ''])) {
             $this->apply($row['id'], $data, 'moko_api');
             $this->processInbox($data['payout_id']);
         } else {
@@ -241,7 +321,7 @@ class MokoPayoutService
             $message = $uncertain ? 'Résultat incertain. Conservez cette référence. '.($attempts >= 3 ? 'Trois tentatives atteintes : rapprochement Moko requis.' : 'Reprise différée avec la même référence.') : $this->error($response);
             if (!$uncertain && $attempts > 1) $message .= ' Une tentative antérieure reste incertaine : rapprochement Moko requis.';
             $delay = 60 * (2 ** $attempts);
-            $this->query('UPDATE payout_transactions SET status=?,status_description=?,response_payload=?,error_detail=?,next_attempt_at=DATE_ADD(UTC_TIMESTAMP(), INTERVAL ? SECOND) WHERE id=?', [$status,$message,json_encode($data),$this->error($response),$delay,$row['id']]);
+            $this->query('UPDATE payout_transactions SET status=?,status_description=?,response_payload=?,error_detail=?,next_attempt_at=DATE_ADD(UTC_TIMESTAMP(), INTERVAL ? SECOND) WHERE id=?', [$status,$message,json_encode($this->client->redact($data)),$this->error($response),$delay,$row['id']]);
             $this->model->addStatusEvent($row['id'], $status, $message, 'moko_api', ['http'=>$response['http']]);
         }
         return $this->result($this->model->findById($row['id']));
@@ -260,7 +340,7 @@ class MokoPayoutService
         $this->db->beginTransaction();
         try {
             $row = $this->query('SELECT * FROM payout_transactions WHERE id=? FOR UPDATE', [$id])->fetch(PDO::FETCH_ASSOC);
-            if (!$row || $row['provider'] !== 'moko' || empty($data['payout_id']) || strlen($data['payout_id']) > 64) throw new RuntimeException('Payout Moko non reconnu.');
+            if (!$row || $row['provider'] !== 'moko' || !is_string($data['payout_id'] ?? null) || !preg_match('/^PAY-[A-Za-z0-9-]{1,60}$/D', $data['payout_id'])) throw new RuntimeException('Payout Moko non reconnu.');
             if ($row['moko_payout_id'] && $row['moko_payout_id'] !== $data['payout_id']) throw new RuntimeException('Identifiant Moko incohérent.');
             foreach (['recipient_id'=>$row['moko_recipient_id'],'currency'=>$row['currency'],'merchant_reference'=>$row['reference']] as $key=>$expected) {
                 if (isset($data[$key]) && (string)$data[$key] !== $expected) throw new RuntimeException('Réponse Moko incohérente : '.$key);
@@ -269,9 +349,11 @@ class MokoPayoutService
             $new = $data['status'] ?? '';
             if (!self::acceptsTransition($row['moko_status'], $new)) { $this->db->commit(); return; }
             [$status,$message] = self::STATUSES[$new];
+            $safeData = $this->client->redact($data);
             $this->query('UPDATE payout_transactions SET moko_payout_id=?,moko_status=?,transaction_id=?,status=?,status_description=?,operator_reference=COALESCE(?,operator_reference),response_payload=?,completed_at=CASE WHEN ? = \'COMPLETED\' THEN COALESCE(completed_at,UTC_TIMESTAMP()) ELSE completed_at END WHERE id=?',
-                [$data['payout_id'],$new,$data['payout_id'],$status,$message,$data['switch_reference']??null,json_encode($data, JSON_UNESCAPED_UNICODE),$new,$id]);
-            if ($row['moko_status'] !== $new) $this->model->addStatusEvent($id,$status,$new.' — '.$message,$source,$data);
+                [$data['payout_id'],$new,$data['payout_id'],$status,$message,$data['switch_reference']??null,json_encode($safeData, JSON_UNESCAPED_UNICODE),$new,$id]);
+            if ($row['moko_status'] !== $new) $this->model->addStatusEvent($id,$status,$new.' — '.$message,$source,$safeData);
+            if (in_array($new, ['COMPLETED','FAILED','EXPIRED','RELEASED'], true)) $this->query('UPDATE payout_transactions SET finalized_at=COALESCE(finalized_at,UTC_TIMESTAMP()) WHERE id=?', [$id]);
             $this->db->commit();
         } catch (Throwable $e) { if ($this->db->inTransaction()) $this->db->rollBack(); throw $e; }
     }
@@ -288,6 +370,7 @@ class MokoPayoutService
         if (!$row || $row['provider'] !== 'moko') throw new InvalidArgumentException('Payout Moko introuvable.');
         if ($row['moko_payout_id']) {
             $response = $this->client->request('GET', '/v1/payouts/'.rawurlencode($row['moko_payout_id']));
+            $this->exchange('payout_transactions', $row['id'], ['merchant_reference'=>$row['reference'], 'payout_id'=>$row['moko_payout_id']]);
             if ($response['http'] !== 200 || empty($response['data']['payout_id']) || !isset(self::STATUSES[$response['data']['status']??''])) throw new RuntimeException($this->error($response));
             $this->apply($row['id'], $response['data'], 'status_api');
             $this->processInbox($row['moko_payout_id']);
@@ -300,7 +383,8 @@ class MokoPayoutService
         if (!MokoClient::verifyWebhook($raw, $signature, $this->config['webhook_secret'])) throw new UnexpectedValueException('Signature invalide.');
         $event = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
         $data = $event['data'] ?? [];
-        if (!is_array($data) || empty($data['payout_id']) || !is_string($data['payout_id']) || strlen($data['payout_id']) > 64 || !isset(self::STATUSES[$data['status']??''])) throw new InvalidArgumentException('Événement Moko invalide.');
+        $events = ['payout.created'=>['RESERVED'],'payout.held_for_review'=>['HOLD_REVIEW'],'payout.processing'=>['DISPATCHED','WAITING_CALLBACK'],'payout.completed'=>['COMPLETED'],'payout.failed'=>['FAILED','EXPIRED','RELEASED']];
+        if (!is_array($data) || !is_string($data['payout_id'] ?? null) || !preg_match('/^PAY-[A-Za-z0-9-]{1,60}$/D', $data['payout_id']) || !in_array($data['status'] ?? null, $events[$event['event'] ?? ''] ?? [], true)) throw new InvalidArgumentException('Événement Moko invalide.');
         $this->query('INSERT INTO moko_webhook_events (event_hash,payout_id,payload) VALUES (?,?,?) ON DUPLICATE KEY UPDATE event_hash=VALUES(event_hash)', [hash('sha256',$raw),$data['payout_id'],$raw]);
         $this->processInbox($data['payout_id']);
         return ['result'=>'ok'];
@@ -337,7 +421,13 @@ class MokoPayoutService
 
     public function diagnostic()
     {
-        return ['health'=>$this->client->request('GET','/v1/health'), 'balance'=>$this->client->request('GET','/v1/balance')];
+        $result = [];
+        foreach (['health','balance'] as $endpoint) {
+            $response = $this->client->request('GET', '/v1/'.$endpoint);
+            $ok = $response['http'] === 200 && $response['valid'] && ($endpoint !== 'health' || ($response['data']['status'] ?? null) === 'ok');
+            $result[$endpoint] = ['http'=>$response['http'], 'ok'=>$ok, 'data'=>$this->client->redact($response['data']), 'message'=>$ok ? ($endpoint === 'health' ? 'Connexion et authentification Moko confirmées.' : 'Solde Moko actualisé.') : $this->error($response), 'technical'=>$this->client->lastExchange()];
+        }
+        return $result;
     }
 
     public function recover($reference, $payoutId)

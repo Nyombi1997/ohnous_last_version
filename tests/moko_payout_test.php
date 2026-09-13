@@ -42,11 +42,16 @@ try {
     $migration=file_get_contents(__DIR__.'/../data base/20260907_001_moko_payout.sql');
     check($migration!==false && trim($migration)!=='','SQL migration missing');
     foreach ([$migration,$migration] as $pass) foreach(explode(';',preg_replace('/^--.*$/m','',$pass))as$sql)if(trim($sql)!=='')$db->exec($sql);
+    $diagnostics=file_get_contents(__DIR__.'/../data base/20260913_001_moko_payout_diagnostics.sql');
+    foreach ([$diagnostics,$diagnostics] as $pass) foreach(explode(';',preg_replace('/^--.*$/m','',$pass))as$sql)if(trim($sql)!=='')$db->exec($sql);
     $calls=0;$mode='ok';$payoutId='PAY-20260907120000-ABC123';$service=null;
     $recipient=['recipient_id'=>'rec_'.str_repeat('a',32),'status'=>'ACTIVE','merchant_recipient_id'=>'vendor_42','full_name'=>'Jean Test','phone'=>'+243812345678','operator'=>'mpesa'];
     $sentBodies=[];
     $client=new MokoClient($cfg,function($method,$path,$raw,$headers)use(&$calls,&$mode,&$service,&$sentBodies,$db,$payoutId,$recipient){
+        if ($path === '/v1/health') return ['http'=>200,'data'=>['status'=>'ok','merchant_code'=>'test-merchant','key_id'=>'test-key'],'valid'=>true];
+        if ($path === '/v1/balance') return ['http'=>200,'data'=>['wallets'=>[['method'=>'mpesa','currency'=>'USD','available'=>12.34,'reserved'=>1,'total'=>13.34]],'as_of'=>'2026-09-13T12:00:00'],'valid'=>true];
         if(strpos($path,'/v1/recipients')===0)return ['http'=>$method==='POST'?201:200,'data'=>$mode==='inactive'?array_merge($recipient,['status'=>'PENDING_KYC']):$recipient,'valid'=>true];
+        if ($method === 'GET') check($path === '/v1/payouts/'.$payoutId, 'GET envoyé avec merchant_reference au lieu de payout_id');
         $data=['payout_id'=>$payoutId,'recipient_id'=>$recipient['recipient_id'],'amount'=>'100','currency'=>'CDF','status'=>'RESERVED'];
         if($method==='POST') {
             $calls++;
@@ -66,6 +71,8 @@ try {
         return ['http'=>$method==='POST'?202:200,'data'=>$data,'valid'=>true];
     });
     $service=new MokoPayoutService($db,$client,$cfg);
+    $diagnostic = $service->diagnostic();
+    check($diagnostic['health']['ok'] && $diagnostic['balance']['data']['wallets'][0]['available'] === 12.34, 'Health / solde wallets incorrects');
     $input=['reference'=>'order-123-vendor-42','merchant_recipient_id'=>'vendor_42','beneficiary'=>'Jean Test','phone_number'=>'+243812345678','operator'=>'mpesa','amount'=>'100','currency'=>'CDF','reason'=>'Reversement'];
     $mode='early';$first=$service->initiatePayout($input);
     check($first['status']==='completed','Early webhook must survive creation response');
@@ -97,5 +104,19 @@ try {
     $disabled=new MokoPayoutService($db,$client,array_merge($cfg,['enabled'=>false]));
     try{$disabled->initiatePayout(array_merge($input,['reference'=>'disabled-payout']));throw new LogicException('Disabled payout accepted');}catch(RuntimeException $expected){check(strpos($expected->getMessage(),'désactivés')!==false,'Unexpected disabled error');}
     check(count((new PayoutTransaction($db))->search(['q'=>'order']))===4,'Native prepared search failed');
+    foreach (['RESERVED'=>'payout.created','HOLD_REVIEW'=>'payout.held_for_review','DISPATCHED'=>'payout.processing','WAITING_CALLBACK'=>'payout.processing','COMPLETED'=>'payout.completed','FAILED'=>'payout.failed','EXPIRED'=>'payout.failed','RELEASED'=>'payout.failed'] as $mokoStatus=>$eventName) {
+        $id = 'PAY-20260913120000-'.strtoupper(substr(hash('sha256', $mokoStatus), 0, 6));
+        $db->prepare("INSERT INTO payout_transactions (provider,reference,beneficiary,phone_number,operator,amount,currency,reason,status,moko_payout_id,moko_recipient_id) VALUES ('moko',?,'Test','+243812345678','mpesa',1,'USD','Test webhook','pending',?,?)")->execute(['status-'.strtolower($mokoStatus),$id,$recipient['recipient_id']]);
+        $raw = json_encode(['event'=>$eventName,'data'=>['payout_id'=>$id,'status'=>$mokoStatus]]);
+        $signature = 't=1717420800123,v1='.hash_hmac('sha256', '1717420800123.'.$raw, 'hook-test');
+        $service->handleWebhook($raw, $signature);
+        $service->handleWebhook($raw, $signature);
+        $row = (new PayoutTransaction($db))->findByReference('status-'.strtolower($mokoStatus));
+        check($row['moko_status'] === $mokoStatus, 'Statut webhook ignoré : '.$mokoStatus);
+        check(($row['status'] === 'completed') === ($mokoStatus === 'COMPLETED'), 'Statut non payé comptabilisé comme succès');
+        $terminal = in_array($mokoStatus, ['COMPLETED','FAILED','EXPIRED','RELEASED'], true);
+        check(!empty($row['finalized_at']) === $terminal, 'Date de finalisation incorrecte');
+        check(count((new PayoutTransaction($db))->getStatusHistory($row['id'])) === 1, 'Webhook non idempotent');
+    }
     echo "PASS: signatures, UUID, sorted GET, migration twice on supplied payout schema, recipient creation, early/duplicate/forged webhooks, terminal ordering, duplicate/conflicting references, timeout, backoff, three-attempt limit, 24h cutoff, 4xx, phone validation, native SQL search. No real HTTP calls.\n";
 } finally { $db->exec('DROP DATABASE '.$database); }

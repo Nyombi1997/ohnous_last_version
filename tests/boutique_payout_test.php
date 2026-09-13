@@ -29,7 +29,8 @@ try {
     $moko = file_get_contents(__DIR__.'/../data base/20260907_001_moko_payout.sql');
     $moko = str_replace(['ADD COLUMN IF NOT EXISTS', 'CREATE UNIQUE INDEX IF NOT EXISTS'], ['ADD COLUMN', 'CREATE UNIQUE INDEX'], $moko);
     $migration = file_get_contents(__DIR__.'/../data base/20260908_001_admin_boutique_payout.sql');
-    foreach ([$moko, $migration, $migration] as $script) {
+    $diagnostics = file_get_contents(__DIR__.'/../data base/20260913_001_moko_payout_diagnostics.sql');
+    foreach ([$moko, $migration, $migration, $diagnostics, $diagnostics] as $script) {
         foreach (explode(';', preg_replace('/^--.*$/m', '', $script)) as $sql) if (trim($sql) !== '') $db->exec($sql);
     }
     $cfg = ['enabled'=>true, 'base_url'=>'https://example.test', 'public_key'=>'test', 'secret_key'=>'test', 'webhook_secret'=>'test', 'callback_url'=>''];
@@ -42,7 +43,8 @@ try {
             check(!isset($data['recipient_id']), 'ID Moko généré localement');
             $id = 'rec_'.md5($data['merchant_recipient_id']);
             if (isset($recipients[$id])) return ['http'=>409,'data'=>['detail'=>['code'=>'recipient_already_exists']],'valid'=>true];
-            $recipients[$id] = $data + ['recipient_id'=>$id, 'status'=>$mode === 'pending' ? 'PENDING_KYC' : 'ACTIVE'];
+            check(preg_match('/^\+243[0-9]{9}$/D', $data['phone']) === 1, 'Téléphone POST non international');
+            $recipients[$id] = array_merge($data, ['phone'=>substr($data['phone'], 1), 'recipient_id'=>$id, 'status'=>$mode === 'pending' ? 'PENDING_KYC' : 'ACTIVE']);
             if ($mode === 'timeout') return ['http'=>0,'data'=>[],'valid'=>false];
             return ['http'=>201, 'data'=>$recipients[$id], 'valid'=>true];
         }
@@ -95,13 +97,38 @@ try {
     $recipients['rec_'.md5('boutique_4')]['status'] = 'ACTIVE';
     check($service->registerBoutiqueRecipient(4)['profile']['recipient_status'] === 'ACTIVE', 'Statut Moko non actualisé');
     $mode = 'timeout';
-    try { $service->registerBoutiqueRecipient(5, $input); throw new LogicException('Timeout accepté'); } catch (RuntimeException $expected) { check(strpos($expected->getMessage(), 'Enregistrement') !== false, 'Erreur timeout incorrecte'); }
+    $retryRecovery = $service->registerBoutiqueRecipient(5, $input);
+    check($retryRecovery['registered'] && $retryRecovery['resynchronized'], 'Reprise timeout puis 409 non synchronisée');
     $mode = 'ok';
     $recovered = $service->registerBoutiqueRecipient(5);
     check($recovered['registered'], 'Bénéficiaire non récupéré après timeout et 409');
     $db->exec("UPDATE moko_recipients SET recipient_id='rec_introuvable' WHERE merchant_recipient_id='boutique_1'");
     check($service->registerBoutiqueRecipient(1)['profile']['existing_recipient_id'] === $created['profile']['existing_recipient_id'], 'Ancien ID introuvable non récupéré');
     check($calls === 3, 'Enregistrement ou validation ayant déclenché un versement');
+    check($created['profile']['phone_number'] === '+243812345678', 'Le format retourné par Moko a remplacé le format OHNOUS');
+    check(!empty($model->recipientProfile(1)['last_sync_at']), 'Dernière synchronisation absente');
+    $originalRecipient = $recipients[$created['profile']['existing_recipient_id']];
+    foreach (['phone'=>'243812345679','full_name'=>'Autre nom','operator'=>'orange','merchant_recipient_id'=>'boutique_999','country'=>'FR','recipient_id'=>'rec_'.str_repeat('e',32)] as $field=>$wrongValue) {
+        $recipients[$created['profile']['existing_recipient_id']][$field] = $wrongValue;
+        try { $service->registerBoutiqueRecipient(1); throw new LogicException('Identité incohérente acceptée : '.$field); }
+        catch (RuntimeException $expected) { check(strpos($expected->getMessage(), 'coordonnées') !== false, 'Mauvaise erreur de comparaison : '.$field); }
+        $trace = $model->recipientExchange(1);
+        check(in_array($field, $trace['mismatched_fields'], true), 'Champ incohérent absent du diagnostic');
+        $recipients[$created['profile']['existing_recipient_id']] = $originalRecipient;
+    }
+    $before = $recipientCalls;
+    unset($recipients[$created['profile']['existing_recipient_id']]);
+    try { $service->registerBoutiqueRecipient(1); throw new LogicException('Bénéficiaire disparu recréé'); }
+    catch (RuntimeException $expected) { check(strpos($expected->getMessage(), 'introuvable') !== false, 'Mauvais diagnostic du bénéficiaire disparu'); }
+    check($before === $recipientCalls, 'POST interdit après perte du bénéficiaire mémorisé');
+    $recipients[$created['profile']['existing_recipient_id']] = $originalRecipient;
+    check(count($model->recipients()) === 5, 'Liste bénéficiaires incorrecte');
+    $partialClient = new MokoClient($cfg, function ($method, $path) use ($originalRecipient) {
+        if (strpos($path, '?') !== false) return ['http'=>200,'valid'=>true,'data'=>['items'=>[$originalRecipient],'total'=>1]];
+        return ['http'=>200,'valid'=>true,'data'=>['recipient_id'=>$originalRecipient['recipient_id'],'merchant_recipient_id'=>$originalRecipient['merchant_recipient_id'],'status'=>'ACTIVE']];
+    });
+    try { (new MokoPayoutService($db, $partialClient, $cfg))->registerBoutiqueRecipient(1); throw new LogicException('Coordonnées absentes après GET acceptées'); }
+    catch (RuntimeException $expected) { check(strpos($expected->getMessage(), 'coordonnées') !== false, 'Vérification identité manquante'); }
     echo "Bénéficiaires : création séparée, identifiants serveur, doublon, brouillon avant activation, KYC, timeout, récupération 409/404 et coordonnées autoritaires : OK.\n";
     $db->exec('CREATE TABLE admins (id INT PRIMARY KEY, mdp VARCHAR(255))');
     $db->exec("INSERT INTO admins VALUES (1,'ancien'),(2,'autre')");
