@@ -15,6 +15,7 @@ if(adminStoreActivationForm){
 
         $.post('/fonctions/admin_store_activation.php', {
             token: token,
+            csrf_token: adminStoreActivationForm.elements.csrf_token.value,
             months: months,
             days: days
         }, function(data){

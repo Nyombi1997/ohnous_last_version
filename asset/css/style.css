@@ -2290,6 +2290,21 @@ i
     font-size: 14px;
 }
 
+#admin_payout_form,#store_recipient_form{grid-template-columns:repeat(2,minmax(0,1fr))}
+.store-recipient-page{background:#fff}
+.store-recipient-page .edit-shop-card{background:#fff;border-radius:8px;box-shadow:0 4px 16px rgba(24,29,52,.05)}
+.recipient-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;border:0;padding:0;margin:0;min-width:0}
+.recipient-fields legend{margin-bottom:16px;font-weight:600;font-size:18px}
+.recipient-fields[hidden],.recipient-reminder[hidden]{display:none}
+.recipient-summary{display:flex;flex-direction:column;gap:8px;overflow-wrap:anywhere}
+.recipient-summary:empty{display:none}
+.recipient-reminder{display:flex;align-items:center;gap:16px;margin:140px auto 0;padding:20px;max-width:1100px;background:#fff;border:1px solid #e6e9f0;border-radius:8px;box-shadow:0 4px 16px rgba(24,29,52,.05)}
+.recipient-reminder:not([hidden]) + .edit-shop-page{padding-top:24px}
+.recipient-reminder span{flex:1;min-width:0}
+.recipient-reminder a{text-decoration:none;flex-shrink:0}
+#register_recipient,#admin_payout_form button[type=submit],.recipient-reminder .btn_ohnous{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;border-radius:8px}
+.recipient-fields input:disabled,.recipient-fields select:disabled{background:#f7f8fa;color:#626879;box-shadow:none}
+
 .edit-shop-forms{
     width: 100%;
     min-width: 0;

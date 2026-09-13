@@ -11,6 +11,10 @@
         </a>
     </div>
     <div class="account-edit-nav__group">
+        <a href="/boutique-versements" class="<?= $storeNavCurrent === 'payout' ? 'is-active' : '' ?>">
+            <i class="fa-solid fa-wallet"></i>
+            <span><strong>Versements</strong><small>Compte Mobile Money</small></span>
+        </a>
         <a href="/editer-boutique-contact" class="<?= $storeNavCurrent === 'contact' ? 'is-active' : '' ?>">
             <i class="fa-solid fa-address-book"></i>
             <span><strong>Contact</strong><small>Réseaux et liens publics</small></span>

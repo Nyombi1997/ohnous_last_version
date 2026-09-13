@@ -1,5 +1,6 @@
 <?php
     ohnous_require_admin_or_redirect();
+    $_SESSION['store_activation_csrf_at'] = time();
 
     $storeId = (int)($_GET['id'] ?? 0);
     $boutique = $storeId > 0 ? only_select('boutiques', 'id = '.$storeId, null, null) : null;
@@ -51,6 +52,7 @@
                     type="button"
                     class="btn_ohnous admin-toggle-store"
                     data-store-id="<?= (int)$boutique['id'] ?>"
+                    data-csrf="<?= htmlspecialchars(ohnous_csrf_token(), ENT_QUOTES, 'UTF-8') ?>"
                     data-next-state="<?= ((int)$boutique['activer'] === 1) ? '0' : '1' ?>"
                     <?= $isTestStore ? 'data-is-test="1"' : '' ?>
                 >

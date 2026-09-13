@@ -145,6 +145,44 @@ class PaymentController
         exit();
     }
 
+    public function registerRecipient()
+    {
+        $bdd = $this->bootDependencies();
+        require_once FONCTION.'moko_recipient.php';
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+        try {
+            $account = ohnous_get_current_account();
+            if (($account['type'] ?? '') === 'boutique' && !empty($account['connected'])) {
+                $boutiqueId = (int)$account['id'];
+            } else {
+                ohnous_require_payout_permission(true);
+                $boutiqueId = $_POST['boutique_id'] ?? 0;
+            }
+            if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+                http_response_code(405); header('Allow: POST'); echo '{"result":"error"}'; exit();
+            }
+            if (!ohnous_validate_recipient_csrf($_POST['recipient_csrf'] ?? null)) {
+                http_response_code(419);
+                echo json_encode(['result'=>'error','msg'=>'Session expirée. Rechargez la page.']); exit();
+            }
+            if (!validateHoneypot('moko_recipient')) ohnous_honeypot_neutral_json();
+            if (time() - (int)($_SESSION['recipient_attempt_at'] ?? 0) < 3) {
+                http_response_code(429);
+                echo json_encode(['result'=>'error','msg'=>'Veuillez patienter quelques secondes avant de réessayer.']); exit();
+            }
+            $_SESSION['recipient_attempt_at'] = time();
+            $response = (new MokoPayoutService($bdd))->registerBoutiqueRecipient($boutiqueId, $_POST);
+            $response['recipient_csrf'] = ohnous_recipient_csrf(true);
+            echo json_encode($response, JSON_UNESCAPED_UNICODE);
+        } catch (Throwable $e) {
+            http_response_code($e instanceof InvalidArgumentException ? 422 : 503);
+            error_log('Moko registerRecipient: '.get_class($e));
+            echo json_encode(['result'=>'error','msg'=>$e instanceof PDOException ? 'Service indisponible. Réessayez plus tard.' : $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        }
+        exit();
+    }
+
     public function startPayout()
     {
         $bdd = $this->bootDependencies();
@@ -166,6 +204,7 @@ class PaymentController
                 throw new RuntimeException('Connexion PDO introuvable.');
             }
             if (!filter_var($_POST['boutique_id'] ?? '', FILTER_VALIDATE_INT, ['options'=>['min_range'=>1]])) throw new InvalidArgumentException('Choisissez une boutique.');
+            if (!validateHoneypot('moko_recipient')) ohnous_honeypot_neutral_json();
             if (!ohnous_table_exists('boutique_payout_profiles') || !ohnous_table_exists('boutique_payout_links')) throw new RuntimeException('Module boutique PayOut indisponible. Appliquez la migration documentée dans le README.');
             echo json_encode((new MokoPayoutService($bdd))->initiatePayout($_POST), JSON_UNESCAPED_UNICODE);
         } catch (Throwable $e) {

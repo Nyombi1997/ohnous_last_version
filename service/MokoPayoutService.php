@@ -72,6 +72,11 @@ class MokoPayoutService
         $reference = strtolower(self::field($input, 'reference', 120));
         $boutiqueId = (int)self::field($input, 'boutique_id', 10, false);
         if ($boutiqueId && !$this->query('SELECT id FROM boutiques WHERE id=?', [$boutiqueId])->fetchColumn()) throw new InvalidArgumentException('Boutique introuvable.');
+        if ($boutiqueId) {
+            $profile = $this->model->recipientProfile($boutiqueId);
+            if (empty($profile['existing_recipient_id'])) throw new InvalidArgumentException('Enregistrez d’abord le bénéficiaire de cette boutique.');
+            foreach (['merchant_recipient_id','beneficiary','phone_number','operator','kyc_reference','existing_recipient_id'] as $field) $input[$field] = $profile[$field] ?? '';
+        }
         $merchantId = self::field($input, 'merchant_recipient_id', 128);
         $name = self::field($input, 'beneficiary', 190);
         $phone = self::field($input, 'phone_number', 30);
@@ -124,9 +129,39 @@ class MokoPayoutService
         });
     }
 
-    private function recipient($merchantId,$name,$phone,$operator,$kyc,$importId)
+    public function registerBoutiqueRecipient($boutiqueId, array $input = [])
     {
-        return $this->lock('recipient:'.$merchantId, function () use ($merchantId,$name,$phone,$operator,$kyc,$importId) {
+        $boutiqueId = filter_var($boutiqueId, FILTER_VALIDATE_INT, ['options'=>['min_range'=>1]]);
+        if (!$boutiqueId) throw new InvalidArgumentException('Choisissez une boutique.');
+        return $this->lock('boutique-recipient:'.$boutiqueId, function () use ($boutiqueId, $input) {
+            $boutique = $this->query('SELECT * FROM boutiques WHERE id=?', [$boutiqueId])->fetch(PDO::FETCH_ASSOC);
+            if (!$boutique) throw new InvalidArgumentException('Boutique introuvable.');
+            $profile = $this->model->recipientProfile($boutiqueId);
+            // Les coordonnées déjà transmises à Moko restent immuables, même après une réponse incertaine.
+            $stored = $profile && (!empty($profile['existing_recipient_id']) || isset($profile['recipient_status']));
+            $details = $stored ? $profile : array_merge($profile ?? [], $input);
+            $name = self::field($details, 'beneficiary', 190);
+            $phone = self::field($details, 'phone_number', 30);
+            $operator = self::field($details, 'operator', 16);
+            $kyc = self::field($details, 'kyc_reference', 128, false);
+            if (preg_match_all('/./us', $name) < 2) throw new InvalidArgumentException('Renseignez le nom complet du titulaire du compte Mobile Money.');
+            if (!preg_match('/^\+243[0-9]{9}$/D', $phone)) throw new InvalidArgumentException('Le numéro doit être au format +243 suivi de 9 chiffres.');
+            if (!in_array($operator, ['mpesa','airtel','orange','afrimoney'], true)) throw new InvalidArgumentException('Choisissez un opérateur Mobile Money.');
+            $merchantId = $profile['merchant_recipient_id'] ?? 'boutique_'.$boutiqueId;
+            $owner = $this->query('SELECT boutique_id FROM boutique_payout_profiles WHERE merchant_recipient_id=?', [$merchantId])->fetchColumn();
+            if ($owner && (int)$owner !== $boutiqueId) throw new InvalidArgumentException('Ce bénéficiaire appartient à une autre boutique.');
+            $this->query('INSERT INTO boutique_payout_profiles (boutique_id,merchant_recipient_id,beneficiary,phone_number,operator,kyc_reference) VALUES (?,?,?,?,?,?) ON DUPLICATE KEY UPDATE beneficiary=VALUES(beneficiary),phone_number=VALUES(phone_number),operator=VALUES(operator),kyc_reference=VALUES(kyc_reference)', [$boutiqueId,$merchantId,$name,$phone,$operator,$kyc ?: null]);
+            if (!ohnous_is_store_active($boutique)) return ['result'=>'ok','registered'=>false,'msg'=>'Coordonnées enregistrées. Le bénéficiaire sera créé à l’activation de votre boutique.', 'profile'=>$this->model->recipientProfile($boutiqueId)];
+            $this->enabled();
+            $recipient = $this->recipient($merchantId,$name,$phone,$operator,$kyc,(string)($profile['existing_recipient_id'] ?? ''),false);
+            $this->query('UPDATE boutique_payout_profiles SET existing_recipient_id=? WHERE boutique_id=?', [$recipient['recipient_id'],$boutiqueId]);
+            return ['result'=>'ok','registered'=>true,'msg'=>$recipient['status'] === 'ACTIVE' ? 'Bénéficiaire enregistré chez Moko.' : 'Bénéficiaire enregistré. Sa validation par Moko est encore nécessaire.', 'profile'=>$this->model->recipientProfile($boutiqueId)];
+        });
+    }
+
+    private function recipient($merchantId,$name,$phone,$operator,$kyc,$importId,$requireActive = true)
+    {
+        return $this->lock('recipient:'.$merchantId, function () use ($merchantId,$name,$phone,$operator,$kyc,$importId,$requireActive) {
             $row = $this->query('SELECT * FROM moko_recipients WHERE merchant_recipient_id=?', [$merchantId])->fetch(PDO::FETCH_ASSOC);
             if ($row && ($row['full_name'] !== $name || $row['phone'] !== $phone || $row['operator'] !== $operator)) throw new InvalidArgumentException('Ce bénéficiaire existe avec des coordonnées différentes. Utilisez ses coordonnées enregistrées ; une modification sensible se traite chez Moko.');
             if (!$row) {
@@ -136,19 +171,42 @@ class MokoPayoutService
             $id = $row['recipient_id'] ?: $importId;
             if ($id !== '') {
                 $response = $this->client->request('GET', '/v1/recipients/'.rawurlencode($id));
+                if (!$requireActive && $response['http'] === 404 && ($response['data']['detail']['code'] ?? '') === 'recipient_not_found') {
+                    $response = $this->client->request('POST', '/v1/recipients', ['merchant_recipient_id'=>$merchantId,'full_name'=>$name,'phone'=>$phone,'operator'=>$operator,'country'=>'CD','kyc_reference'=>$kyc ?: null]);
+                }
             } else {
                 $response = $this->client->request('POST', '/v1/recipients', ['merchant_recipient_id'=>$merchantId,'full_name'=>$name,'phone'=>$phone,'operator'=>$operator,'country'=>'CD','kyc_reference'=>$kyc ?: null]);
             }
-            if ($response['http'] === 409) throw new RuntimeException('Bénéficiaire déjà enregistré chez Moko. Retrouvez son recipient_id dans la console ou GET /v1/recipients et renseignez « ID Moko existant » pour le rattacher.');
+            if ($response['http'] === 409 && !$requireActive) $response = $this->findRecipient($merchantId);
+            if ($response['http'] === 409) throw new RuntimeException('Bénéficiaire déjà enregistré chez Moko. Enregistrez à nouveau le bénéficiaire pour le rattacher.');
             $data = $response['data'];
             if (!in_array($response['http'], [200,201], true) || empty($data['recipient_id']) || empty($data['status'])) throw new RuntimeException('Enregistrement bénéficiaire : '.$this->error($response));
             foreach (['merchant_recipient_id'=>$merchantId,'full_name'=>$name,'phone'=>$phone,'operator'=>$operator] as $key=>$expected) {
                 if (!isset($data[$key]) || $data[$key] !== $expected) throw new RuntimeException('Les coordonnées retournées par Moko ne correspondent pas au bénéficiaire demandé.');
             }
             $this->query('UPDATE moko_recipients SET recipient_id=?, status=? WHERE id=?', [$data['recipient_id'],$data['status'],$row['id']]);
-            if ($data['status'] !== 'ACTIVE') throw new RuntimeException('Bénéficiaire Moko non actif : '.$data['status'].'. Faites valider son dossier avant de verser.');
+            if ($requireActive && $data['status'] !== 'ACTIVE') throw new RuntimeException('Bénéficiaire Moko non actif : '.$data['status'].'. Faites valider son dossier avant de verser.');
             return $data;
         });
+    }
+
+    private function findRecipient($merchantId)
+    {
+        // Après un timeout ou un doublon, retrouver le même bénéficiaire sans changer son identifiant marchand.
+        for ($page = 1; $page <= 100; $page++) {
+            $response = $this->client->request('GET', '/v1/recipients', null, ['page'=>$page,'page_size'=>100]);
+            if ($response['http'] !== 200) throw new RuntimeException('Recherche du bénéficiaire : '.$this->error($response));
+            $data = $response['data'];
+            $items = $data['items'] ?? $data['recipients'] ?? (($data === [] || array_keys($data) === range(0, count($data) - 1)) ? $data : null);
+            if (!is_array($items)) throw new RuntimeException('Liste des bénéficiaires Moko non exploitable. Contactez le support.');
+            foreach ($items as $item) {
+                if (is_array($item) && ($item['merchant_recipient_id'] ?? '') === $merchantId && !empty($item['recipient_id'])) {
+                    return $this->client->request('GET', '/v1/recipients/'.rawurlencode($item['recipient_id']));
+                }
+            }
+            if (!$items || (isset($data['total']) && $page * 100 >= (int)$data['total'])) break;
+        }
+        throw new RuntimeException('Bénéficiaire déjà présent chez Moko, mais introuvable dans la liste. Contactez le support Moko pour vérifier son rattachement.');
     }
 
     private function error(array $response)

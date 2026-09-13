@@ -200,6 +200,12 @@
             $myView->render('Ohnous | DÉTAIL DU PAIEMENT');
         }
 
+        public function showStorePayout ()
+        {
+            $myView = new View('store-payout');
+            $myView->render('OhNous | Coordonnées de versement');
+        }
+
         public function showAdminPayoutForm ()
         {
             $this->requirePayoutPermission();

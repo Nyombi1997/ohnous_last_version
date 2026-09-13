@@ -39,6 +39,10 @@
 
     if($action === 'toggle_store')
     {
+        if (!ohnous_validate_csrf($_POST['csrf_token'] ?? '') || time() - (int)($_SESSION['store_activation_csrf_at'] ?? 0) > 7200) {
+            http_response_code(419);
+            echo json_encode(['result'=>'error','msg'=>'Session expirée. Rechargez la page.']); exit;
+        }
         $activate = (int)html_entity_decode(filter_var($_POST['activate'] ?? 0, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
 
         if(ohnous_is_test_store($boutique) && $activate === 0)
@@ -63,6 +67,10 @@
         }
 
         update_bdd($bdd, 'boutiques', $updateData, "id = '".(int)$storeId."'");
+        if ($activate === 1) {
+            require_once __DIR__.'/moko_recipient.php';
+            ohnous_register_recipient_on_activation($bdd, $storeId);
+        }
 
         echo json_encode([
             'result' => 'ok',

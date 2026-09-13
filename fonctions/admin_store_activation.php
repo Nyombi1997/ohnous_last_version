@@ -6,6 +6,10 @@
     header('Content-Type: application/json; charset=utf-8');
 
     ohnous_require_admin_or_redirect('/admin-login');
+    if (!ohnous_validate_csrf($_POST['csrf_token'] ?? '') || time() - (int)($_SESSION['store_activation_csrf_at'] ?? 0) > 7200) {
+        http_response_code(419);
+        echo json_encode(['result'=>'error','msg'=>'Session expirée. Rechargez la page.']); exit;
+    }
 
     $token = html_entity_decode(filter_var($_POST['token'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $days = (int)html_entity_decode(filter_var($_POST['days'] ?? 0, FILTER_SANITIZE_FULL_SPECIAL_CHARS));
@@ -64,6 +68,9 @@
         'duree_jours' => $durationDays,
         'date_traitement' => date('Y-m-d H:i:s')
     ], "id = '".(int)$request['id']."'");
+
+    require_once __DIR__.'/moko_recipient.php';
+    ohnous_register_recipient_on_activation($bdd, (int)$request['boutique_id']);
 
     echo json_encode([
         'result' => 'ok',

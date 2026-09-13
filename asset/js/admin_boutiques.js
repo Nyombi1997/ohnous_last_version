@@ -57,6 +57,7 @@
 
         $.post('/fonctions/admin_store_actions.php', {
             action: 'toggle_store',
+            csrf_token: button.getAttribute('data-csrf'),
             store_id: storeId,
             activate: activate
         }, function(data){

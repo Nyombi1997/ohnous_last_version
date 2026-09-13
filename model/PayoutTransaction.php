@@ -104,9 +104,7 @@ class PayoutTransaction
 
     public function boutiqueContext($id)
     {
-        $stmt = $this->bdd->prepare('SELECT * FROM boutique_payout_profiles WHERE boutique_id = ?');
-        $stmt->execute([(int)$id]);
-        $profile = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        $profile = $this->recipientProfile($id);
 $stmt = $this->bdd->prepare('SELECT p.phone_number, p.operator, p.beneficiary, r.merchant_recipient_id, r.kyc_reference, r.recipient_id AS existing_recipient_id FROM payout_transactions p INNER JOIN boutique_payout_links l ON l.payout_id = p.id LEFT JOIN moko_recipients r ON r.recipient_id = CONVERT(p.moko_recipient_id USING utf8mb4) COLLATE utf8mb4_general_ci WHERE l.boutique_id = ? ORDER BY p.created_at DESC, p.id DESC');
         $stmt->execute([(int)$id]);
         $phones = [];
@@ -115,6 +113,25 @@ $stmt = $this->bdd->prepare('SELECT p.phone_number, p.operator, p.beneficiary, r
         }
         if ($profile && !isset($phones[$profile['phone_number']])) $phones[$profile['phone_number']] = $profile;
         return ['profile'=>$profile, 'phones'=>array_values($phones)];
+    }
+
+    public function recipientProfile($id)
+    {
+        $stmt = $this->bdd->prepare('SELECT * FROM boutique_payout_profiles WHERE boutique_id = ?');
+        $stmt->execute([(int)$id]);
+        $profile = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        $stmt = $this->bdd->prepare('SELECT * FROM moko_recipients WHERE merchant_recipient_id = ?');
+        $stmt->execute([$profile['merchant_recipient_id'] ?? 'boutique_'.(int)$id]);
+        $recipient = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($recipient) {
+            $profile = array_merge($profile ?? ['boutique_id'=>(int)$id], [
+                'merchant_recipient_id'=>$recipient['merchant_recipient_id'], 'beneficiary'=>$recipient['full_name'],
+                'phone_number'=>$recipient['phone'], 'operator'=>$recipient['operator'],
+                'kyc_reference'=>$recipient['kyc_reference'], 'existing_recipient_id'=>$recipient['recipient_id'],
+                'recipient_status'=>$recipient['status'],
+            ]);
+        }
+        return $profile;
     }
 
     public function statistics($boutiqueId = 0)

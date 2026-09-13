@@ -236,6 +236,7 @@
             }
     ?>
     <!-- afficher le contenue -->
+    <?php include VIEW.'composants/recipient-reminder.php'; ?>
     <?php echo $contentPage; ?>
 	<!-- barre de recherche -->
 	<div class="div_search_bar all <?php if(isset($GLOBALS['categorie'])){ echo 'sans_categorie';}else if(isset($GLOBALS['others'])){ echo 'sans_categorie';}  ?>" id="div_search_bar_all">

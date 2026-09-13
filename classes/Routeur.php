@@ -68,6 +68,8 @@
                             "paiement-retour" => ["controller" => 'PaymentController', "method" => 'showReturnPage'],
                             "payout-demarrer" => ["controller" => 'PaymentController', "method" => 'startPayout'],
                             "payout-boutique" => ["controller" => 'PaymentController', "method" => 'payoutBoutique'],
+                            "payout-beneficiaire" => ["controller" => 'PaymentController', "method" => 'registerRecipient'],
+                            "boutique-versements" => ["controller" => 'Home', "method" => 'showStorePayout'],
                             "payout-callback-moko" => ["controller" => 'PaymentController', "method" => 'handleMokoCallback'],
                             "payout-verifier" => ["controller" => 'PaymentController', "method" => 'verifyPayoutStatus'],
                             "payout-export" => ["controller" => 'PaymentController', "method" => 'exportPayouts'],

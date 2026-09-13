@@ -1,5 +1,6 @@
 <?php
     ohnous_require_admin_or_redirect();
+    $_SESSION['store_activation_csrf_at'] = time();
 
     $token = html_entity_decode(filter_var($_GET['token'] ?? '', FILTER_SANITIZE_FULL_SPECIAL_CHARS));
     $request = null;
@@ -45,6 +46,7 @@
                     </div>
                     <?php if(($request['statut'] ?? '') === 'en_attente'): ?>
                         <form id="admin_store_activation_form" class="activation-admin-form">
+                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(ohnous_csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
                             <input type="hidden" id="activation_token" value="<?= htmlspecialchars($token, ENT_QUOTES, 'UTF-8') ?>">
                             <div class="form_ohnous">
                                 <i class="fa-regular fa-calendar"></i>
